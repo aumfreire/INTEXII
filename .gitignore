@@ -1,0 +1,43 @@
+# ----- OS / Editor -----
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# ----- Logs -----
+logs/
+*.log
+*.tlog
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ----- .NET / Visual Studio -----
+**/bin/
+**/obj/
+.vs/
+*.user
+*.rsuser
+*.suo
+*.sln.docstates
+*.DotSettings.user
+
+# ----- Node / Frontend build artifacts -----
+**/node_modules/
+**/dist/
+**/dist-ssr/
+**/.vite/
+
+# ----- Local environment files -----
+*.local
+.env
+.env.*
+!.env.example
+
+# ----- Test / coverage output -----
+coverage/
+TestResults/
+*.coverage
+*.coveragexml

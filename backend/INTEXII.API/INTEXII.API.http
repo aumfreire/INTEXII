@@ -1,0 +1,6 @@
+@INTEXII.API_HostAddress = http://localhost:5173
+
+GET {{INTEXII.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
