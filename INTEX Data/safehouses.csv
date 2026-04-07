@@ -1,0 +1,10 @@
+safehouse_id,safehouse_code,name,region,city,province,country,open_date,status,capacity_girls,capacity_staff,current_occupancy,notes
+1,SH01,Lighthouse Safehouse 1,Luzon,Quezon City,Metro Manila,Philippines,2022-01-01,Active,8,4,8,
+2,SH02,Lighthouse Safehouse 2,Visayas,Cebu City,Cebu,Philippines,2022-02-15,Active,10,5,8,
+3,SH03,Lighthouse Safehouse 3,Mindanao,Davao City,Davao del Sur,Philippines,2022-04-01,Active,9,4,9,
+4,SH04,Lighthouse Safehouse 4,Visayas,Iloilo City,Iloilo,Philippines,2022-05-16,Active,12,4,12,
+5,SH05,Lighthouse Safehouse 5,Luzon,Baguio City,Benguet,Philippines,2022-06-30,Active,11,4,9,
+6,SH06,Lighthouse Safehouse 6,Mindanao,Cagayan de Oro,Misamis Oriental,Philippines,2022-08-14,Active,8,5,6,
+7,SH07,Lighthouse Safehouse 7,Visayas,Bacolod,Negros Occidental,Philippines,2022-09-28,Active,12,4,12,
+8,SH08,Lighthouse Safehouse 8,Visayas,Tacloban,Leyte,Philippines,2022-11-12,Active,9,7,7,
+9,SH09,Lighthouse Safehouse 9,Mindanao,General Santos,South Cotabato,Philippines,2022-12-27,Active,6,3,6,
