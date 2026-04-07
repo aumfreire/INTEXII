@@ -36,6 +36,17 @@ lerna-debug.log*
 .env.*
 !.env.example
 
+# ----- Credentials / Secrets (never commit these) -----
+# VIDEO NOTE: Show this file in .gitignore, then show appsettings.Secrets.json
+# exists locally but does NOT appear in git status.
+appsettings.Secrets.json
+**/appsettings.Secrets.json
+
+# ----- SQLite databases (local identity DB) -----
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+
 # ----- Test / coverage output -----
 coverage/
 TestResults/

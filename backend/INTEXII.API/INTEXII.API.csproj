@@ -7,8 +7,24 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="10.0.4" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.4" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.1" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.7" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.4" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.4">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.4" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.4">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Scalar.AspNetCore" Version="2.13.20" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="7.0.0" />
+    <!-- LOCAL DEV: SQLite (INTEXIIdb.sqlite) — already included via Microsoft.EntityFrameworkCore.Sqlite above -->
+    <!-- AZURE PRODUCTION: Uncomment SqlServer, remove Sqlite, swap UseSqlite → UseSqlServer in Program.cs -->
+    <!-- <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.4" /> -->
   </ItemGroup>
 
 </Project>
