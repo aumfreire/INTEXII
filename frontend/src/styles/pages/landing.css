@@ -1,0 +1,187 @@
+.hero-section {
+  background-color: var(--color-warm-cream);
+  padding: 80px 0;
+}
+
+@media (max-width: 768px) {
+  .hero-section {
+    padding: 48px 0;
+    text-align: center;
+  }
+}
+
+.hero-section h1 {
+  margin-bottom: 20px;
+  line-height: 1.15;
+}
+
+.hero-section .hero-subtitle {
+  font-size: 1.15rem;
+  color: var(--color-muted);
+  line-height: 1.7;
+  margin-bottom: 32px;
+  max-width: 500px;
+}
+
+@media (max-width: 768px) {
+  .hero-section .hero-subtitle {
+    max-width: 100%;
+  }
+}
+
+.hero-buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+  .hero-buttons {
+    justify-content: center;
+  }
+}
+
+.hero-image-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-image-wrapper img {
+  max-width: 100%;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+.mission-section {
+  padding: 80px 0;
+  background-color: var(--color-white);
+}
+
+.why-section {
+  padding: 80px 0;
+  background-color: var(--color-warm-cream);
+}
+
+.programs-section {
+  padding: 80px 0;
+  background-color: var(--color-white);
+}
+
+.impact-section {
+  padding: 80px 0;
+  background-color: var(--color-lavender);
+}
+
+.impact-stat {
+  text-align: center;
+  padding: 20px;
+}
+
+.impact-stat .stat-number {
+  font-family: var(--font-heading);
+  font-size: 2.75rem;
+  font-weight: 700;
+  color: var(--color-white);
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.impact-stat .stat-label {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.testimonials-section {
+  padding: 80px 0;
+  background-color: var(--color-soft-blush);
+}
+
+.trust-section {
+  padding: 80px 0;
+  background-color: var(--color-white);
+}
+
+.trust-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px;
+}
+
+.trust-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cta-band {
+  padding: 80px 0;
+  background-color: var(--color-cta);
+  text-align: center;
+}
+
+.cta-band h2 {
+  color: var(--color-white);
+  margin-bottom: 16px;
+}
+
+.cta-band p {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.1rem;
+  max-width: 550px;
+  margin: 0 auto 32px;
+  line-height: 1.7;
+}
+
+.cta-band-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 32px;
+  background-color: var(--color-white);
+  color: var(--color-cta);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 1rem;
+  text-decoration: none;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.cta-band-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  color: var(--color-cta);
+}
+
+@media (max-width: 768px) {
+  .mission-section,
+  .why-section,
+  .programs-section,
+  .impact-section,
+  .testimonials-section,
+  .trust-section,
+  .cta-band {
+    padding: 48px 0;
+  }
+
+  .impact-stat .stat-number {
+    font-size: 2.25rem;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spin-icon {
+  animation: spin 1s linear infinite;
+}
