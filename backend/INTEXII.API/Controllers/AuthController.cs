@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 using INTEXII.API.Data;
+using INTEXII.API.Data.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace INTEXII.API.Controllers;
 
@@ -14,7 +16,8 @@ namespace INTEXII.API.Controllers;
 public class AuthController(
     UserManager<ApplicationUser> userManager,
     SignInManager<ApplicationUser> signInManager,
-    IConfiguration configuration) : ControllerBase
+    IConfiguration configuration,
+    IntexDbContext intexDb) : ControllerBase
 {
     private const string DefaultFrontendUrl = "http://localhost:3000";
     private const string DefaultExternalReturnPath = "/dashboard";
@@ -33,13 +36,29 @@ public class AuthController(
             return Ok(new
             {
                 isAuthenticated = false,
+                displayName = (string?)null,
                 userName = (string?)null,
                 email = (string?)null,
+                hasLocalPassword = false,
+                isExternalOnly = false,
+                externalLoginProviders = Array.Empty<string>(),
                 roles = Array.Empty<string>()
             });
         }
 
         var user = await userManager.GetUserAsync(User);
+        var externalLogins = user is null
+            ? Array.Empty<UserLoginInfo>()
+            : (await userManager.GetLoginsAsync(user)).ToArray();
+        var externalLoginProviders = externalLogins
+            .Select(login => login.LoginProvider)
+            .Where(provider => !string.IsNullOrWhiteSpace(provider))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(provider => provider)
+            .ToArray();
+        var hasLocalPassword = user is not null && await userManager.HasPasswordAsync(user);
+        var isExternalOnly = externalLoginProviders.Length > 0 && !hasLocalPassword;
+        var supporter = await FindSupporterByEmailAsync(user?.Email);
         var roles = User.Claims
             .Where(c => c.Type == ClaimTypes.Role)
             .Select(c => c.Value)
@@ -47,11 +66,20 @@ public class AuthController(
             .OrderBy(r => r)
             .ToArray();
 
+        var displayName = BuildPreferredDisplayName(
+            supporter,
+            user?.UserName,
+            user?.Email);
+
         return Ok(new
         {
             isAuthenticated = true,
+            displayName,
             userName = user?.UserName ?? User.Identity?.Name,
             email = user?.Email,
+            hasLocalPassword,
+            isExternalOnly,
+            externalLoginProviders,
             roles
         });
     }
@@ -135,8 +163,19 @@ public class AuthController(
             isPersistent: false,
             bypassTwoFactor: true);
 
+        var externalFirstName = info.Principal.FindFirstValue(ClaimTypes.GivenName)
+            ?? info.Principal.FindFirstValue("given_name");
+        var externalLastName = info.Principal.FindFirstValue(ClaimTypes.Surname)
+            ?? info.Principal.FindFirstValue("family_name");
+
         if (signInResult.Succeeded)
         {
+            var existingUser = await userManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
+            if (existingUser is not null)
+            {
+                await EnsureDonorRoleAndSupporterSyncAsync(existingUser, externalFirstName, externalLastName);
+            }
+
             return Redirect(BuildFrontendSuccessUrl(returnPath));
         }
 
@@ -171,6 +210,8 @@ public class AuthController(
         {
             return Redirect(BuildFrontendErrorUrl("Unable to associate the external login with the local account."));
         }
+
+        await EnsureDonorRoleAndSupporterSyncAsync(user, externalFirstName, externalLastName, email);
 
         await signInManager.SignInAsync(user, isPersistent: false, info.LoginProvider);
         return Redirect(BuildFrontendSuccessUrl(returnPath));
@@ -213,6 +254,77 @@ public class AuthController(
     }
 
     [Authorize]
+    [HttpGet("manage/profile")]
+    public async Task<IActionResult> GetProfile()
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user is null)
+        {
+            return Unauthorized(new { message = "You must be signed in." });
+        }
+
+        var supporter = await FindSupporterByEmailAsync(user.Email);
+        var displayName = BuildPreferredDisplayName(supporter, user.UserName, user.Email);
+
+        return Ok(new ManageProfileResponse(
+            supporter?.FirstName,
+            supporter?.LastName,
+            displayName));
+    }
+
+    [Authorize]
+    [HttpPut("manage/profile")]
+    public async Task<IActionResult> UpdateProfile([FromBody] ManageProfileRequest request)
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user is null)
+        {
+            return Unauthorized(new { message = "You must be signed in." });
+        }
+
+        var normalizedEmail = NormalizeEmail(user.Email);
+        if (string.IsNullOrWhiteSpace(normalizedEmail))
+        {
+            return BadRequest(new { message = "Current account email is required to update profile." });
+        }
+
+        var supporter = await intexDb.Supporters
+            .FirstOrDefaultAsync(s => s.Email != null && s.Email.ToLower() == normalizedEmail);
+
+        if (supporter is null)
+        {
+            supporter = new Supporter
+            {
+                Email = normalizedEmail,
+                SupporterType = "Individual",
+                Status = "Active",
+                CreatedAt = DateTime.UtcNow
+            };
+
+            intexDb.Supporters.Add(supporter);
+        }
+
+        supporter.FirstName = NormalizeNullable(request.FirstName);
+        supporter.LastName = NormalizeNullable(request.LastName);
+        supporter.DisplayName = NormalizeNullable(request.DisplayName);
+
+        if (string.IsNullOrWhiteSpace(supporter.DisplayName))
+        {
+            supporter.DisplayName = BuildPreferredDisplayNameFromParts(
+                supporter.FirstName,
+                supporter.LastName,
+                normalizedEmail);
+        }
+
+        await intexDb.SaveChangesAsync();
+
+        return Ok(new ManageProfileResponse(
+            supporter.FirstName,
+            supporter.LastName,
+            supporter.DisplayName));
+    }
+
+    [Authorize]
     [HttpPost("manage/2fa")]
     public async Task<IActionResult> ManageTwoFactor([FromBody] ManageTwoFactorRequest request)
     {
@@ -220,6 +332,18 @@ public class AuthController(
         if (user is null)
         {
             return Unauthorized(new { message = "You must be signed in." });
+        }
+
+        var hasLocalPassword = await userManager.HasPasswordAsync(user);
+        var externalLogins = await userManager.GetLoginsAsync(user);
+        var isExternalOnly = externalLogins.Count > 0 && !hasLocalPassword;
+
+        if (isExternalOnly)
+        {
+            return BadRequest(new
+            {
+                message = "MFA is managed by your external provider for this account."
+            });
         }
 
         if (request.ForgetMachine)
@@ -306,8 +430,18 @@ public class AuthController(
     // ---------------------------------------------------------------------------
 
     private bool IsGoogleConfigured() =>
-        !string.IsNullOrWhiteSpace(configuration["Authentication:Google:ClientId"]) &&
-        !string.IsNullOrWhiteSpace(configuration["Authentication:Google:ClientSecret"]);
+        IsConfiguredValue(configuration["Authentication:Google:ClientId"]) &&
+        IsConfiguredValue(configuration["Authentication:Google:ClientSecret"]);
+
+    private static bool IsConfiguredValue(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return false;
+        }
+
+        return !value.StartsWith("YOUR_", StringComparison.OrdinalIgnoreCase);
+    }
 
     private string NormalizeReturnPath(string? returnPath)
     {
@@ -385,7 +519,146 @@ public class AuthController(
         return $"otpauth://totp/{encodedIssuer}:{encodedEmail}?secret={unformattedKey}&issuer={encodedIssuer}&digits=6";
     }
 
+    private async Task EnsureDonorRoleAndSupporterSyncAsync(
+        ApplicationUser user,
+        string? firstName,
+        string? lastName,
+        string? emailOverride = null)
+    {
+        if (!await userManager.IsInRoleAsync(user, AuthRoles.Donor))
+        {
+            await userManager.AddToRoleAsync(user, AuthRoles.Donor);
+        }
+
+        var normalizedEmail = NormalizeEmail(emailOverride ?? user.Email);
+        if (string.IsNullOrWhiteSpace(normalizedEmail))
+        {
+            return;
+        }
+
+        var supporter = await intexDb.Supporters
+            .FirstOrDefaultAsync(s => s.Email != null && s.Email.ToLower() == normalizedEmail);
+
+        var first = string.IsNullOrWhiteSpace(firstName) ? null : firstName.Trim();
+        var last = string.IsNullOrWhiteSpace(lastName) ? null : lastName.Trim();
+        var preferredName = BuildPreferredDisplayNameFromParts(first, last, normalizedEmail);
+
+        if (supporter is null)
+        {
+            intexDb.Supporters.Add(new Supporter
+            {
+                Email = normalizedEmail,
+                SupporterType = "Individual",
+                FirstName = first,
+                LastName = last,
+                DisplayName = preferredName,
+                Status = "Active",
+                CreatedAt = DateTime.UtcNow
+            });
+
+            await intexDb.SaveChangesAsync();
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(supporter.FirstName) && !string.IsNullOrWhiteSpace(first))
+        {
+            supporter.FirstName = first;
+        }
+
+        if (string.IsNullOrWhiteSpace(supporter.LastName) && !string.IsNullOrWhiteSpace(last))
+        {
+            supporter.LastName = last;
+        }
+
+        if (string.IsNullOrWhiteSpace(supporter.DisplayName))
+        {
+            supporter.DisplayName = BuildPreferredDisplayNameFromParts(supporter.FirstName, supporter.LastName, normalizedEmail);
+        }
+
+        if (string.IsNullOrWhiteSpace(supporter.SupporterType))
+        {
+            supporter.SupporterType = "Individual";
+        }
+
+        await intexDb.SaveChangesAsync();
+    }
+
+    private async Task<Supporter?> FindSupporterByEmailAsync(string? email)
+    {
+        var normalizedEmail = NormalizeEmail(email);
+        if (string.IsNullOrWhiteSpace(normalizedEmail))
+        {
+            return null;
+        }
+
+        return await intexDb.Supporters
+            .AsNoTracking()
+            .FirstOrDefaultAsync(s => s.Email != null && s.Email.ToLower() == normalizedEmail);
+    }
+
+    private static string? NormalizeEmail(string? email)
+    {
+        return string.IsNullOrWhiteSpace(email)
+            ? null
+            : email.Trim().ToLowerInvariant();
+    }
+
+    private static string? NormalizeNullable(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value)
+            ? null
+            : value.Trim();
+    }
+
+    private static string BuildPreferredDisplayName(
+        Supporter? supporter,
+        string? userName,
+        string? email)
+    {
+        if (supporter is not null)
+        {
+            if (!string.IsNullOrWhiteSpace(supporter.DisplayName))
+            {
+                return supporter.DisplayName.Trim();
+            }
+
+            var fromNames = $"{supporter.FirstName ?? string.Empty} {supporter.LastName ?? string.Empty}".Trim();
+            if (!string.IsNullOrWhiteSpace(fromNames))
+            {
+                return fromNames;
+            }
+        }
+
+        return BuildPreferredDisplayNameFromParts(null, null, userName ?? email ?? "User");
+    }
+
+    private static string BuildPreferredDisplayNameFromParts(string? firstName, string? lastName, string fallback)
+    {
+        if (!string.IsNullOrWhiteSpace(fallback) && string.IsNullOrWhiteSpace(firstName) && string.IsNullOrWhiteSpace(lastName))
+        {
+            return fallback.Trim();
+        }
+
+        var combined = $"{firstName ?? string.Empty} {lastName ?? string.Empty}".Trim();
+        if (!string.IsNullOrWhiteSpace(combined))
+        {
+            return combined;
+        }
+
+        return string.IsNullOrWhiteSpace(fallback) ? "User" : fallback.Trim();
+    }
+
     public sealed record ManageInfoRequest(string OldPassword, string NewPassword);
+
+    public sealed record ManageProfileRequest(
+        string? FirstName,
+        string? LastName,
+        string? DisplayName);
+
+    public sealed record ManageProfileResponse(
+        string? FirstName,
+        string? LastName,
+        string DisplayName);
 
     public sealed record ManageTwoFactorRequest(
         bool? Enable,

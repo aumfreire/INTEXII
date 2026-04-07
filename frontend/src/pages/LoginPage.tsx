@@ -28,6 +28,7 @@ export default function LoginPage() {
   const [externalProviders, setExternalProviders] = useState<
     ExternalAuthProvider[]
   >([]);
+  const [providersLoaded, setProvidersLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(searchParams.get('externalError') ?? '');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -42,6 +43,8 @@ export default function LoginPage() {
       setExternalProviders(providers);
     } catch {
       setExternalProviders([]);
+    } finally {
+      setProvidersLoaded(true);
     }
   }
 
@@ -306,6 +309,14 @@ export default function LoginPage() {
                   Continue with {provider.displayName}
                 </button>
               ))}
+
+              {providersLoaded && externalProviders.length === 0 ? (
+                <div className="alert alert-secondary mt-3 mb-0" role="status">
+                  Google sign-in is currently unavailable. Configure
+                  Authentication:Google:ClientId and Authentication:Google:ClientSecret
+                  in local user-secrets (or appsettings.Secrets.json) and restart the backend.
+                </div>
+              ) : null}
 
               <p className="signup-link">
                 Don&apos;t have an account?{' '}

@@ -9,7 +9,7 @@ export default function DashboardPage() {
             <div className="login-card" style={{ maxWidth: '720px' }}>
                 <h2>My Dashboard</h2>
                 <p className="login-subtitle" style={{ marginBottom: '20px' }}>
-                    Hello, {authSession.userName ?? authSession.email ?? 'there'}.
+                    Hello, {authSession.displayName ?? authSession.userName ?? authSession.email ?? 'there'}.
                 </p>
                 <p>
                     You are signed in as <strong>{authSession.email ?? 'unknown user'}</strong>.

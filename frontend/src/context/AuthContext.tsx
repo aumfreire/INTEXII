@@ -17,8 +17,12 @@ interface AuthContextValue {
 
 const anonymousSession: AuthSession = {
     isAuthenticated: false,
+    displayName: null,
     userName: null,
     email: null,
+    hasLocalPassword: false,
+    isExternalOnly: false,
+    externalLoginProviders: [],
     roles: [],
 };
 

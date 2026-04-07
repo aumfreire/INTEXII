@@ -14,6 +14,8 @@ import { useAuth } from '../context/useAuth';
 
 export default function ManageMfaPage() {
     const { authSession } = useAuth();
+    const isExternalOnlyAccount = authSession.isExternalOnly;
+    const providerList = authSession.externalLoginProviders.join(', ');
     const [status, setStatus] = useState<TwoFactorStatus | null>(null);
     const [authenticatorCode, setAuthenticatorCode] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
@@ -116,6 +118,13 @@ export default function ManageMfaPage() {
                     Configure optional multi-factor authentication for {authSession.email ?? 'your account'}.
                 </p>
 
+                {isExternalOnlyAccount ? (
+                    <AlertBanner
+                        type="warning"
+                        message={`This account uses external sign-in (${providerList || 'provider-managed'}). MFA is managed by that provider.`}
+                    />
+                ) : null}
+
                 {errorMessage ? (
                     <AlertBanner
                         message={errorMessage}
@@ -140,7 +149,7 @@ export default function ManageMfaPage() {
                                 {status.isTwoFactorEnabled ? 'Enabled' : 'Not enabled'}
                             </strong>
                         </p>
-                        {status.sharedKey ? (
+                        {!isExternalOnlyAccount && status.sharedKey ? (
                             <div className="alert alert-light border" style={{ marginBottom: '16px' }}>
                                 <div style={{ fontWeight: 600, marginBottom: '6px' }}>
                                     Step 1: Scan QR code in your authenticator app
@@ -167,7 +176,7 @@ export default function ManageMfaPage() {
                             </div>
                         ) : null}
 
-                        {!status.isTwoFactorEnabled ? (
+                        {!isExternalOnlyAccount && !status.isTwoFactorEnabled ? (
                             <form onSubmit={handleEnable}>
                                 <label htmlFor="authCode" style={{ display: 'block', marginBottom: '8px' }}>
                                     Step 3: Enter the 6-digit code from your authenticator app
@@ -186,7 +195,7 @@ export default function ManageMfaPage() {
                                     </PrimaryButton>
                                 </div>
                             </form>
-                        ) : (
+                        ) : !isExternalOnlyAccount ? (
                             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                                 <button
                                     type="button"
@@ -205,9 +214,11 @@ export default function ManageMfaPage() {
                                     Disable MFA
                                 </button>
                             </div>
+                        ) : (
+                            <p className="text-muted mb-0">No local MFA actions are available for external-only accounts.</p>
                         )}
 
-                        {status.recoveryCodes && status.recoveryCodes.length > 0 ? (
+                        {!isExternalOnlyAccount && status.recoveryCodes && status.recoveryCodes.length > 0 ? (
                             <div className="alert alert-warning" style={{ marginTop: '20px' }}>
                                 <div style={{ fontWeight: 600, marginBottom: '8px' }}>
                                     Recovery Codes
@@ -220,11 +231,11 @@ export default function ManageMfaPage() {
                                     ))}
                                 </ul>
                             </div>
-                        ) : (
+                        ) : !isExternalOnlyAccount ? (
                             <p style={{ marginTop: '16px' }}>
                                 Recovery codes left: {status.recoveryCodesLeft}
                             </p>
-                        )}
+                        ) : null}
                     </>
                 ) : (
                     <p>Loading MFA status...</p>

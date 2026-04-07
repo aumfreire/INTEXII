@@ -22,6 +22,9 @@ import DashboardPage from './pages/DashboardPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import EditProfilePage from './pages/EditProfilePage';
 import AdminUsersPage from './pages/AdminUsersPage';
+import CookieConsentBanner from './components/CookieConsentBanner';
+import CookiePolicyPage from './pages/CookiePolicyPage';
+import { CookieConsentProvider } from './context/CookieConsentContext';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -57,65 +60,69 @@ function RequireAuth({
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <ScrollToTop />
-        <div className="page-wrapper">
-          <Navbar />
-          <main className="page-content">
-            <Routes>
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/donate" element={<DonationPage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/signup" element={<SignUpPage />} />
-              <Route path="/register" element={<SignUpPage />} />
-              <Route path="/logout" element={<LogoutPage />} />
-              <Route
-                path="/dashboard"
-                element={
-                  <RequireAuth>
-                    <DashboardPage />
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="/profile"
-                element={
-                  <RequireAuth>
-                    <EditProfilePage />
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="/mfa"
-                element={
-                  <RequireAuth>
-                    <ManageMfaPage />
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="/admin"
-                element={
-                  <RequireAuth adminOnly>
-                    <AdminDashboardPage />
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="/admin/users"
-                element={
-                  <RequireAuth adminOnly>
-                    <AdminUsersPage />
-                  </RequireAuth>
-                }
-              />
-            </Routes>
-          </main>
-          <Footer />
-        </div>
-      </Router>
-    </AuthProvider>
+    <CookieConsentProvider>
+      <AuthProvider>
+        <Router>
+          <ScrollToTop />
+          <div className="page-wrapper">
+            <Navbar />
+            <main className="page-content">
+              <Routes>
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/donate" element={<DonationPage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/cookies" element={<CookiePolicyPage />} />
+                <Route path="/signup" element={<SignUpPage />} />
+                <Route path="/register" element={<SignUpPage />} />
+                <Route path="/logout" element={<LogoutPage />} />
+                <Route
+                  path="/dashboard"
+                  element={
+                    <RequireAuth>
+                      <DashboardPage />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/profile"
+                  element={
+                    <RequireAuth>
+                      <EditProfilePage />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/mfa"
+                  element={
+                    <RequireAuth>
+                      <ManageMfaPage />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/admin"
+                  element={
+                    <RequireAuth adminOnly>
+                      <AdminDashboardPage />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/admin/users"
+                  element={
+                    <RequireAuth adminOnly>
+                      <AdminUsersPage />
+                    </RequireAuth>
+                  }
+                />
+              </Routes>
+            </main>
+            <Footer />
+            <CookieConsentBanner />
+          </div>
+        </Router>
+      </AuthProvider>
+    </CookieConsentProvider>
   );
 }
 

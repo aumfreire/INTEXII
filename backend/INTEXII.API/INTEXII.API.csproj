@@ -4,6 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>INTEXII.API-4f5de26f-6f1d-4fbc-8aa8-c48f577bb7a1</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

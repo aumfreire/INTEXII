@@ -8,7 +8,7 @@ export default function Navbar() {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const { authSession, isAuthenticated, isLoading } = useAuth();
   const isAdmin = authSession.roles.includes('Admin');
-  const displayName = authSession.userName ?? authSession.email ?? 'User';
+  const displayName = authSession.displayName ?? authSession.userName ?? authSession.email ?? 'User';
 
   const navLinkStyle = ({
     isActive,

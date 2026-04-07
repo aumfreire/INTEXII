@@ -1,13 +1,23 @@
 import type { AuthSession } from '../types/AuthSession';
 import type { TwoFactorStatus } from '../types/TwoFactorStatus';
 import type {
+    AdminCreateUserRequest,
+    AdminCreateUserResponse,
+    AdminDonationSummary,
     AdminUserDetail,
     AdminUserSummary,
     AdminUserSummaryMetrics,
+    AdminUpdateProfileRequest,
 } from '../types/AdminUser';
 
 export interface ExternalAuthProvider {
     name: string;
+    displayName: string;
+}
+
+export interface ManagedProfile {
+    firstName: string | null;
+    lastName: string | null;
     displayName: string;
 }
 
@@ -231,6 +241,41 @@ export async function updatePassword(
     }
 }
 
+export async function getManagedProfile(): Promise<ManagedProfile> {
+    const response = await fetch(`${apiBaseUrl}/api/auth/manage/profile`, {
+        credentials: 'include',
+    });
+
+    if (!response.ok) {
+        throw new Error(
+            await readApiError(response, 'Unable to load profile details.')
+        );
+    }
+
+    return response.json();
+}
+
+export async function updateManagedProfile(
+    payload: Partial<Pick<ManagedProfile, 'firstName' | 'lastName' | 'displayName'>>
+): Promise<ManagedProfile> {
+    const response = await fetch(`${apiBaseUrl}/api/auth/manage/profile`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+        throw new Error(
+            await readApiError(response, 'Unable to update profile details.')
+        );
+    }
+
+    return response.json();
+}
+
 export async function getAdminSummary(): Promise<AdminUserSummaryMetrics> {
     const response = await fetch(`${apiBaseUrl}/api/admin/users/summary`, {
         credentials: 'include',
@@ -239,6 +284,20 @@ export async function getAdminSummary(): Promise<AdminUserSummaryMetrics> {
     if (!response.ok) {
         throw new Error(
             await readApiError(response, 'Unable to load admin dashboard metrics.')
+        );
+    }
+
+    return response.json();
+}
+
+export async function getAdminDonationSummary(): Promise<AdminDonationSummary> {
+    const response = await fetch(`${apiBaseUrl}/api/donations/admin/summary`, {
+        credentials: 'include',
+    });
+
+    if (!response.ok) {
+        throw new Error(
+            await readApiError(response, 'Unable to load donation metrics.')
         );
     }
 
@@ -277,6 +336,43 @@ export async function getAdminUserById(userId: string): Promise<AdminUserDetail>
     return response.json();
 }
 
+export async function adminCreateUser(
+    payload: AdminCreateUserRequest
+): Promise<AdminCreateUserResponse> {
+    const response = await fetch(`${apiBaseUrl}/api/admin/users`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+        throw new Error(await readApiError(response, 'Unable to create user.'));
+    }
+
+    return response.json();
+}
+
+export async function adminUpdateUserProfile(
+    userId: string,
+    payload: AdminUpdateProfileRequest
+): Promise<void> {
+    const response = await fetch(`${apiBaseUrl}/api/admin/users/${userId}/profile`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+        throw new Error(await readApiError(response, 'Unable to update profile details.'));
+    }
+}
+
 export async function adminResetUserPassword(
     userId: string,
     newPassword: string
@@ -304,6 +400,24 @@ export async function adminResetUserMfa(userId: string): Promise<void> {
     if (!response.ok) {
         throw new Error(await readApiError(response, 'Unable to reset MFA.'));
     }
+}
+
+export async function adminUpdateUserRoles(userId: string, roles: string[]): Promise<string[]> {
+    const response = await fetch(`${apiBaseUrl}/api/admin/users/${userId}/roles`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ roles }),
+    });
+
+    if (!response.ok) {
+        throw new Error(await readApiError(response, 'Unable to update roles.'));
+    }
+
+    const payload = await response.json();
+    return Array.isArray(payload.roles) ? payload.roles : [];
 }
 
 export async function deleteAdminUser(userId: string): Promise<void> {
