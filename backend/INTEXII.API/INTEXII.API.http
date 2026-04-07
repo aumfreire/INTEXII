@@ -1,6 +1,104 @@
-@INTEXII.API_HostAddress = http://localhost:5173
+@INTEXII.API_HostAddress = http://127.0.0.1:5205
+@authEmail = student_auth@example.com
+@authPassword = StudentPassword2026
+@refreshToken = REPLACE_WITH_REFRESH_TOKEN
 
-GET {{INTEXII.API_HostAddress}}/weatherforecast/
+### Register
+POST {{INTEXII.API_HostAddress}}/api/auth/register
+Content-Type: application/json
+
+{
+	"email": "{{authEmail}}",
+	"password": "{{authPassword}}"
+}
+
+### Login (Bearer tokens)
+POST {{INTEXII.API_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+	"email": "{{authEmail}}",
+	"password": "{{authPassword}}"
+}
+
+### Login (Cookie)
+POST {{INTEXII.API_HostAddress}}/api/auth/login?useCookies=true
+Content-Type: application/json
+
+{
+	"email": "{{authEmail}}",
+	"password": "{{authPassword}}"
+}
+
+### Refresh token
+POST {{INTEXII.API_HostAddress}}/api/auth/refresh
+Content-Type: application/json
+
+{
+	"refreshToken": "{{refreshToken}}"
+}
+
+### Confirm email (requires valid userId + code)
+GET {{INTEXII.API_HostAddress}}/api/auth/confirmEmail?userId=replace-user-id&code=replace-code
 Accept: application/json
 
-###
+### Resend confirmation email
+POST {{INTEXII.API_HostAddress}}/api/auth/resendConfirmationEmail
+Content-Type: application/json
+
+{
+	"email": "{{authEmail}}"
+}
+
+### Forgot password
+POST {{INTEXII.API_HostAddress}}/api/auth/forgotPassword
+Content-Type: application/json
+
+{
+	"email": "{{authEmail}}"
+}
+
+### Reset password (requires valid resetCode)
+POST {{INTEXII.API_HostAddress}}/api/auth/resetPassword
+Content-Type: application/json
+
+{
+	"email": "{{authEmail}}",
+	"resetCode": "replace-reset-code",
+	"newPassword": "{{authPassword}}"
+}
+
+### Manage 2FA (requires auth cookie or bearer)
+POST {{INTEXII.API_HostAddress}}/api/auth/manage/2fa
+Content-Type: application/json
+
+{
+	"enable": true,
+	"twoFactorCode": "000000",
+	"resetSharedKey": false,
+	"resetRecoveryCodes": false,
+	"forgetMachine": false
+}
+
+### Manage info (GET) - requires auth cookie or bearer
+GET {{INTEXII.API_HostAddress}}/api/auth/manage/info
+Accept: application/json
+
+### Manage info (POST) - requires auth cookie or bearer
+POST {{INTEXII.API_HostAddress}}/api/auth/manage/info
+Content-Type: application/json
+
+{
+	"newEmail": "student_auth_updated@example.com",
+	"newPassword": "StudentPassword2026",
+	"oldPassword": "StudentPassword2026"
+}
+
+### Existing custom auth session endpoint
+GET {{INTEXII.API_HostAddress}}/api/auth/me
+Accept: application/json
+
+### Existing custom auth providers endpoint
+GET {{INTEXII.API_HostAddress}}/api/auth/providers
+Accept: application/json
+
