@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink, Link } from 'react-router-dom';
-import { Menu, X, Heart } from 'lucide-react';
+import { Menu, X, Shield } from 'lucide-react';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -10,7 +10,7 @@ export default function Navbar() {
   }: {
     isActive: boolean;
   }): React.CSSProperties => ({
-    color: isActive ? 'var(--color-cta)' : 'var(--color-charcoal)',
+    color: isActive ? 'var(--color-primary)' : 'var(--color-dark)',
     fontWeight: isActive ? 600 : 500,
     textDecoration: 'none',
     padding: '8px 16px',
@@ -25,7 +25,7 @@ export default function Navbar() {
         position: 'sticky',
         top: 0,
         zIndex: 1000,
-        backgroundColor: 'var(--color-warm-cream)',
+        backgroundColor: 'var(--color-cream)',
         borderBottom: '1px solid rgba(0,0,0,0.06)',
         boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
       }}
@@ -46,13 +46,13 @@ export default function Navbar() {
               alignItems: 'center',
               gap: '10px',
               textDecoration: 'none',
-              color: 'var(--color-charcoal)',
+              color: 'var(--color-dark)',
             }}
           >
-            <Heart
+            <Shield
               size={28}
-              style={{ color: 'var(--color-cta)' }}
-              fill="var(--color-cta)"
+              style={{ color: 'var(--color-primary)' }}
+              fill="var(--color-primary)"
             />
             <span
               style={{
@@ -61,18 +61,24 @@ export default function Navbar() {
                 fontWeight: 700,
               }}
             >
-              Haven of Hope
+              Haven
             </span>
           </Link>
 
           {/* Desktop nav */}
           <div
             className="d-none d-lg-flex"
-            style={{ alignItems: 'center', gap: '8px' }}
+            style={{ alignItems: 'center', gap: '4px' }}
           >
             <NavLink to="/" style={navLinkStyle} end>
               Home
             </NavLink>
+            <a href="#mission" style={{ ...navLinkStyle({ isActive: false }) }}>
+              About
+            </a>
+            <a href="#impact" style={{ ...navLinkStyle({ isActive: false }) }}>
+              Impact
+            </a>
             <NavLink to="/login" style={navLinkStyle}>
               Login
             </NavLink>
@@ -84,8 +90,8 @@ export default function Navbar() {
                 alignItems: 'center',
                 gap: '6px',
                 padding: '10px 22px',
-                backgroundColor: 'var(--color-cta)',
-                color: 'var(--color-white)',
+                backgroundColor: 'var(--color-primary-dark)',
+                color: 'var(--color-light)',
                 borderRadius: 'var(--radius-sm)',
                 fontWeight: 600,
                 fontSize: '0.9rem',
@@ -95,15 +101,15 @@ export default function Navbar() {
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor =
-                  'var(--color-cta-hover)';
+                  'var(--color-primary)';
                 e.currentTarget.style.transform = 'translateY(-1px)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--color-cta)';
+                e.currentTarget.style.backgroundColor =
+                  'var(--color-primary-dark)';
                 e.currentTarget.style.transform = 'translateY(0)';
               }}
             >
-              <Heart size={16} />
               Donate Now
             </Link>
           </div>
@@ -118,7 +124,7 @@ export default function Navbar() {
               border: 'none',
               cursor: 'pointer',
               padding: '8px',
-              color: 'var(--color-charcoal)',
+              color: 'var(--color-dark)',
             }}
           >
             {isOpen ? <X size={24} /> : <Menu size={24} />}
@@ -144,6 +150,20 @@ export default function Navbar() {
             >
               Home
             </NavLink>
+            <a
+              href="#mission"
+              style={{ ...navLinkStyle({ isActive: false }) }}
+              onClick={() => setIsOpen(false)}
+            >
+              About
+            </a>
+            <a
+              href="#impact"
+              style={{ ...navLinkStyle({ isActive: false }) }}
+              onClick={() => setIsOpen(false)}
+            >
+              Impact
+            </a>
             <NavLink
               to="/login"
               style={navLinkStyle}
@@ -161,15 +181,14 @@ export default function Navbar() {
                 justifyContent: 'center',
                 gap: '6px',
                 padding: '10px 22px',
-                backgroundColor: 'var(--color-cta)',
-                color: 'var(--color-white)',
+                backgroundColor: 'var(--color-primary-dark)',
+                color: 'var(--color-light)',
                 borderRadius: 'var(--radius-sm)',
                 fontWeight: 600,
                 fontSize: '0.9rem',
                 textDecoration: 'none',
               }}
             >
-              <Heart size={16} />
               Donate Now
             </Link>
           </div>

@@ -1,76 +1,132 @@
+/* ===== Hero Section — Full-width background image ===== */
 .hero-section {
-  background-color: var(--color-warm-cream);
-  padding: 80px 0;
+  position: relative;
+  min-height: 85vh;
+  display: flex;
+  align-items: center;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  overflow: hidden;
 }
 
-@media (max-width: 768px) {
-  .hero-section {
-    padding: 48px 0;
-    text-align: center;
-  }
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to right,
+    rgba(28, 16, 8, 0.82) 0%,
+    rgba(28, 16, 8, 0.55) 50%,
+    rgba(28, 16, 8, 0.2) 100%
+  );
+  z-index: 1;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 680px;
+  padding-top: 60px;
+  padding-bottom: 60px;
+}
+
+.hero-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: rgba(250, 246, 240, 0.7);
+  font-weight: 500;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 20px;
+}
+
+.hero-label-line {
+  display: inline-block;
+  width: 40px;
+  height: 2px;
+  background-color: rgba(250, 246, 240, 0.5);
 }
 
 .hero-section h1 {
-  margin-bottom: 20px;
-  line-height: 1.15;
+  color: var(--color-cream);
+  margin-bottom: 24px;
+  line-height: 1.1;
+  font-size: 3.5rem;
+  max-width: 620px;
 }
 
 .hero-section .hero-subtitle {
-  font-size: 1.15rem;
-  color: var(--color-muted);
+  font-size: 1.1rem;
+  color: rgba(250, 246, 240, 0.75);
   line-height: 1.7;
-  margin-bottom: 32px;
-  max-width: 500px;
-}
-
-@media (max-width: 768px) {
-  .hero-section .hero-subtitle {
-    max-width: 100%;
-  }
+  margin-bottom: 36px;
+  max-width: 540px;
 }
 
 .hero-buttons {
   display: flex;
-  gap: 12px;
+  gap: 16px;
   flex-wrap: wrap;
 }
 
 @media (max-width: 768px) {
-  .hero-buttons {
-    justify-content: center;
+  .hero-section {
+    min-height: 70vh;
+  }
+
+  .hero-section h1 {
+    font-size: 2.5rem;
+  }
+
+  .hero-section .hero-subtitle {
+    max-width: 100%;
+  }
+
+  .hero-content {
+    padding-top: 40px;
+    padding-bottom: 40px;
   }
 }
 
-.hero-image-wrapper {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.hero-image-wrapper img {
-  max-width: 100%;
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
-}
-
+/* ===== Mission Section ===== */
 .mission-section {
   padding: 80px 0;
   background-color: var(--color-white);
 }
 
-.why-section {
-  padding: 80px 0;
-  background-color: var(--color-warm-cream);
+.mission-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  align-items: center;
+  margin-top: 32px;
 }
 
-.programs-section {
-  padding: 80px 0;
-  background-color: var(--color-white);
+.mission-image img {
+  width: 100%;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
 }
 
+.mission-text {
+  color: var(--color-muted);
+  font-size: 1rem;
+  line-height: 1.8;
+}
+
+@media (max-width: 768px) {
+  .mission-content {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+}
+
+/* ===== Impact Section ===== */
 .impact-section {
   padding: 80px 0;
-  background-color: var(--color-lavender);
+  background-color: var(--color-dark);
 }
 
 .impact-stat {
@@ -82,57 +138,43 @@
   font-family: var(--font-heading);
   font-size: 2.75rem;
   font-weight: 700;
-  color: var(--color-white);
+  color: var(--color-primary-light, #D4927A);
   line-height: 1;
   margin-bottom: 8px;
 }
 
 .impact-stat .stat-label {
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.75);
   font-size: 0.95rem;
   font-weight: 500;
 }
 
-.testimonials-section {
+/* ===== How You Can Help ===== */
+.help-section {
   padding: 80px 0;
-  background-color: var(--color-soft-blush);
+  background-color: var(--color-cream);
 }
 
-.trust-section {
+/* ===== Stories of Hope ===== */
+.stories-section {
   padding: 80px 0;
   background-color: var(--color-white);
 }
 
-.trust-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 16px;
-  padding: 20px;
-}
-
-.trust-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
+/* ===== Final CTA ===== */
 .cta-band {
   padding: 80px 0;
-  background-color: var(--color-cta);
+  background-color: var(--color-primary-dark);
   text-align: center;
 }
 
 .cta-band h2 {
-  color: var(--color-white);
+  color: var(--color-cream);
   margin-bottom: 16px;
 }
 
 .cta-band p {
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(250, 246, 240, 0.85);
   font-size: 1.1rem;
   max-width: 550px;
   margin: 0 auto 32px;
@@ -144,8 +186,8 @@
   align-items: center;
   gap: 8px;
   padding: 14px 32px;
-  background-color: var(--color-white);
-  color: var(--color-cta);
+  background-color: var(--color-cream);
+  color: var(--color-primary-dark);
   border: none;
   border-radius: var(--radius-sm);
   font-weight: 600;
@@ -157,16 +199,14 @@
 .cta-band-btn:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
-  color: var(--color-cta);
+  color: var(--color-primary-dark);
 }
 
 @media (max-width: 768px) {
   .mission-section,
-  .why-section,
-  .programs-section,
   .impact-section,
-  .testimonials-section,
-  .trust-section,
+  .help-section,
+  .stories-section,
   .cta-band {
     padding: 48px 0;
   }

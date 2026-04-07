@@ -36,12 +36,12 @@ export default function FormInput({
           marginBottom: '6px',
           fontSize: '0.9rem',
           fontWeight: 500,
-          color: 'var(--color-charcoal)',
+          color: 'var(--color-dark)',
         }}
       >
         {label}
         {required && (
-          <span style={{ color: 'var(--color-cta)', marginLeft: '2px' }}>
+          <span style={{ color: 'var(--color-primary)', marginLeft: '2px' }}>
             *
           </span>
         )}
@@ -76,11 +76,11 @@ export default function FormInput({
             width: '100%',
             padding: icon ? '10px 12px 10px 40px' : '10px 12px',
             paddingRight: children ? '44px' : '12px',
-            border: `1.5px solid ${error ? 'var(--color-cta)' : 'var(--color-light-gray)'}`,
+            border: `1.5px solid ${error ? 'var(--color-primary)' : 'var(--color-light-gray)'}`,
             borderRadius: 'var(--radius-sm)',
             fontSize: '0.95rem',
             fontFamily: 'var(--font-body)',
-            color: 'var(--color-charcoal)',
+            color: 'var(--color-dark)',
             backgroundColor: disabled
               ? 'var(--color-light-gray)'
               : 'var(--color-white)',
@@ -90,9 +90,9 @@ export default function FormInput({
           }}
           onFocus={(e) => {
             if (!error) {
-              e.currentTarget.style.borderColor = 'var(--color-lavender)';
+              e.currentTarget.style.borderColor = 'var(--color-primary-light)';
               e.currentTarget.style.boxShadow =
-                '0 0 0 3px rgba(151, 142, 196, 0.2)';
+                '0 0 0 3px rgba(193, 96, 58, 0.15)';
             }
           }}
           onBlur={(e) => {
@@ -121,7 +121,7 @@ export default function FormInput({
             display: 'block',
             marginTop: '4px',
             fontSize: '0.82rem',
-            color: 'var(--color-cta)',
+            color: 'var(--color-primary)',
           }}
         >
           {error}

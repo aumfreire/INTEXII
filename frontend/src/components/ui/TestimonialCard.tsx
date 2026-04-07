@@ -21,7 +21,7 @@ export default function TestimonialCard({
     <div
       className="h-100"
       style={{
-        backgroundColor: 'var(--color-warm-cream)',
+        backgroundColor: 'var(--color-cream)',
         borderRadius: 'var(--radius-md)',
         padding: '28px',
         position: 'relative',
@@ -30,7 +30,7 @@ export default function TestimonialCard({
       <Quote
         size={28}
         style={{
-          color: 'var(--color-rose-accent)',
+          color: 'var(--color-primary-light)',
           marginBottom: '12px',
           opacity: 0.7,
         }}
@@ -38,7 +38,7 @@ export default function TestimonialCard({
       <p
         style={{
           fontStyle: 'italic',
-          color: 'var(--color-charcoal)',
+          color: 'var(--color-dark)',
           fontSize: '1rem',
           lineHeight: '1.7',
           marginBottom: '20px',
@@ -52,7 +52,7 @@ export default function TestimonialCard({
             width: '40px',
             height: '40px',
             borderRadius: '50%',
-            backgroundColor: 'var(--color-lavender)',
+            backgroundColor: 'var(--color-primary)',
             color: 'var(--color-white)',
             display: 'flex',
             alignItems: 'center',
@@ -68,7 +68,7 @@ export default function TestimonialCard({
             style={{
               fontWeight: 600,
               marginBottom: '2px',
-              color: 'var(--color-charcoal)',
+              color: 'var(--color-dark)',
               fontSize: '0.95rem',
             }}
           >

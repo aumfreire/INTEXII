@@ -8,18 +8,18 @@ interface AlertBannerProps {
 
 const config = {
   info: {
-    bg: 'rgba(153, 183, 198, 0.15)',
-    border: 'var(--color-soft-blue)',
+    bg: 'rgba(193, 96, 58, 0.08)',
+    border: 'var(--color-primary-light)',
     icon: Info,
   },
   success: {
-    bg: 'rgba(154, 180, 157, 0.15)',
-    border: 'var(--color-sage-green)',
+    bg: 'rgba(122, 158, 126, 0.12)',
+    border: 'var(--color-sage)',
     icon: CheckCircle,
   },
   warning: {
-    bg: 'rgba(244, 176, 146, 0.15)',
-    border: 'var(--color-peach-accent)',
+    bg: 'rgba(193, 96, 58, 0.12)',
+    border: 'var(--color-primary)',
     icon: AlertTriangle,
   },
 };
@@ -43,7 +43,7 @@ export default function AlertBanner({
         borderRadius: 'var(--radius-sm)',
         marginBottom: '16px',
         fontSize: '0.9rem',
-        color: 'var(--color-charcoal)',
+        color: 'var(--color-dark)',
       }}
     >
       <Icon size={18} style={{ flexShrink: 0, color: border }} />

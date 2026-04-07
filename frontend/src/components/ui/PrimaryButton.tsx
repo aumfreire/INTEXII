@@ -31,8 +31,8 @@ export default function PrimaryButton({
     justifyContent: 'center',
     gap: '8px',
     padding: '12px 28px',
-    backgroundColor: 'var(--color-cta)',
-    color: 'var(--color-white)',
+    backgroundColor: 'var(--color-primary-dark)',
+    color: 'var(--color-light)',
     border: 'none',
     borderRadius: 'var(--radius-sm)',
     fontFamily: 'var(--font-body)',
@@ -47,14 +47,14 @@ export default function PrimaryButton({
 
   const handleMouseEnter = (e: React.MouseEvent<HTMLElement>) => {
     if (!disabled && !loading) {
-      e.currentTarget.style.backgroundColor = 'var(--color-cta-hover)';
+      e.currentTarget.style.backgroundColor = 'var(--color-primary)';
       e.currentTarget.style.transform = 'translateY(-1px)';
       e.currentTarget.style.boxShadow = 'var(--shadow-md)';
     }
   };
 
   const handleMouseLeave = (e: React.MouseEvent<HTMLElement>) => {
-    e.currentTarget.style.backgroundColor = 'var(--color-cta)';
+    e.currentTarget.style.backgroundColor = 'var(--color-primary-dark)';
     e.currentTarget.style.transform = 'translateY(0)';
     e.currentTarget.style.boxShadow = 'none';
   };

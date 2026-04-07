@@ -9,6 +9,7 @@ interface SecondaryButtonProps {
   disabled?: boolean;
   className?: string;
   fullWidth?: boolean;
+  light?: boolean;
 }
 
 export default function SecondaryButton({
@@ -19,6 +20,7 @@ export default function SecondaryButton({
   disabled = false,
   className = '',
   fullWidth = false,
+  light = false,
 }: SecondaryButtonProps) {
   const baseClass = `btn-secondary-cta ${fullWidth ? 'w-100' : ''} ${className}`.trim();
 
@@ -29,8 +31,8 @@ export default function SecondaryButton({
     gap: '8px',
     padding: '12px 28px',
     backgroundColor: 'transparent',
-    color: 'var(--color-cta)',
-    border: '2px solid var(--color-cta)',
+    color: light ? 'var(--color-cream)' : 'var(--color-primary-dark)',
+    border: `2px solid ${light ? 'var(--color-cream)' : 'var(--color-primary-dark)'}`,
     borderRadius: 'var(--radius-sm)',
     fontFamily: 'var(--font-body)',
     fontSize: '1rem',
@@ -44,7 +46,11 @@ export default function SecondaryButton({
 
   const handleMouseEnter = (e: React.MouseEvent<HTMLElement>) => {
     if (!disabled) {
-      e.currentTarget.style.backgroundColor = 'rgba(206, 50, 91, 0.08)';
+      if (light) {
+        e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+      } else {
+        e.currentTarget.style.backgroundColor = 'rgba(193, 96, 58, 0.08)';
+      }
       e.currentTarget.style.transform = 'translateY(-1px)';
     }
   };
