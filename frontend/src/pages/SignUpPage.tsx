@@ -4,6 +4,7 @@ import { Mail, Lock, Eye, EyeOff, Heart, User } from 'lucide-react';
 import FormInput from '../components/ui/FormInput';
 import PrimaryButton from '../components/ui/PrimaryButton';
 import AlertBanner from '../components/ui/AlertBanner';
+import { buildExternalLoginUrl, registerUser } from '../lib/authAPI';
 import '../styles/pages/login.css';
 
 export default function SignUpPage() {
@@ -18,6 +19,7 @@ export default function SignUpPage() {
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const clearError = (field: string) => {
@@ -25,17 +27,18 @@ export default function SignUpPage() {
       setFieldErrors((prev) => ({ ...prev, [field]: '' }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
     const errors: Record<string, string> = {};
 
     if (!firstName.trim()) errors.firstName = 'First name is required';
     if (!lastName.trim()) errors.lastName = 'Last name is required';
     if (!email.trim()) errors.email = 'Email is required';
     if (!password.trim()) errors.password = 'Password is required';
-    else if (password.length < 8)
-      errors.password = 'Password must be at least 8 characters';
+    else if (password.length < 14)
+      errors.password = 'Password must be at least 14 characters';
     if (!confirmPassword.trim())
       errors.confirmPassword = 'Please confirm your password';
     else if (password !== confirmPassword)
@@ -50,11 +53,24 @@ export default function SignUpPage() {
     setFieldErrors({});
     setIsLoading(true);
 
-    setTimeout(() => {
+    try {
+      await registerUser(email, password);
+      setSuccess('Account created successfully. Redirecting to login...');
+      setTimeout(() => navigate('/login'), 900);
+    } catch (submitError) {
+      setError(
+        submitError instanceof Error
+          ? submitError.message
+          : 'Unable to create your account.'
+      );
+    } finally {
       setIsLoading(false);
-      navigate('/login');
-    }, 1500);
+    }
   };
+
+  function handleExternalRegister() {
+    window.location.assign(buildExternalLoginUrl('Google', '/dashboard'));
+  }
 
   return (
     <div className="login-page">
@@ -123,6 +139,13 @@ export default function SignUpPage() {
                   onClose={() => setError('')}
                 />
               )}
+              {success && (
+                <AlertBanner
+                  message={success}
+                  type="success"
+                  onClose={() => setSuccess('')}
+                />
+              )}
 
               <form onSubmit={handleSubmit} noValidate>
                 <div className="row g-3">
@@ -181,7 +204,7 @@ export default function SignUpPage() {
                     setPassword(e.target.value);
                     clearError('password');
                   }}
-                  placeholder="At least 8 characters"
+                  placeholder="At least 14 characters"
                   icon={<Lock size={18} />}
                   error={fieldErrors.password}
                   required
@@ -291,7 +314,11 @@ export default function SignUpPage() {
                 <span>or</span>
               </div>
 
-              <button className="social-btn">
+              <button
+                className="social-btn"
+                type="button"
+                onClick={handleExternalRegister}
+              >
                 <svg width="18" height="18" viewBox="0 0 24 24">
                   <path
                     fill="#4285F4"

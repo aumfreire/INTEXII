@@ -1,4 +1,6 @@
 using System.Security.Claims;
+using System.Text.Encodings.Web;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -185,6 +187,120 @@ public class AuthController(
         return Ok(new { message = "Logout successful." });
     }
 
+    [Authorize]
+    [HttpPost("manage/info")]
+    public async Task<IActionResult> ManageInfo([FromBody] ManageInfoRequest request)
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user is null)
+        {
+            return Unauthorized(new { message = "You must be signed in." });
+        }
+
+        if (string.IsNullOrWhiteSpace(request.OldPassword) || string.IsNullOrWhiteSpace(request.NewPassword))
+        {
+            return BadRequest(new { message = "Both oldPassword and newPassword are required." });
+        }
+
+        var result = await userManager.ChangePasswordAsync(user, request.OldPassword, request.NewPassword);
+        if (!result.Succeeded)
+        {
+            return ValidationProblem(new ValidationProblemDetails(ToValidationErrors(result)));
+        }
+
+        await signInManager.RefreshSignInAsync(user);
+        return Ok(new { message = "Password updated successfully." });
+    }
+
+    [Authorize]
+    [HttpPost("manage/2fa")]
+    public async Task<IActionResult> ManageTwoFactor([FromBody] ManageTwoFactorRequest request)
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user is null)
+        {
+            return Unauthorized(new { message = "You must be signed in." });
+        }
+
+        if (request.ForgetMachine)
+        {
+            await signInManager.ForgetTwoFactorClientAsync();
+        }
+
+        var authenticatorKey = await EnsureAuthenticatorKeyAsync(user);
+
+        if (request.ResetSharedKey)
+        {
+            await userManager.ResetAuthenticatorKeyAsync(user);
+            authenticatorKey = await EnsureAuthenticatorKeyAsync(user);
+        }
+
+        if (request.Enable is true)
+        {
+            if (string.IsNullOrWhiteSpace(request.TwoFactorCode))
+            {
+                return BadRequest(new { message = "twoFactorCode is required when enabling MFA." });
+            }
+
+            var validCode = await userManager.VerifyTwoFactorTokenAsync(
+                user,
+                TokenOptions.DefaultAuthenticatorProvider,
+                NormalizeAuthenticatorCode(request.TwoFactorCode));
+
+            if (!validCode)
+            {
+                return BadRequest(new { message = "Invalid authenticator code." });
+            }
+
+            var enableResult = await userManager.SetTwoFactorEnabledAsync(user, true);
+            if (!enableResult.Succeeded)
+            {
+                return ValidationProblem(new ValidationProblemDetails(ToValidationErrors(enableResult)));
+            }
+        }
+
+        if (request.Enable is false)
+        {
+            await userManager.ResetAuthenticatorKeyAsync(user);
+            authenticatorKey = await EnsureAuthenticatorKeyAsync(user);
+
+            var disableResult = await userManager.SetTwoFactorEnabledAsync(user, false);
+            if (!disableResult.Succeeded)
+            {
+                return ValidationProblem(new ValidationProblemDetails(ToValidationErrors(disableResult)));
+            }
+        }
+
+        IReadOnlyList<string>? newRecoveryCodes = null;
+        var isTwoFactorEnabled = await userManager.GetTwoFactorEnabledAsync(user);
+        if (request.ResetRecoveryCodes)
+        {
+            if (!isTwoFactorEnabled)
+            {
+                return BadRequest(new { message = "Two-factor must be enabled before generating recovery codes." });
+            }
+
+            newRecoveryCodes = (await userManager.GenerateNewTwoFactorRecoveryCodesAsync(user, 10) ?? Array.Empty<string>()).ToArray();
+        }
+
+        await signInManager.RefreshSignInAsync(user);
+
+        isTwoFactorEnabled = await userManager.GetTwoFactorEnabledAsync(user);
+        var recoveryCodesLeft = await userManager.CountRecoveryCodesAsync(user);
+        var isMachineRemembered = await signInManager.IsTwoFactorClientRememberedAsync(user);
+        var authenticatorUri = BuildAuthenticatorUri(user.Email ?? user.UserName ?? "user", authenticatorKey);
+
+        return Ok(new
+        {
+            sharedKey = FormatKey(authenticatorKey),
+            authenticatorUri,
+            recoveryCodesLeft,
+            recoveryCodes = newRecoveryCodes,
+            isTwoFactorEnabled,
+            isMachineRemembered
+        });
+    }
+
     // ---------------------------------------------------------------------------
     // Private helpers
     // ---------------------------------------------------------------------------
@@ -212,4 +328,69 @@ public class AuthController(
         var loginUrl = $"{frontendUrl.TrimEnd('/')}/login";
         return QueryHelpers.AddQueryString(loginUrl, "externalError", errorMessage);
     }
+
+    private static Dictionary<string, string[]> ToValidationErrors(IdentityResult result)
+    {
+        return result.Errors
+            .GroupBy(error => string.IsNullOrWhiteSpace(error.Code) ? "Identity" : error.Code)
+            .ToDictionary(group => group.Key, group => group.Select(error => error.Description).ToArray());
+    }
+
+    private async Task<string> EnsureAuthenticatorKeyAsync(ApplicationUser user)
+    {
+        var key = await userManager.GetAuthenticatorKeyAsync(user);
+        if (!string.IsNullOrWhiteSpace(key))
+        {
+            return key;
+        }
+
+        await userManager.ResetAuthenticatorKeyAsync(user);
+        return (await userManager.GetAuthenticatorKeyAsync(user)) ?? string.Empty;
+    }
+
+    private static string NormalizeAuthenticatorCode(string code)
+    {
+        return code.Replace(" ", string.Empty).Replace("-", string.Empty);
+    }
+
+    private static string FormatKey(string unformattedKey)
+    {
+        if (string.IsNullOrWhiteSpace(unformattedKey))
+        {
+            return string.Empty;
+        }
+
+        var result = new System.Text.StringBuilder();
+        var currentPosition = 0;
+
+        while (currentPosition + 4 < unformattedKey.Length)
+        {
+            result.Append(unformattedKey.AsSpan(currentPosition, 4)).Append(' ');
+            currentPosition += 4;
+        }
+
+        if (currentPosition < unformattedKey.Length)
+        {
+            result.Append(unformattedKey.AsSpan(currentPosition));
+        }
+
+        return result.ToString().ToLowerInvariant();
+    }
+
+    private static string BuildAuthenticatorUri(string email, string unformattedKey)
+    {
+        const string issuer = "INTEXII";
+        var encodedIssuer = UrlEncoder.Default.Encode(issuer);
+        var encodedEmail = UrlEncoder.Default.Encode(email);
+        return $"otpauth://totp/{encodedIssuer}:{encodedEmail}?secret={unformattedKey}&issuer={encodedIssuer}&digits=6";
+    }
+
+    public sealed record ManageInfoRequest(string OldPassword, string NewPassword);
+
+    public sealed record ManageTwoFactorRequest(
+        bool? Enable,
+        string? TwoFactorCode,
+        bool ResetSharedKey = false,
+        bool ResetRecoveryCodes = false,
+        bool ForgetMachine = false);
 }
