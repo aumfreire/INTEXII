@@ -1,56 +1,60 @@
 import { useState } from 'react';
 import {
   Heart,
-  Lock,
   Shield,
   CheckCircle,
   CreditCard,
   Loader2,
-  Sparkles,
+  ArrowLeft,
+  RefreshCw,
+  BookOpen,
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import PrimaryButton from '../components/ui/PrimaryButton';
 import SectionHeading from '../components/ui/SectionHeading';
 import FormInput from '../components/ui/FormInput';
 import AlertBanner from '../components/ui/AlertBanner';
-import TestimonialCard from '../components/ui/TestimonialCard';
 import FAQAccordion from '../components/ui/FAQAccordion';
 import Card from '../components/ui/Card';
+import heroMain from '../assets/haven/hero-main.webp';
 import '../styles/pages/donation.css';
 
-const amounts = [25, 50, 100, 250];
+const amounts = [25, 50, 75, 150, 300, 500];
 
 const impactItems = [
-  { amount: 25, text: 'Provides essential supplies for a girl in need' },
-  { amount: 50, text: 'Supports mentorship resources for one month' },
-  { amount: 100, text: 'Funds program needs and learning materials' },
-  { amount: 250, text: 'Helps sustain safe spaces and ongoing care' },
+  { amount: 25, text: 'School supplies for one girl for a full term' },
+  { amount: 50, text: 'One week of trauma-informed counseling sessions' },
+  { amount: 75, text: 'Educational materials and tutoring for one month' },
+  { amount: 150, text: 'One month of safe housing and nutritious meals' },
+  { amount: 300, text: 'Complete life skills and vocational training course' },
+  { amount: 500, text: 'Full program enrollment for one girl for three months' },
 ];
 
 const faqItems = [
   {
-    question: 'Is my donation secure?',
+    question: 'Is my donation tax-deductible?',
     answer:
-      'Absolutely. All donations are processed through encrypted, secure channels. Your personal and financial information is never stored or shared.',
+      'Yes! Haven is a registered 501(c)(3) nonprofit. All donations are tax-deductible to the fullest extent allowed by law. You will receive a receipt for your records.',
   },
   {
-    question: 'Can I donate monthly?',
+    question: 'Can I set up a recurring monthly donation?',
     answer:
-      'Yes! Monthly giving is one of the most impactful ways to support our mission. You can choose the monthly option on our donation form to set up recurring support.',
-  },
-  {
-    question: 'Will I receive a receipt?',
-    answer:
-      'Yes, you will receive an email receipt immediately after your donation. All gifts are tax-deductible, and we provide annual giving summaries upon request.',
+      'Absolutely. Monthly giving is one of the most impactful ways to support our mission. Select the "Give Monthly" option on the donation form to provide consistent, reliable support.',
   },
   {
     question: 'How are donations used?',
     answer:
-      'Donations go directly to programs that support girls — including safe housing, mentorship, education, and emotional care. We are committed to transparent use of every dollar.',
+      'Donations go directly to programs that protect and empower girls — including emergency shelter, trauma counseling, education support, life skills training, and community reintegration.',
   },
   {
-    question: 'Can I dedicate my gift?',
+    question: 'Is my payment information secure?',
     answer:
-      'Yes, you can add a dedication or personal message when making your donation. This is a meaningful way to honor someone special while supporting our mission.',
+      'Absolutely. All donations are processed through encrypted, secure channels. Your personal and financial information is never stored or shared with third parties.',
+  },
+  {
+    question: 'Can I donate in honor or memory of someone?',
+    answer:
+      'Yes, you can add a dedication or personal message when making your donation. This is a meaningful way to honor someone special while supporting vulnerable girls.',
   },
 ];
 
@@ -58,26 +62,26 @@ const whyGiveCards = [
   {
     title: 'Direct Impact',
     description:
-      'Every dollar goes toward creating safety, healing, and opportunity for girls who need it most.',
-    accent: 'var(--color-sage-green)',
+      'Every dollar goes toward creating safety, healing, and opportunity for girls who have experienced abuse, trafficking, and neglect.',
+    accent: 'var(--color-sage)',
   },
   {
-    title: 'Lasting Change',
+    title: 'Lasting Transformation',
     description:
-      'Your support helps build futures — through education, mentorship, and programs that create real transformation.',
-    accent: 'var(--color-lavender)',
+      'Your support helps build futures — through education, counseling, and programs that create real, measurable change in girls\' lives.',
+    accent: 'var(--color-primary)',
   },
   {
-    title: 'Community of Care',
+    title: 'Community of Protectors',
     description:
-      'Join a community of donors who believe in the power of compassion and the potential of every girl.',
-    accent: 'var(--color-peach-accent)',
+      'Join a community of donors who believe in the power of compassion and the potential of every girl to overcome and thrive.',
+    accent: 'var(--color-primary-light)',
   },
 ];
 
 export default function DonationPage() {
-  const [donationType, setDonationType] = useState<'one-time' | 'monthly'>(
-    'one-time'
+  const [donationType, setDonationType] = useState<'monthly' | 'one-time'>(
+    'monthly'
   );
   const [selectedAmount, setSelectedAmount] = useState<number | null>(50);
   const [customAmount, setCustomAmount] = useState('');
@@ -97,6 +101,11 @@ export default function DonationPage() {
   const activeAmount = customAmount
     ? parseFloat(customAmount)
     : selectedAmount;
+
+  const annualImpact =
+    donationType === 'monthly' && activeAmount
+      ? activeAmount * 12
+      : null;
 
   const handleAmountClick = (amount: number) => {
     setSelectedAmount(amount);
@@ -153,7 +162,7 @@ export default function DonationPage() {
     setCvc('');
     setZip('');
     setCoverFees(false);
-    setDonationType('one-time');
+    setDonationType('monthly');
   };
 
   const clearError = (field: string) => {
@@ -162,13 +171,39 @@ export default function DonationPage() {
 
   return (
     <>
-      {/* Hero */}
-      <section className="donation-hero">
-        <div className="container" style={{ padding: '0 24px' }}>
-          <h1>Make a Difference Today</h1>
-          <p>
-            Your generosity helps create safety, healing, and opportunity for
-            girls who need it most. Every gift matters.
+      {/* Hero — full-width background like landing page */}
+      <section
+        className="donation-hero"
+        style={{ backgroundImage: `url(${heroMain})` }}
+      >
+        <div className="donation-hero-overlay" />
+        <div
+          className="container donation-hero-content"
+          style={{ padding: '0 24px' }}
+        >
+          <Link
+            to="/"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              color: 'rgba(250,246,240,0.7)',
+              fontSize: '0.9rem',
+              textDecoration: 'none',
+              marginBottom: '20px',
+            }}
+          >
+            <ArrowLeft size={16} />
+            Back to Haven
+          </Link>
+          <div className="donation-hero-label">
+            <span className="donation-hero-label-line" />
+            MAKE A DIFFERENCE
+          </div>
+          <h1>Your Gift Changes a Girl&rsquo;s Story.</h1>
+          <p className="donation-hero-subtitle">
+            Every dollar you give goes directly toward shelter, counseling,
+            education, and long-term support for girls who need it most.
           </p>
         </div>
       </section>
@@ -191,7 +226,7 @@ export default function DonationPage() {
               >
                 Your {donationType === 'monthly' ? 'monthly ' : ''}donation of
                 <strong> ${activeAmount?.toFixed(2)}</strong> will help create
-                meaningful change in the lives of girls who need it most.
+                safety and healing for girls who need it most.
               </p>
               <PrimaryButton onClick={resetForm}>
                 Make Another Donation
@@ -199,30 +234,51 @@ export default function DonationPage() {
             </div>
           ) : (
             <div className="row g-4">
-              {/* Left: Form */}
-              <div className="col-lg-7">
-                <div className="donation-form-card">
-                  <form onSubmit={handleSubmit} noValidate>
-                    {/* Type toggle */}
-                    <div className="donation-type-toggle">
+              {/* Left: Stepped Form */}
+              <div className="col-lg-8">
+                <form onSubmit={handleSubmit} noValidate>
+                  {/* Step 1: Giving Type */}
+                  <div className="donate-step-card">
+                    <h3 className="donate-step-title">
+                      <span className="donate-step-num">1.</span> Choose Your
+                      Giving Type
+                    </h3>
+                    <div className="giving-type-row">
                       <button
                         type="button"
-                        className={`donation-type-btn ${donationType === 'one-time' ? 'active' : ''}`}
-                        onClick={() => setDonationType('one-time')}
-                      >
-                        One-Time
-                      </button>
-                      <button
-                        type="button"
-                        className={`donation-type-btn ${donationType === 'monthly' ? 'active' : ''}`}
+                        className={`giving-type-btn ${donationType === 'monthly' ? 'active' : ''}`}
                         onClick={() => setDonationType('monthly')}
                       >
-                        Monthly
+                        <RefreshCw size={18} />
+                        Give Monthly
+                        {donationType === 'monthly' && (
+                          <span className="giving-type-badge">Recommended</span>
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        className={`giving-type-btn ${donationType === 'one-time' ? 'active' : ''}`}
+                        onClick={() => setDonationType('one-time')}
+                      >
+                        <Heart size={18} />
+                        Give Once
                       </button>
                     </div>
+                    {donationType === 'monthly' && (
+                      <p className="giving-type-note">
+                        <CheckCircle size={14} />
+                        Monthly giving provides girls with consistent, reliable
+                        support. You can cancel anytime.
+                      </p>
+                    )}
+                  </div>
 
-                    {/* Amounts */}
-                    <p className="form-section-title">Choose an Amount</p>
+                  {/* Step 2: Amount */}
+                  <div className="donate-step-card">
+                    <h3 className="donate-step-title">
+                      <span className="donate-step-num">2.</span> Select Your
+                      Amount
+                    </h3>
                     <div className="amount-grid">
                       {amounts.map((amt) => (
                         <button
@@ -235,66 +291,38 @@ export default function DonationPage() {
                         </button>
                       ))}
                     </div>
-                    <div style={{ marginBottom: '24px' }}>
-                      <div style={{ position: 'relative' }}>
-                        <span
-                          style={{
-                            position: 'absolute',
-                            left: '12px',
-                            top: '50%',
-                            transform: 'translateY(-50%)',
-                            color: 'var(--color-muted)',
-                            fontWeight: 500,
-                          }}
-                        >
-                          $
-                        </span>
-                        <input
-                          type="text"
-                          placeholder="Custom amount"
-                          value={customAmount}
-                          onChange={handleCustomAmountChange}
-                          style={{
-                            width: '100%',
-                            padding: '10px 12px 10px 28px',
-                            border: `1.5px solid ${errors.amount ? 'var(--color-cta)' : 'var(--color-light-gray)'}`,
-                            borderRadius: 'var(--radius-sm)',
-                            fontSize: '0.95rem',
-                            fontFamily: 'var(--font-body)',
-                            color: 'var(--color-charcoal)',
-                            outline: 'none',
-                            transition:
-                              'border-color var(--transition-fast), box-shadow var(--transition-fast)',
-                          }}
-                          onFocus={(e) => {
-                            e.currentTarget.style.borderColor =
-                              'var(--color-lavender)';
-                            e.currentTarget.style.boxShadow =
-                              '0 0 0 3px rgba(151,142,196,0.2)';
-                          }}
-                          onBlur={(e) => {
-                            e.currentTarget.style.borderColor =
-                              'var(--color-light-gray)';
-                            e.currentTarget.style.boxShadow = 'none';
-                          }}
-                        />
-                      </div>
-                      {errors.amount && (
-                        <span
-                          style={{
-                            fontSize: '0.82rem',
-                            color: 'var(--color-cta)',
-                            marginTop: '4px',
-                            display: 'block',
-                          }}
-                        >
-                          {errors.amount}
-                        </span>
-                      )}
+                    <div style={{ position: 'relative' }}>
+                      <span
+                        style={{
+                          position: 'absolute',
+                          left: '12px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          color: 'var(--color-muted)',
+                          fontWeight: 500,
+                        }}
+                      >
+                        $
+                      </span>
+                      <input
+                        type="text"
+                        placeholder="Enter custom amount"
+                        value={customAmount}
+                        onChange={handleCustomAmountChange}
+                        className="custom-amount-input"
+                      />
                     </div>
+                    {errors.amount && (
+                      <span className="field-error">{errors.amount}</span>
+                    )}
+                  </div>
 
-                    {/* Donor Info */}
-                    <p className="form-section-title">Your Information</p>
+                  {/* Step 3: Your Information */}
+                  <div className="donate-step-card">
+                    <h3 className="donate-step-title">
+                      <span className="donate-step-num">3.</span> Your
+                      Information
+                    </h3>
                     <div className="row g-3">
                       <div className="col-md-6">
                         <FormInput
@@ -345,9 +373,12 @@ export default function DonationPage() {
                       onChange={(e) => setDedication(e.target.value)}
                       placeholder="In honor of..."
                     />
+                  </div>
 
-                    {/* Payment */}
-                    <p className="form-section-title">
+                  {/* Step 4: Payment */}
+                  <div className="donate-step-card">
+                    <h3 className="donate-step-title">
+                      <span className="donate-step-num">4.</span>
                       <CreditCard
                         size={18}
                         style={{
@@ -357,7 +388,7 @@ export default function DonationPage() {
                         }}
                       />
                       Payment Details
-                    </p>
+                    </h3>
                     <AlertBanner
                       message="This is a design prototype. No real payment will be processed."
                       type="info"
@@ -419,7 +450,6 @@ export default function DonationPage() {
                       </div>
                     </div>
 
-                    {/* Cover fees */}
                     <label
                       style={{
                         display: 'flex',
@@ -427,7 +457,7 @@ export default function DonationPage() {
                         gap: '10px',
                         marginBottom: '24px',
                         fontSize: '0.9rem',
-                        color: 'var(--color-charcoal)',
+                        color: 'var(--color-dark)',
                         cursor: 'pointer',
                       }}
                     >
@@ -435,12 +465,11 @@ export default function DonationPage() {
                         type="checkbox"
                         checked={coverFees}
                         onChange={(e) => setCoverFees(e.target.checked)}
-                        style={{ accentColor: 'var(--color-cta)' }}
+                        style={{ accentColor: 'var(--color-primary)' }}
                       />
                       Cover processing fees so 100% goes to the mission
                     </label>
 
-                    {/* Submit */}
                     <PrimaryButton
                       type="submit"
                       fullWidth
@@ -454,151 +483,91 @@ export default function DonationPage() {
                         </>
                       ) : (
                         <>
-                          Donate
+                          Complete{' '}
+                          {donationType === 'monthly' ? 'Monthly ' : ''}
+                          Donation
                           {activeAmount && activeAmount > 0
-                            ? ` $${activeAmount.toFixed(2)}`
-                            : ''}{' '}
-                          Now
+                            ? ` — $${activeAmount.toFixed(2)}`
+                            : ''}
+                          {donationType === 'monthly' ? '/mo' : ''}
                         </>
                       )}
                     </PrimaryButton>
-                  </form>
-                </div>
-
-                {/* Monthly encouragement */}
-                {donationType === 'one-time' && (
-                  <div className="monthly-callout">
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'flex-start',
-                        gap: '12px',
-                      }}
-                    >
-                      <Sparkles
-                        size={20}
-                        style={{
-                          color: 'var(--color-lavender)',
-                          flexShrink: 0,
-                          marginTop: '2px',
-                        }}
-                      />
-                      <div>
-                        <p
-                          style={{
-                            fontWeight: 600,
-                            marginBottom: '4px',
-                            fontSize: '0.95rem',
-                          }}
-                        >
-                          Consider Monthly Giving
-                        </p>
-                        <p
-                          style={{
-                            color: 'var(--color-muted)',
-                            fontSize: '0.9rem',
-                            marginBottom: '8px',
-                            lineHeight: '1.6',
-                          }}
-                        >
-                          Monthly donors provide the steady, reliable support
-                          that helps us plan ahead and sustain programs
-                          year-round.
-                        </p>
-                        <button
-                          onClick={() => setDonationType('monthly')}
-                          style={{
-                            background: 'none',
-                            border: 'none',
-                            color: 'var(--color-cta)',
-                            fontWeight: 600,
-                            cursor: 'pointer',
-                            padding: 0,
-                            fontSize: '0.9rem',
-                            fontFamily: 'var(--font-body)',
-                          }}
-                        >
-                          Switch to monthly &rarr;
-                        </button>
-                      </div>
-                    </div>
                   </div>
-                )}
+                </form>
               </div>
 
               {/* Right: Sidebar */}
-              <div className="col-lg-5">
-                <div className="impact-sidebar">
-                  {/* Impact panel */}
-                  <div className="impact-panel">
-                    <h3
-                      style={{
-                        fontSize: '1.15rem',
-                        marginBottom: '16px',
-                      }}
-                    >
-                      What Your Gift Can Do
-                    </h3>
-                    {impactItems.map((item, i) => (
-                      <div className="impact-item" key={i}>
-                        <CheckCircle
-                          size={18}
+              <div className="col-lg-4">
+                <div className="donate-sidebar">
+                  {/* Gift Summary */}
+                  <div className="gift-summary-card">
+                    <div className="gift-summary-header">
+                      <h3>Your Gift Summary</h3>
+                    </div>
+                    <div className="gift-summary-body">
+                      <div className="gift-summary-row">
+                        <span>Type</span>
+                        <strong
+                          style={{ color: 'var(--color-primary-dark)' }}
+                        >
+                          {donationType === 'monthly'
+                            ? 'Monthly Gift'
+                            : 'One-Time Gift'}
+                        </strong>
+                      </div>
+                      <div className="gift-summary-row">
+                        <span>Amount</span>
+                        <strong
                           style={{
-                            color: 'var(--color-sage-green)',
-                            flexShrink: 0,
-                            marginTop: '2px',
-                          }}
-                        />
-                        <p
-                          style={{
-                            fontSize: '0.9rem',
-                            lineHeight: '1.5',
-                            marginBottom: 0,
-                            color: 'var(--color-charcoal)',
+                            color: 'var(--color-primary-dark)',
+                            fontSize: '1.1rem',
                           }}
                         >
-                          <strong>${item.amount}</strong> — {item.text}
-                        </p>
+                          {activeAmount && activeAmount > 0
+                            ? `$${activeAmount.toFixed(0)}`
+                            : '—'}
+                        </strong>
                       </div>
-                    ))}
-                  </div>
-
-                  {/* Trust cues */}
-                  <div
-                    style={{
-                      padding: '20px 28px',
-                      backgroundColor: 'var(--color-white)',
-                      borderRadius: 'var(--radius-md)',
-                      boxShadow: 'var(--shadow-sm)',
-                      marginBottom: '20px',
-                    }}
-                  >
-                    <div className="trust-cue">
-                      <Lock size={18} style={{ color: 'var(--color-sage-green)' }} />
-                      <span>Secure & Encrypted</span>
-                    </div>
-                    <div className="trust-cue">
-                      <Shield
-                        size={18}
-                        style={{ color: 'var(--color-sage-green)' }}
-                      />
-                      <span>Tax Deductible</span>
-                    </div>
-                    <div className="trust-cue">
-                      <Heart
-                        size={18}
-                        style={{ color: 'var(--color-sage-green)' }}
-                      />
-                      <span>100% Supports Our Mission</span>
+                      {annualImpact && (
+                        <div className="gift-summary-row">
+                          <span>Annual Impact</span>
+                          <strong
+                            style={{ color: 'var(--color-primary-dark)' }}
+                          >
+                            ${annualImpact.toLocaleString()}/year
+                          </strong>
+                        </div>
+                      )}
+                      <div className="gift-summary-secure">
+                        <Shield size={14} />
+                        Secure &middot; Encrypted &middot; Tax-deductible
+                      </div>
                     </div>
                   </div>
 
-                  {/* Testimonial */}
-                  <TestimonialCard
-                    quote="Giving to Haven of Hope is one of the most meaningful things I do each month. Knowing that my contribution directly supports a girl's safety and growth makes all the difference."
-                    name="Rebecca Owens"
-                    role="Monthly Donor since 2022"
-                  />
+                  {/* What Your Gift Supports */}
+                  <div className="gift-supports-card">
+                    <h3>What Your Gift Supports</h3>
+                    <div className="gift-supports-list">
+                      {impactItems.map((item, i) => (
+                        <div className="gift-supports-item" key={i}>
+                          <BookOpen
+                            size={16}
+                            style={{
+                              color: 'var(--color-primary)',
+                              flexShrink: 0,
+                              marginTop: '2px',
+                            }}
+                          />
+                          <div>
+                            <strong>${item.amount} provides</strong>
+                            <p>{item.text}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -609,7 +578,6 @@ export default function DonationPage() {
       {/* Extra sections */}
       <section className="donation-extra">
         <div className="container" style={{ padding: '0 24px' }}>
-          {/* Why Give */}
           <SectionHeading
             title="Why Give?"
             subtitle="Your donation creates ripples of change that extend far beyond a single moment."
@@ -626,18 +594,11 @@ export default function DonationPage() {
             ))}
           </div>
 
-          {/* FAQ */}
-          <div
-            style={{
-              maxWidth: '700px',
-              margin: '0 auto',
-            }}
-          >
+          <div style={{ maxWidth: '700px', margin: '0 auto' }}>
             <SectionHeading title="Common Questions" />
             <FAQAccordion items={faqItems} />
           </div>
 
-          {/* Reassurance */}
           <div
             style={{
               textAlign: 'center',
@@ -648,7 +609,7 @@ export default function DonationPage() {
             <Heart
               size={24}
               style={{
-                color: 'var(--color-rose-accent)',
+                color: 'var(--color-primary-light)',
                 marginBottom: '12px',
               }}
             />
