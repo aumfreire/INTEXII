@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using INTEXII.API.Data;
+using INTEXII.API.Data.Models;
 using INTEXII.API.Infrastructure;
 using Microsoft.AspNetCore.Authentication.Google;
 using Scalar.AspNetCore;
 using Swashbuckle.AspNetCore.SwaggerUI;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,8 +26,11 @@ var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecr
 // -----------------------------------------------------------------------
 
 builder.Services.AddControllers();
-builder.Services.AddOpenApi();
-builder.Services.AddSwaggerGen();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new() { Title = "INTEXII API", Version = "v1" });
+});
 
 // Identity database (SQLite — local and Azure deployment)
 // VIDEO NOTE: Show INTEXII.Identity.sqlite was created by EF migration.
@@ -123,11 +128,11 @@ using (var scope = app.Services.CreateScope())
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI(options =>
+    app.UseSwaggerUI(c =>
     {
-        options.SwaggerEndpoint("/swagger/v1/swagger.json", "INTEXII API");
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "INTEXII API v1");
+        c.RoutePrefix = string.Empty;
     });
-    app.MapOpenApi();
 }
 
 // HSTS — tells browsers to always use HTTPS for this domain for 1 year
@@ -141,6 +146,88 @@ if (!app.Environment.IsDevelopment())
 // VIDEO NOTE: Open DevTools → Network → any response → Response Headers.
 // Show "content-security-policy" header present with the policy value.
 app.UseSecurityHeaders();
+
+// Keep Identity users and operational supporters in sync for donor workflows.
+// When registration succeeds, we ensure:
+// 1) the user has Donor role
+// 2) a corresponding supporters row exists in the operational DB.
+app.Use(async (context, next) =>
+{
+    if (!HttpMethods.IsPost(context.Request.Method)
+        || !context.Request.Path.Equals("/api/auth/register", StringComparison.OrdinalIgnoreCase))
+    {
+        await next();
+        return;
+    }
+
+    string? registeredEmail = null;
+
+    context.Request.EnableBuffering();
+    try
+    {
+        using var document = await JsonDocument.ParseAsync(context.Request.Body);
+        if (document.RootElement.TryGetProperty("email", out var emailElement))
+        {
+            registeredEmail = emailElement.GetString();
+        }
+    }
+    catch
+    {
+        // If payload cannot be parsed, continue and let Identity endpoint handle validation.
+    }
+    finally
+    {
+        context.Request.Body.Position = 0;
+    }
+
+    await next();
+
+    if (context.Response.StatusCode < 200 || context.Response.StatusCode >= 300 || string.IsNullOrWhiteSpace(registeredEmail))
+        return;
+
+    var normalizedEmail = registeredEmail.Trim().ToLowerInvariant();
+    using var scope = context.RequestServices.CreateScope();
+    var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("RegisterSupporterSync");
+
+    try
+    {
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var intexDb = scope.ServiceProvider.GetRequiredService<IntexDbContext>();
+
+        var user = await userManager.FindByEmailAsync(normalizedEmail);
+        if (user != null && !await userManager.IsInRoleAsync(user, AuthRoles.Donor))
+        {
+            var donorRoleResult = await userManager.AddToRoleAsync(user, AuthRoles.Donor);
+            if (!donorRoleResult.Succeeded)
+            {
+                logger.LogWarning("Failed to assign Donor role for newly registered user {Email}: {Errors}",
+                    normalizedEmail,
+                    string.Join(", ", donorRoleResult.Errors.Select(e => e.Description)));
+            }
+        }
+
+        var supporterExists = await intexDb.Supporters
+            .AnyAsync(s => s.Email != null && s.Email.ToLower() == normalizedEmail);
+
+        if (!supporterExists)
+        {
+            intexDb.Supporters.Add(new Supporter
+            {
+                Email = normalizedEmail,
+                SupporterType = "Individual",
+                DisplayName = normalizedEmail,
+                Status = "Active",
+                CreatedAt = DateTime.UtcNow
+            });
+
+            await intexDb.SaveChangesAsync();
+        }
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Failed to synchronize supporter record after registration for {Email}", normalizedEmail);
+    }
+});
 
 app.UseCors(FrontendCorsPolicy);
 

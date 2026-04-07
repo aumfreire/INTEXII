@@ -21,7 +21,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Scalar.AspNetCore" Version="2.13.20" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="7.0.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.7" />
     <!-- LOCAL DEV: SQLite (INTEXIIdb.sqlite) — already included via Microsoft.EntityFrameworkCore.Sqlite above -->
     <!-- AZURE PRODUCTION: Uncomment SqlServer, remove Sqlite, swap UseSqlite → UseSqlServer in Program.cs -->
     <!-- <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.4" /> -->
