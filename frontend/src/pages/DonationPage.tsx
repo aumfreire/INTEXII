@@ -20,8 +20,10 @@ import { useAuth } from '../context/useAuth';
 import { getManagedProfile } from '../lib/authAPI';
 import { useLocation } from 'react-router-dom';
 import type { RepeatDonationState } from '../types/Donation';
-import heroMain from '../assets/haven/hero-main.webp';
 import '../styles/pages/donation.css';
+
+const donationHeroImageUrl =
+  'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=1600&q=80';
 
 const amounts = [25, 50, 75, 150, 300, 500];
 
@@ -261,7 +263,7 @@ export default function DonationPage() {
       {/* Hero — full-width background like landing page */}
       <section
         className="donation-hero"
-        style={{ backgroundImage: `url(${heroMain})` }}
+        style={{ backgroundImage: `url(${donationHeroImageUrl})` }}
       >
         <div className="donation-hero-overlay" />
         <div

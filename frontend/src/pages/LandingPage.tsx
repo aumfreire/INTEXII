@@ -11,9 +11,12 @@ import SectionHeading from '../components/ui/SectionHeading';
 import Card from '../components/ui/Card';
 import TestimonialCard from '../components/ui/TestimonialCard';
 import CountUpStat from '../components/ui/CountUpStat';
-import heroMain from '../assets/haven/hero-main.webp';
-import missionImage from '../assets/haven/mission-image.webp';
 import '../styles/pages/landing.css';
+
+const heroImageUrl =
+  'https://images.unsplash.com/photo-1516627145497-ae6968895b74?auto=format&fit=crop&w=1600&q=80';
+const missionImageUrl =
+  'https://images.unsplash.com/photo-1497486751825-1233686d5d80?auto=format&fit=crop&w=1200&q=80';
 
 const impactStats = [
   { end: 2500, suffix: '+', label: 'Girls Protected & Served' },
@@ -77,7 +80,7 @@ export default function LandingPage() {
       <section
         className="hero-section"
         style={{
-          backgroundImage: `url(${heroMain})`,
+          backgroundImage: `url(${heroImageUrl})`,
         }}
       >
         <div className="hero-overlay" />
@@ -118,7 +121,7 @@ export default function LandingPage() {
           <div className="mission-content">
             <div className="mission-image">
               <img
-                src={missionImage}
+                src={missionImageUrl}
                 alt="Counselor working with girls in a safe environment"
               />
             </div>
