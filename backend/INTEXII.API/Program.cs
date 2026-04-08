@@ -6,11 +6,13 @@ using INTEXII.API.Infrastructure;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Data.SqlClient;
 using Scalar.AspNetCore;
 using Swashbuckle.AspNetCore.SwaggerUI;
 using Microsoft.IdentityModel.Tokens;
 using System.Text.Json;
 using System.Text;
+using System.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -211,8 +213,23 @@ using (var scope = app.Services.CreateScope())
     var identityDb = services.GetRequiredService<AuthIdentityDbContext>();
     var intexDb = services.GetRequiredService<IntexDbContext>();
 
-    await identityDb.Database.MigrateAsync();
-    await intexDb.Database.MigrateAsync();
+    await MigrateWithSqlServerBaselineAsync(
+        identityDb,
+        markerTable: "AspNetUsers",
+        baselineMigrations:
+        [
+            "20260406221451_InitialIdentity",
+            "20260408031748_SyncAuthIdentitySchema"
+        ]);
+
+    await MigrateWithSqlServerBaselineAsync(
+        intexDb,
+        markerTable: "partners",
+        baselineMigrations:
+        [
+            "20260408023150_InitialIntexSchema",
+            "20260408031855_SyncIntexSqlServerModel"
+        ]);
 }
 
 // Seed identity: create roles (Admin, Donor) and default admin user
@@ -424,4 +441,76 @@ static string NormalizeOrigin(string origin)
     }
 
     return origin.Trim().TrimEnd('/');
+}
+
+static async Task MigrateWithSqlServerBaselineAsync(
+    DbContext db,
+    string markerTable,
+    IReadOnlyList<string> baselineMigrations)
+{
+    try
+    {
+        await db.Database.MigrateAsync();
+    }
+    catch (SqlException ex) when (
+        db.Database.IsSqlServer()
+        && ex.Number == 2714
+        && ex.Message.Contains("already an object named", StringComparison.OrdinalIgnoreCase))
+    {
+        await EnsureMigrationHistoryBaselineAsync(db, markerTable, baselineMigrations);
+        await db.Database.MigrateAsync();
+    }
+}
+
+static async Task EnsureMigrationHistoryBaselineAsync(
+    DbContext db,
+    string markerTable,
+    IReadOnlyList<string> baselineMigrations)
+{
+    if (!db.Database.IsSqlServer())
+    {
+        return;
+    }
+
+    var fullMarkerTableName = $"[dbo].[{markerTable}]";
+    var connection = db.Database.GetDbConnection();
+    var shouldCloseConnection = connection.State != ConnectionState.Open;
+
+    if (shouldCloseConnection)
+    {
+        await connection.OpenAsync();
+    }
+
+    int markerTableExists;
+    await using (var command = connection.CreateCommand())
+    {
+        command.CommandText = "SELECT CASE WHEN OBJECT_ID(@tableName, N'U') IS NULL THEN 0 ELSE 1 END;";
+        var parameter = command.CreateParameter();
+        parameter.ParameterName = "@tableName";
+        parameter.Value = fullMarkerTableName;
+        command.Parameters.Add(parameter);
+
+        markerTableExists = Convert.ToInt32(await command.ExecuteScalarAsync());
+    }
+
+    if (shouldCloseConnection)
+    {
+        await connection.CloseAsync();
+    }
+
+    if (markerTableExists == 0)
+    {
+        return;
+    }
+
+    await db.Database.ExecuteSqlRawAsync(
+        "IF OBJECT_ID(N'[dbo].[__EFMigrationsHistory]', N'U') IS NULL " +
+        "BEGIN CREATE TABLE [dbo].[__EFMigrationsHistory] ([MigrationId] nvarchar(150) NOT NULL, [ProductVersion] nvarchar(32) NOT NULL, CONSTRAINT [PK___EFMigrationsHistory] PRIMARY KEY ([MigrationId])); END;");
+
+    foreach (var migrationId in baselineMigrations)
+    {
+        const string productVersion = "10.0.0";
+        await db.Database.ExecuteSqlAsync(
+            $"IF NOT EXISTS (SELECT 1 FROM [dbo].[__EFMigrationsHistory] WHERE [MigrationId] = {migrationId}) BEGIN INSERT INTO [dbo].[__EFMigrationsHistory] ([MigrationId], [ProductVersion]) VALUES ({migrationId}, {productVersion}); END;");
+    }
 }
