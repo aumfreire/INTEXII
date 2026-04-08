@@ -26,6 +26,7 @@ import AdminUsersPage from './pages/AdminUsersPage';
 import CookieConsentBanner from './components/CookieConsentBanner';
 import CookiePolicyPage from './pages/CookiePolicyPage';
 import AuthCallbackPage from './pages/AuthCallbackPage';
+import ComingSoonPage from './pages/ComingSoonPage';
 import { CookieConsentProvider } from './context/CookieConsentContext';
 
 function ScrollToTop() {
@@ -85,6 +86,7 @@ function App() {
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/auth/callback" element={<AuthCallbackPage />} />
                 <Route path="/cookies" element={<CookiePolicyPage />} />
+                <Route path="/coming-soon" element={<ComingSoonPage />} />
                 <Route path="/signup" element={<SignUpPage />} />
                 <Route path="/register" element={<SignUpPage />} />
                 <Route path="/logout" element={<LogoutPage />} />

@@ -228,13 +228,13 @@ export default function SignUpPage() {
                             />
                             <span>
                                 I agree to the{' '}
-                                <a href="#" style={{ color: 'var(--color-cta)' }}>
+                                <Link to="/coming-soon?topic=terms-of-service" style={{ color: 'var(--color-cta)' }}>
                                     Terms of Service
-                                </a>{' '}
+                                </Link>{' '}
                                 and{' '}
-                                <a href="#" style={{ color: 'var(--color-cta)' }}>
+                                <Link to="/cookies" style={{ color: 'var(--color-cta)' }}>
                                     Privacy Policy
-                                </a>
+                                </Link>
                             </span>
                         </label>
                         {fieldErrors.terms && (

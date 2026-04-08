@@ -49,10 +49,15 @@ export default function Footer() {
               — because every girl deserves to be safe, seen, and free.
             </p>
             <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
-              {[Globe, MessageCircle, Camera, Play].map((Icon, i) => (
-                <a
-                  key={i}
-                  href="#"
+              {[
+                { Icon: Globe, to: '/coming-soon?topic=website' },
+                { Icon: MessageCircle, to: '/coming-soon?topic=community-chat' },
+                { Icon: Camera, to: '/coming-soon?topic=instagram' },
+                { Icon: Play, to: '/coming-soon?topic=video-channel' },
+              ].map(({ Icon, to }) => (
+                <Link
+                  key={to}
+                  to={to}
                   aria-label="Social link"
                   style={{
                     width: '36px',
@@ -79,7 +84,7 @@ export default function Footer() {
                   }}
                 >
                   <Icon size={16} />
-                </a>
+                </Link>
               ))}
             </div>
           </div>
@@ -107,11 +112,16 @@ export default function Footer() {
                 gap: '10px',
               }}
             >
-              {['About Us', 'Our Team', 'Careers', 'Financials', 'Annual Report'].map(
-                (label) => (
+              {[
+                { label: 'About Us', to: '/#mission' },
+                { label: 'Our Team', to: '/coming-soon?topic=our-team' },
+                { label: 'Careers', to: '/coming-soon?topic=careers' },
+                { label: 'Financials', to: '/coming-soon?topic=financials' },
+                { label: 'Annual Report', to: '/coming-soon?topic=annual-report' },
+              ].map(({ label, to }) => (
                   <li key={label}>
-                    <a
-                      href="#"
+                    <Link
+                      to={to}
                       style={{
                         color: 'rgba(255,255,255,0.7)',
                         textDecoration: 'none',
@@ -126,7 +136,7 @@ export default function Footer() {
                       }
                     >
                       {label}
-                    </a>
+                    </Link>
                   </li>
                 )
               )}
@@ -158,10 +168,10 @@ export default function Footer() {
             >
               {[
                 { to: '/donate', label: 'Donate' },
-                { to: '#', label: 'Volunteer' },
-                { to: '#', label: 'Fundraise for Us' },
-                { to: '#', label: 'Corporate Partners' },
-                { to: '#', label: 'Share Our Story' },
+                { to: '/coming-soon?topic=volunteer', label: 'Volunteer' },
+                { to: '/coming-soon?topic=fundraising', label: 'Fundraise for Us' },
+                { to: '/coming-soon?topic=corporate-partners', label: 'Corporate Partners' },
+                { to: '/coming-soon?topic=share-our-story', label: 'Share Our Story' },
               ].map(({ to, label }) => (
                 <li key={label}>
                   <Link
@@ -278,25 +288,25 @@ export default function Footer() {
           &copy; {new Date().getFullYear()} Haven. All rights
           reserved. A registered 501(c)(3) nonprofit organization.
           <span style={{ margin: '0 12px' }}>|</span>
-          <a
-            href="#"
+          <Link
+            to="/cookies"
             style={{
               color: 'rgba(255,255,255,0.5)',
               textDecoration: 'none',
             }}
           >
             Privacy Policy
-          </a>
+          </Link>
           <span style={{ margin: '0 8px' }}>|</span>
-          <a
-            href="#"
+          <Link
+            to="/coming-soon?topic=terms-of-use"
             style={{
               color: 'rgba(255,255,255,0.5)',
               textDecoration: 'none',
             }}
           >
             Terms of Use
-          </a>
+          </Link>
         </div>
       </div>
     </footer>
