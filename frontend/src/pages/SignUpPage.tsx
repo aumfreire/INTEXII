@@ -28,6 +28,16 @@ export default function SignUpPage() {
         }
     };
 
+    const meetsPasswordPolicy = (value: string) => {
+        return (
+            value.length >= 14 &&
+            /[A-Z]/.test(value) &&
+            /[a-z]/.test(value) &&
+            /\d/.test(value) &&
+            /[^A-Za-z0-9]/.test(value)
+        );
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
@@ -38,8 +48,8 @@ export default function SignUpPage() {
         if (!lastName.trim()) errors.lastName = 'Last name is required';
         if (!email.trim()) errors.email = 'Email is required';
         if (!password.trim()) errors.password = 'Password is required';
-        else if (password.length < 14)
-            errors.password = 'Password must be at least 14 characters';
+        else if (!meetsPasswordPolicy(password))
+            errors.password = 'Use 14+ chars with upper, lower, number, and symbol';
         if (!confirmPassword.trim()) {
             errors.confirmPassword = 'Please confirm your password';
         } else if (password !== confirmPassword) {

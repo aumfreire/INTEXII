@@ -78,6 +78,8 @@ if (hasGoogleCredentials)
             options.ClientSecret = googleClientSecret!;
             options.SignInScheme = IdentityConstants.ExternalScheme;
             options.CallbackPath = "/signin-google";
+            options.CorrelationCookie.SameSite = SameSiteMode.None;
+            options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.Always;
         });
 }
 
@@ -93,32 +95,29 @@ builder.Services.AddAuthorization(options =>
         policy => policy.RequireRole(AuthRoles.Donor, AuthRoles.Admin));
 });
 
-// Password policy — 14-char minimum, no complexity requirements
-// VIDEO NOTE: Attempt to register with a short password; show the 400 error response.
-// This matches the lab implementation (NOT the Microsoft docs defaults).
+// Password policy — enforce strong passwords.
+// Requires length + complexity to reduce weak credential risk.
 builder.Services.Configure<IdentityOptions>(options =>
 {
-    options.Password.RequireDigit = false;
-    options.Password.RequireLowercase = false;
-    options.Password.RequireNonAlphanumeric = false;
-    options.Password.RequireUppercase = false;
+    options.Password.RequireDigit = true;
+    options.Password.RequireLowercase = true;
+    options.Password.RequireNonAlphanumeric = true;
+    options.Password.RequireUppercase = true;
     options.Password.RequiredLength = 14;
-    options.Password.RequiredUniqueChars = 1;
+    options.Password.RequiredUniqueChars = 4;
 });
 
 // Cookie security configuration
 // VIDEO NOTE: After login, open DevTools → Application → Cookies.
-// Show HttpOnly=true, Secure=true, SameSite=Lax, Expires=7 days from now.
+// Show HttpOnly=true, Secure=true, SameSite=None, Expires=7 days from now.
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.HttpOnly = true;
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
 
-    // Local dev uses frontend and backend on different origins/ports.
-    // SameSite=None allows the auth cookie on cross-origin fetch with credentials.
-    options.Cookie.SameSite = builder.Environment.IsDevelopment()
-        ? SameSiteMode.None
-        : SameSiteMode.Lax;
+    // Frontend and backend are hosted on different origins in both local and Azure.
+    // SameSite=None is required for cross-site cookie auth with fetch credentials.
+    options.Cookie.SameSite = SameSiteMode.None;
 
     options.ExpireTimeSpan = TimeSpan.FromDays(7);
     options.SlidingExpiration = true;
@@ -234,8 +233,11 @@ app.Use(async (context, next) =>
 
         if (!supporterExists)
         {
+            var nextSupporterId = (await intexDb.Supporters.MaxAsync(s => (int?)s.SupporterId) ?? 0) + 1;
+
             intexDb.Supporters.Add(new Supporter
             {
+                SupporterId = nextSupporterId,
                 Email = normalizedEmail,
                 SupporterType = "Individual",
                 DisplayName = normalizedEmail,

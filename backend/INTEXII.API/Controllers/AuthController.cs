@@ -545,8 +545,11 @@ public class AuthController(
 
         if (supporter is null)
         {
+            var nextSupporterId = (await intexDb.Supporters.MaxAsync(s => (int?)s.SupporterId) ?? 0) + 1;
+
             intexDb.Supporters.Add(new Supporter
             {
+                SupporterId = nextSupporterId,
                 Email = normalizedEmail,
                 SupporterType = "Individual",
                 FirstName = first,
