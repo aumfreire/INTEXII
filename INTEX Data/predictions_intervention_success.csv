@@ -1,0 +1,149 @@
+plan_id,resident_id,safehouse_code,name,plan_category,status,prediction_tier,pred_success_probability,services_provided,n_services,target_value,days_to_target,sessions_before,visits_before,incidents_before,current_risk_level,case_category
+154,52,SH02,Lighthouse Safehouse 2,Safety,In Progress,At Risk,0.0008599560399106391,"Caring, Legal Services, Teaching",3,4.2,151,0,0,0,Low,Abandoned
+155,52,SH02,Lighthouse Safehouse 2,Education,In Progress,At Risk,0.0014284844409354787,"Legal Services, Caring, Teaching",3,0.85,151,0,0,0,Low,Abandoned
+127,43,SH02,Lighthouse Safehouse 2,Safety,On Hold,At Risk,0.0022429352129641777,"Legal Services, Teaching, Caring",3,4.2,153,0,0,0,Low,Neglected
+128,43,SH02,Lighthouse Safehouse 2,Education,In Progress,At Risk,0.00553874842170755,"Caring, Healing, Teaching",3,0.85,153,0,0,0,Low,Neglected
+58,20,SH01,Lighthouse Safehouse 1,Safety,Open,At Risk,0.005858997546271916,"Caring, Teaching, Legal Services",3,4.2,214,0,0,0,Medium,Neglected
+76,26,SH03,Lighthouse Safehouse 3,Safety,In Progress,At Risk,0.005900352934354992,"Legal Services, Teaching, Caring",3,4.2,184,0,0,0,Low,Abandoned
+26,9,SH07,Lighthouse Safehouse 7,Education,In Progress,At Risk,0.007024080173187433,Teaching,1,0.85,214,0,0,0,Low,Surrendered
+157,53,SH06,Lighthouse Safehouse 6,Safety,Open,At Risk,0.00751097338348675,Teaching,1,4.2,305,0,0,0,Low,Surrendered
+148,50,SH04,Lighthouse Safehouse 4,Safety,In Progress,At Risk,0.0075947184104105375,"Teaching, Caring",2,4.2,304,0,0,0,Medium,Neglected
+25,9,SH07,Lighthouse Safehouse 7,Safety,Open,At Risk,0.007775544341727757,"Caring, Healing, Legal Services",3,4.2,214,0,0,0,Low,Surrendered
+166,56,SH01,Lighthouse Safehouse 1,Safety,In Progress,At Risk,0.01028785299353974,"Teaching, Caring",2,4.2,243,0,0,0,Low,Surrendered
+156,52,SH02,Lighthouse Safehouse 2,Physical Health,On Hold,At Risk,0.011484133425457493,"Healing, Caring",2,4.2,151,0,0,0,Low,Abandoned
+118,40,SH01,Lighthouse Safehouse 1,Safety,In Progress,At Risk,0.013598173136903742,"Teaching, Healing, Caring",3,4.2,306,0,0,0,Low,Abandoned
+27,9,SH07,Lighthouse Safehouse 7,Physical Health,Open,At Risk,0.013730340674018515,"Healing, Teaching, Caring",3,4.2,214,0,0,0,Low,Surrendered
+158,53,SH06,Lighthouse Safehouse 6,Education,In Progress,At Risk,0.017127083796186653,"Caring, Legal Services",2,0.85,305,0,0,0,Low,Surrendered
+100,34,SH07,Lighthouse Safehouse 7,Safety,On Hold,At Risk,0.017498519724599204,"Caring, Healing, Teaching",3,4.2,275,0,0,0,Medium,Abandoned
+60,20,SH01,Lighthouse Safehouse 1,Physical Health,On Hold,At Risk,0.02183191825009859,"Caring, Teaching, Legal Services",3,4.2,214,0,0,0,Medium,Neglected
+119,40,SH01,Lighthouse Safehouse 1,Education,Open,At Risk,0.02584189336078255,Teaching,1,0.85,306,0,0,0,Low,Abandoned
+1,1,SH04,Lighthouse Safehouse 4,Safety,On Hold,At Risk,0.025973618167758606,"Healing, Legal Services, Teaching",3,4.2,123,0,0,0,High,Neglected
+103,35,SH03,Lighthouse Safehouse 3,Safety,On Hold,At Risk,0.026562081332388777,Healing,1,4.2,243,0,0,0,Medium,Surrendered
+92,31,SH01,Lighthouse Safehouse 1,Education,In Progress,At Risk,0.026772271090129397,"Caring, Teaching",2,0.85,213,0,0,0,Low,Abandoned
+55,19,SH04,Lighthouse Safehouse 4,Safety,In Progress,At Risk,0.028184517677662363,Caring,1,4.2,121,0,0,0,Low,Surrendered
+85,29,SH08,Lighthouse Safehouse 8,Safety,Open,At Risk,0.028354434538022184,"Healing, Teaching",2,4.2,122,0,0,0,Medium,Abandoned
+136,46,SH07,Lighthouse Safehouse 7,Safety,On Hold,At Risk,0.02909072738276004,"Healing, Caring",2,4.2,182,0,0,0,Low,Foundling
+91,31,SH01,Lighthouse Safehouse 1,Safety,On Hold,At Risk,0.029294794751087084,"Healing, Teaching, Legal Services",3,4.2,213,0,0,0,Low,Abandoned
+129,43,SH02,Lighthouse Safehouse 2,Physical Health,On Hold,At Risk,0.02944929129271324,"Caring, Healing",2,4.2,153,0,0,0,Low,Neglected
+86,29,SH08,Lighthouse Safehouse 8,Education,On Hold,At Risk,0.03055713051912824,"Teaching, Caring, Healing",3,0.85,122,0,0,0,Medium,Abandoned
+160,54,SH07,Lighthouse Safehouse 7,Safety,In Progress,At Risk,0.03140753178261753,"Legal Services, Teaching, Caring",3,4.2,306,0,0,0,Medium,Neglected
+105,35,SH03,Lighthouse Safehouse 3,Physical Health,On Hold,At Risk,0.03149454071444577,Teaching,1,4.2,243,0,0,0,Medium,Surrendered
+67,23,SH05,Lighthouse Safehouse 5,Safety,In Progress,At Risk,0.032242100982762596,"Caring, Teaching",2,4.2,273,0,0,0,Medium,Foundling
+145,49,SH05,Lighthouse Safehouse 5,Safety,On Hold,At Risk,0.03357597668824488,"Teaching, Legal Services, Caring",3,4.2,153,0,0,0,Low,Abandoned
+59,20,SH01,Lighthouse Safehouse 1,Education,Open,At Risk,0.03373492036853627,"Caring, Healing",2,0.85,214,0,0,0,Medium,Neglected
+101,34,SH07,Lighthouse Safehouse 7,Education,On Hold,At Risk,0.03902629965232538,"Healing, Legal Services, Teaching",3,0.85,275,0,0,0,Medium,Abandoned
+149,50,SH04,Lighthouse Safehouse 4,Education,In Progress,At Risk,0.040052009163232684,Legal Services,1,0.85,304,0,0,0,Medium,Neglected
+124,42,SH06,Lighthouse Safehouse 6,Safety,In Progress,At Risk,0.04022532941599445,"Legal Services, Caring, Healing",3,4.2,151,0,0,0,Low,Abandoned
+16,6,SH05,Lighthouse Safehouse 5,Safety,On Hold,At Risk,0.04310448501531265,"Caring, Legal Services, Healing",3,4.2,274,0,0,0,Medium,Foundling
+56,19,SH04,Lighthouse Safehouse 4,Education,On Hold,At Risk,0.04598623853393987,Caring,1,0.85,121,0,0,0,Low,Surrendered
+137,46,SH07,Lighthouse Safehouse 7,Education,In Progress,At Risk,0.04743688338976056,"Healing, Caring",2,0.85,182,0,0,0,Low,Foundling
+176,59,SH03,Lighthouse Safehouse 3,Education,Open,At Risk,0.050902810049411766,"Caring, Legal Services, Teaching",3,0.85,214,0,0,0,Low,Neglected
+18,6,SH05,Lighthouse Safehouse 5,Physical Health,Open,At Risk,0.05094801936813304,"Teaching, Caring, Legal Services",3,4.2,274,0,0,0,Medium,Foundling
+87,29,SH08,Lighthouse Safehouse 8,Physical Health,Open,At Risk,0.051267624802716384,"Caring, Teaching",2,4.2,122,0,0,0,Medium,Abandoned
+77,26,SH03,Lighthouse Safehouse 3,Education,In Progress,At Risk,0.05132655475868902,Healing,1,0.85,184,0,0,0,Low,Abandoned
+138,46,SH07,Lighthouse Safehouse 7,Physical Health,Open,At Risk,0.05208286808484789,Teaching,1,4.2,182,0,0,0,Low,Foundling
+112,38,SH02,Lighthouse Safehouse 2,Safety,In Progress,At Risk,0.05309688945664925,"Teaching, Caring, Healing",3,4.2,244,0,0,0,Low,Neglected
+167,56,SH01,Lighthouse Safehouse 1,Education,On Hold,At Risk,0.05363268920927038,Legal Services,1,0.85,243,0,0,0,Low,Surrendered
+150,50,SH04,Lighthouse Safehouse 4,Physical Health,Open,At Risk,0.055954538454602146,"Teaching, Healing",2,4.2,304,0,0,0,Medium,Neglected
+122,41,SH09,Lighthouse Safehouse 9,Education,In Progress,At Risk,0.059164668493003815,"Legal Services, Teaching",2,0.65,183,0,0,0,High,Surrendered
+31,11,SH01,Lighthouse Safehouse 1,Safety,On Hold,At Risk,0.05943242197344069,"Caring, Teaching",2,4.2,214,0,0,0,Low,Surrendered
+65,22,SH06,Lighthouse Safehouse 6,Education,In Progress,At Risk,0.062234510769060995,"Teaching, Caring, Legal Services",3,0.85,184,0,0,0,Medium,Abandoned
+173,58,SH08,Lighthouse Safehouse 8,Education,Open,At Risk,0.06340430502821372,"Caring, Healing, Teaching",3,0.85,214,0,0,0,Low,Abandoned
+2,1,SH04,Lighthouse Safehouse 4,Education,In Progress,At Risk,0.06443046322646284,"Caring, Legal Services, Healing",3,0.85,123,0,0,0,High,Neglected
+125,42,SH06,Lighthouse Safehouse 6,Education,In Progress,At Risk,0.06512255931686166,"Healing, Caring, Legal Services",3,0.85,151,0,0,0,Low,Abandoned
+113,38,SH02,Lighthouse Safehouse 2,Education,Open,At Risk,0.06552826436992908,"Caring, Teaching",2,0.85,244,0,0,0,Low,Neglected
+3,1,SH04,Lighthouse Safehouse 4,Physical Health,On Hold,At Risk,0.06856258308553072,"Teaching, Healing, Caring",3,4.2,123,0,0,0,High,Neglected
+109,37,SH04,Lighthouse Safehouse 4,Safety,In Progress,At Risk,0.0696013310335041,"Healing, Teaching",2,4.2,305,0,0,0,Low,Foundling
+120,40,SH01,Lighthouse Safehouse 1,Physical Health,Open,At Risk,0.07436027488467992,"Healing, Teaching",2,4.2,306,0,0,0,Low,Abandoned
+161,54,SH07,Lighthouse Safehouse 7,Education,Open,At Risk,0.07436432821861094,"Caring, Teaching, Healing",3,0.85,306,0,0,0,Medium,Neglected
+110,37,SH04,Lighthouse Safehouse 4,Education,In Progress,At Risk,0.07476172056293547,"Teaching, Caring, Healing",3,0.85,305,0,0,0,Low,Foundling
+159,53,SH06,Lighthouse Safehouse 6,Physical Health,Open,At Risk,0.07510227786571694,"Legal Services, Healing",2,4.2,305,0,0,0,Low,Surrendered
+8,3,SH01,Lighthouse Safehouse 1,Education,On Hold,At Risk,0.07769581911013465,"Caring, Teaching, Legal Services",3,0.85,276,0,0,0,Medium,Surrendered
+121,41,SH09,Lighthouse Safehouse 9,Safety,In Progress,Moderate,0.08115826226752508,Legal Services,1,3.6,183,0,0,0,High,Surrendered
+106,36,SH01,Lighthouse Safehouse 1,Safety,In Progress,Moderate,0.08367697217219029,Teaching,1,4.2,122,0,0,0,Low,Surrendered
+37,13,SH02,Lighthouse Safehouse 2,Safety,In Progress,Moderate,0.08468129270392659,"Healing, Legal Services, Teaching",3,4.2,120,0,0,0,Low,Surrendered
+140,47,SH04,Lighthouse Safehouse 4,Education,Open,Moderate,0.08975341824289472,Caring,1,0.85,215,0,0,0,Low,Abandoned
+43,15,SH08,Lighthouse Safehouse 8,Safety,In Progress,Moderate,0.09008916821204523,"Teaching, Healing",2,4.2,304,0,0,0,Low,Surrendered
+172,58,SH08,Lighthouse Safehouse 8,Safety,In Progress,Moderate,0.09134393305945156,Legal Services,1,4.2,214,0,0,0,Low,Abandoned
+174,58,SH08,Lighthouse Safehouse 8,Physical Health,Open,Moderate,0.09377241295256718,"Legal Services, Caring, Teaching",3,4.2,214,0,0,0,Low,Abandoned
+32,11,SH01,Lighthouse Safehouse 1,Education,On Hold,Moderate,0.09504056150357862,"Caring, Teaching",2,0.85,214,0,0,0,Low,Surrendered
+133,45,SH03,Lighthouse Safehouse 3,Safety,On Hold,Moderate,0.09730820562128037,Teaching,1,4.2,212,0,0,0,Medium,Abandoned
+175,59,SH03,Lighthouse Safehouse 3,Safety,In Progress,Moderate,0.10314932167647743,"Caring, Healing",2,4.2,214,0,0,0,Low,Neglected
+17,6,SH05,Lighthouse Safehouse 5,Education,In Progress,Moderate,0.10330436584711317,"Legal Services, Healing",2,0.85,274,0,0,0,Medium,Foundling
+126,42,SH06,Lighthouse Safehouse 6,Physical Health,Open,Moderate,0.10668218513708091,"Caring, Legal Services",2,4.2,151,0,0,0,Low,Abandoned
+78,26,SH03,Lighthouse Safehouse 3,Physical Health,On Hold,Moderate,0.10974762591048139,Healing,1,4.2,184,0,0,0,Low,Abandoned
+93,31,SH01,Lighthouse Safehouse 1,Physical Health,In Progress,Moderate,0.11362214455696223,"Healing, Teaching",2,4.2,213,0,0,0,Low,Abandoned
+107,36,SH01,Lighthouse Safehouse 1,Education,In Progress,Moderate,0.11590000897563418,"Teaching, Caring, Healing",3,0.85,122,0,0,0,Low,Surrendered
+7,3,SH01,Lighthouse Safehouse 1,Safety,Open,Moderate,0.11965819966127335,Caring,1,4.2,276,0,0,0,Medium,Surrendered
+49,17,SH01,Lighthouse Safehouse 1,Safety,On Hold,Moderate,0.1203637060621952,"Legal Services, Healing, Caring",3,4.2,212,0,0,0,Medium,Surrendered
+177,59,SH03,Lighthouse Safehouse 3,Physical Health,In Progress,Moderate,0.12054256385759182,"Teaching, Caring",2,4.2,214,0,0,0,Low,Neglected
+44,15,SH08,Lighthouse Safehouse 8,Education,In Progress,Moderate,0.12794573231922737,"Legal Services, Teaching, Healing",3,0.85,304,0,0,0,Low,Surrendered
+57,19,SH04,Lighthouse Safehouse 4,Physical Health,Open,Moderate,0.13095011883413177,Legal Services,1,4.2,121,0,0,0,Low,Surrendered
+88,30,SH05,Lighthouse Safehouse 5,Safety,In Progress,Moderate,0.13327117215079093,"Caring, Teaching, Healing",3,4.2,274,0,0,0,Critical,Abandoned
+38,13,SH02,Lighthouse Safehouse 2,Education,In Progress,Moderate,0.13327346474989363,"Healing, Teaching, Legal Services",3,0.85,120,0,0,0,Low,Surrendered
+134,45,SH03,Lighthouse Safehouse 3,Education,In Progress,Moderate,0.13773909237727383,"Teaching, Legal Services",2,0.85,212,0,0,0,Medium,Abandoned
+45,15,SH08,Lighthouse Safehouse 8,Physical Health,On Hold,Moderate,0.14049770685720964,"Caring, Legal Services, Teaching",3,4.2,304,0,0,0,Low,Surrendered
+141,47,SH04,Lighthouse Safehouse 4,Physical Health,On Hold,Moderate,0.14627472823040566,"Healing, Teaching, Legal Services",3,4.2,215,0,0,0,Low,Abandoned
+168,56,SH01,Lighthouse Safehouse 1,Physical Health,On Hold,Moderate,0.1464826872477102,"Legal Services, Healing",2,4.2,243,0,0,0,Low,Surrendered
+11,4,SH02,Lighthouse Safehouse 2,Education,In Progress,Moderate,0.16193774417534273,Teaching,1,0.85,273,0,0,0,Low,Neglected
+52,18,SH08,Lighthouse Safehouse 8,Safety,Open,Moderate,0.16551680114779194,"Legal Services, Caring",2,4.2,183,0,0,0,Medium,Neglected
+130,44,SH09,Lighthouse Safehouse 9,Safety,On Hold,Moderate,0.16921408216587064,"Healing, Caring",2,3.6,213,0,0,0,Medium,Foundling
+132,44,SH09,Lighthouse Safehouse 9,Physical Health,Open,Moderate,0.1779126406856191,"Teaching, Caring, Legal Services",3,3.6,213,0,0,0,Medium,Foundling
+123,41,SH09,Lighthouse Safehouse 9,Physical Health,In Progress,Moderate,0.1785659272415969,"Caring, Legal Services",2,3.6,183,0,0,0,High,Surrendered
+64,22,SH06,Lighthouse Safehouse 6,Safety,Open,Moderate,0.179647754822723,Healing,1,4.2,184,0,0,0,Medium,Abandoned
+102,34,SH07,Lighthouse Safehouse 7,Physical Health,In Progress,Moderate,0.18116527849846165,"Healing, Legal Services",2,4.2,275,0,0,0,Medium,Abandoned
+131,44,SH09,Lighthouse Safehouse 9,Education,Open,Moderate,0.18243071481977288,"Healing, Teaching",2,0.65,213,0,0,0,Medium,Foundling
+147,49,SH05,Lighthouse Safehouse 5,Physical Health,In Progress,Moderate,0.18505452115363757,Teaching,1,4.2,153,0,0,0,Low,Abandoned
+33,11,SH01,Lighthouse Safehouse 1,Physical Health,In Progress,Moderate,0.1930906525504102,"Teaching, Caring",2,4.2,214,0,0,0,Low,Surrendered
+10,4,SH02,Lighthouse Safehouse 2,Safety,Open,Moderate,0.19360898933760057,"Caring, Healing",2,4.2,273,0,0,0,Low,Neglected
+51,17,SH01,Lighthouse Safehouse 1,Physical Health,In Progress,Moderate,0.1955494246402753,"Caring, Teaching, Healing",3,4.2,212,0,0,0,Medium,Surrendered
+28,10,SH01,Lighthouse Safehouse 1,Safety,In Progress,Moderate,0.2011213970513606,Caring,1,4.2,183,0,0,0,Low,Surrendered
+69,23,SH05,Lighthouse Safehouse 5,Physical Health,In Progress,Moderate,0.2119570594389173,"Caring, Legal Services",2,4.2,273,0,0,0,Medium,Foundling
+146,49,SH05,Lighthouse Safehouse 5,Education,On Hold,Moderate,0.22018665553292768,"Legal Services, Healing",2,0.85,153,0,0,0,Low,Abandoned
+19,7,SH06,Lighthouse Safehouse 6,Safety,In Progress,Moderate,0.22317597175965798,"Caring, Healing, Legal Services",3,4.2,214,0,0,0,Low,Foundling
+66,22,SH06,Lighthouse Safehouse 6,Physical Health,Open,Moderate,0.23620421200589092,"Legal Services, Healing, Teaching",3,4.2,184,0,0,0,Medium,Abandoned
+108,36,SH01,Lighthouse Safehouse 1,Physical Health,In Progress,Moderate,0.25696312382360503,Teaching,1,4.2,122,0,0,0,Low,Surrendered
+39,13,SH02,Lighthouse Safehouse 2,Physical Health,Open,Moderate,0.2594583753128802,"Healing, Legal Services, Teaching",3,4.2,120,0,0,0,Low,Surrendered
+30,10,SH01,Lighthouse Safehouse 1,Physical Health,Open,Moderate,0.2622768038962138,"Teaching, Caring, Legal Services",3,4.2,183,0,0,0,Low,Surrendered
+135,45,SH03,Lighthouse Safehouse 3,Physical Health,On Hold,Moderate,0.2668503495881552,"Teaching, Legal Services",2,4.2,212,0,0,0,Medium,Abandoned
+169,57,SH07,Lighthouse Safehouse 7,Safety,On Hold,Moderate,0.2697117384899414,Legal Services,1,4.2,153,0,0,0,Low,Abandoned
+12,4,SH02,Lighthouse Safehouse 2,Physical Health,In Progress,Moderate,0.2818908522102126,"Teaching, Legal Services",2,4.2,273,0,0,0,Low,Neglected
+9,3,SH01,Lighthouse Safehouse 1,Physical Health,Open,Moderate,0.2818937857885717,"Legal Services, Healing, Teaching",3,4.2,276,0,0,0,Medium,Surrendered
+94,32,SH06,Lighthouse Safehouse 6,Safety,In Progress,Moderate,0.29580228871608294,"Teaching, Legal Services",2,4.2,212,0,0,0,Medium,Foundling
+111,37,SH04,Lighthouse Safehouse 4,Physical Health,In Progress,Moderate,0.30565614673377756,"Caring, Healing",2,4.2,305,0,0,0,Low,Foundling
+53,18,SH08,Lighthouse Safehouse 8,Education,Open,Moderate,0.32949985056415027,"Caring, Healing",2,0.85,183,0,0,0,Medium,Neglected
+61,21,SH05,Lighthouse Safehouse 5,Safety,In Progress,Moderate,0.33088500623622913,"Caring, Legal Services, Teaching",3,4.2,183,0,0,0,Low,Surrendered
+82,28,SH03,Lighthouse Safehouse 3,Safety,In Progress,Moderate,0.3332421401478258,Teaching,1,4.2,305,0,0,0,Medium,Abandoned
+40,14,SH07,Lighthouse Safehouse 7,Safety,In Progress,Moderate,0.33790392430464766,"Teaching, Caring",2,4.2,181,0,0,0,Low,Foundling
+171,57,SH07,Lighthouse Safehouse 7,Physical Health,In Progress,Moderate,0.3617132376127162,"Healing, Teaching, Caring",3,4.2,153,0,0,0,Low,Abandoned
+90,30,SH05,Lighthouse Safehouse 5,Physical Health,In Progress,Moderate,0.3680135567119087,"Teaching, Healing, Caring",3,4.2,274,0,0,0,Critical,Abandoned
+89,30,SH05,Lighthouse Safehouse 5,Education,In Progress,Moderate,0.38678643051788847,Legal Services,1,0.85,274,0,0,0,Critical,Abandoned
+162,54,SH07,Lighthouse Safehouse 7,Physical Health,In Progress,Moderate,0.40244388818889343,Healing,1,4.2,306,0,0,0,Medium,Neglected
+21,7,SH06,Lighthouse Safehouse 6,Physical Health,Open,Moderate,0.411833211332945,"Healing, Legal Services, Teaching",3,4.2,214,0,0,0,Low,Foundling
+179,60,SH07,Lighthouse Safehouse 7,Education,In Progress,Moderate,0.4230383802578124,"Teaching, Legal Services, Caring",3,0.85,121,0,0,0,Medium,Abandoned
+20,7,SH06,Lighthouse Safehouse 6,Education,In Progress,Moderate,0.4235485498369626,"Legal Services, Healing",2,0.85,214,0,0,0,Low,Foundling
+178,60,SH07,Lighthouse Safehouse 7,Safety,Open,Moderate,0.4322588496753784,Teaching,1,4.2,121,0,0,0,Medium,Abandoned
+71,24,SH04,Lighthouse Safehouse 4,Education,Open,Moderate,0.43709922016628083,"Teaching, Healing",2,0.85,151,0,0,0,Low,Foundling
+114,38,SH02,Lighthouse Safehouse 2,Physical Health,On Hold,Moderate,0.43860898069979715,Healing,1,4.2,244,0,0,0,Low,Neglected
+170,57,SH07,Lighthouse Safehouse 7,Education,On Hold,Moderate,0.4778161474283296,Healing,1,0.85,153,0,0,0,Low,Abandoned
+34,12,SH03,Lighthouse Safehouse 3,Safety,In Progress,Moderate,0.47861801188293995,"Healing, Teaching, Caring",3,4.2,304,0,0,0,High,Abandoned
+151,51,SH02,Lighthouse Safehouse 2,Safety,In Progress,Moderate,0.483486546269144,Caring,1,4.2,122,0,0,0,Low,Surrendered
+13,5,SH04,Lighthouse Safehouse 4,Safety,In Progress,Likely to Succeed,0.5561708850550929,"Healing, Teaching, Legal Services",3,4.2,213,0,0,0,Low,Surrendered
+152,51,SH02,Lighthouse Safehouse 2,Education,In Progress,Likely to Succeed,0.5709497411440992,"Healing, Teaching",2,0.85,122,0,0,0,Low,Surrendered
+14,5,SH04,Lighthouse Safehouse 4,Education,In Progress,Likely to Succeed,0.6028791621479417,"Healing, Caring, Teaching",3,0.85,213,0,0,0,Low,Surrendered
+83,28,SH03,Lighthouse Safehouse 3,Education,On Hold,Likely to Succeed,0.6046678881678872,"Healing, Caring, Legal Services",3,0.85,305,0,0,0,Medium,Abandoned
+54,18,SH08,Lighthouse Safehouse 8,Physical Health,In Progress,Likely to Succeed,0.6057074186313472,"Healing, Legal Services",2,4.2,183,0,0,0,Medium,Neglected
+23,8,SH04,Lighthouse Safehouse 4,Education,Open,Likely to Succeed,0.6179553105842381,"Teaching, Caring, Legal Services",3,0.85,121,0,0,0,High,Foundling
+4,2,SH03,Lighthouse Safehouse 3,Safety,On Hold,Likely to Succeed,0.6466329917979774,Legal Services,1,4.2,245,0,0,0,Medium,Surrendered
+98,33,SH07,Lighthouse Safehouse 7,Education,In Progress,Likely to Succeed,0.6691823869585661,Caring,1,0.85,182,0,0,0,Low,Foundling
+73,25,SH01,Lighthouse Safehouse 1,Safety,In Progress,Likely to Succeed,0.6755250414243994,"Healing, Legal Services, Caring",3,4.2,305,0,0,0,High,Surrendered
+62,21,SH05,Lighthouse Safehouse 5,Education,In Progress,Likely to Succeed,0.6879026515164298,Caring,1,0.85,183,0,0,0,Low,Surrendered
+5,2,SH03,Lighthouse Safehouse 3,Education,Open,Likely to Succeed,0.7466057135920877,"Healing, Caring",2,0.85,245,0,0,0,Medium,Surrendered
+99,33,SH07,Lighthouse Safehouse 7,Physical Health,In Progress,Likely to Succeed,0.7785119959683712,"Healing, Teaching, Legal Services",3,4.2,182,0,0,0,Low,Foundling
+72,24,SH04,Lighthouse Safehouse 4,Physical Health,In Progress,Likely to Succeed,0.7904333635746235,"Healing, Legal Services",2,4.2,151,0,0,0,Low,Foundling
+163,55,SH02,Lighthouse Safehouse 2,Safety,On Hold,Likely to Succeed,0.8277690062762749,"Healing, Legal Services, Teaching",3,4.2,153,0,0,0,Medium,Abandoned
+96,32,SH06,Lighthouse Safehouse 6,Physical Health,On Hold,Likely to Succeed,0.8500716055938956,Healing,1,4.2,212,0,0,0,Medium,Foundling
+144,48,SH05,Lighthouse Safehouse 5,Physical Health,Open,Likely to Succeed,0.922191588805869,"Healing, Teaching",2,4.2,153,0,0,0,Medium,Surrendered
+24,8,SH04,Lighthouse Safehouse 4,Physical Health,Open,Likely to Succeed,0.929258328639182,"Caring, Healing",2,4.2,121,0,0,0,High,Foundling
+117,39,SH08,Lighthouse Safehouse 8,Physical Health,On Hold,Likely to Succeed,0.9305128073125415,Legal Services,1,4.2,273,0,0,0,Low,Surrendered
+47,16,SH08,Lighthouse Safehouse 8,Education,In Progress,Likely to Succeed,0.9525811961866315,"Healing, Caring",2,0.85,122,0,0,0,Low,Surrendered

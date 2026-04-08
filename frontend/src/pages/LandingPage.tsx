@@ -11,9 +11,12 @@ import SectionHeading from '../components/ui/SectionHeading';
 import Card from '../components/ui/Card';
 import TestimonialCard from '../components/ui/TestimonialCard';
 import CountUpStat from '../components/ui/CountUpStat';
-import heroMain from '../assets/haven/hero-main.webp';
-import missionImage from '../assets/haven/mission-image.webp';
 import '../styles/pages/landing.css';
+
+const heroImageUrl =
+  'https://images.unsplash.com/photo-1522661067900-ab829854a57f?auto=format&fit=crop&w=1600&q=80';
+const missionImageUrl =
+  'https://images.unsplash.com/photo-1615466178532-b6d2f9c304de?auto=format&fit=crop&w=1200&q=80';
 
 const impactStats = [
   { end: 2500, suffix: '+', label: 'Girls Protected & Served' },
@@ -36,7 +39,7 @@ const helpCards = [
     title: 'Spread the Word',
     description:
       'Share our mission with your network. Follow us on social media, share our stories, and help raise awareness about the challenges girls face.',
-    link: '#',
+    link: '/coming-soon?topic=share-our-story',
     linkText: 'Share Our Story',
   },
   {
@@ -44,7 +47,7 @@ const helpCards = [
     title: 'Corporate Partnership',
     description:
       'Align your business with a cause that matters. Corporate sponsors enjoy brand visibility while making a meaningful impact on girls\' lives.',
-    link: '#',
+    link: '/coming-soon?topic=corporate-partnership',
     linkText: 'Become a Partner',
   },
 ];
@@ -77,7 +80,7 @@ export default function LandingPage() {
       <section
         className="hero-section"
         style={{
-          backgroundImage: `url(${heroMain})`,
+          backgroundImage: `url(${heroImageUrl})`,
         }}
       >
         <div className="hero-overlay" />
@@ -99,7 +102,7 @@ export default function LandingPage() {
               <Heart size={18} />
               Donate Now
             </PrimaryButton>
-            <SecondaryButton href="#impact" light>
+            <SecondaryButton href="/#impact" light>
               See Our Impact
               <ArrowRight size={18} />
             </SecondaryButton>
@@ -118,7 +121,7 @@ export default function LandingPage() {
           <div className="mission-content">
             <div className="mission-image">
               <img
-                src={missionImage}
+                src={missionImageUrl}
                 alt="Counselor working with girls in a safe environment"
               />
             </div>
@@ -252,17 +255,6 @@ export default function LandingPage() {
             <Link to="/donate" className="cta-band-btn">
               <Heart size={18} />
               Donate Now
-            </Link>
-            <Link
-              to="/"
-              className="cta-band-btn"
-              style={{
-                backgroundColor: 'transparent',
-                color: 'var(--color-cream)',
-                border: '2px solid var(--color-cream)',
-              }}
-            >
-              Learn More
             </Link>
           </div>
         </div>
