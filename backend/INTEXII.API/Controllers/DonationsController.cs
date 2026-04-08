@@ -306,6 +306,7 @@ public class DonationsController : ControllerBase
         {
             supporter = new Supporter
             {
+                SupporterId = await GetNextSupporterIdAsync(),
                 Email = normalizedEmail,
                 CreatedAt = DateTime.UtcNow,
                 SupporterType = NormalizeText(request.SupporterType) ?? "Individual",
@@ -353,6 +354,7 @@ public class DonationsController : ControllerBase
         {
             supporter = new Supporter
             {
+                SupporterId = await GetNextSupporterIdAsync(),
                 Email = normalizedEmail,
                 SupporterType = "Individual",
                 Status = "Active",
@@ -455,6 +457,11 @@ public class DonationsController : ControllerBase
             .AsNoTracking()
             .Include(d => d.Supporter)
             .FirstOrDefaultAsync(d => d.DonationId == donationId);
+    }
+
+    private async Task<int> GetNextSupporterIdAsync()
+    {
+        return (await _db.Supporters.MaxAsync(s => (int?)s.SupporterId) ?? 0) + 1;
     }
 
     private static void ApplySupporterFields(Supporter supporter, DonationUpsertRequest request)
