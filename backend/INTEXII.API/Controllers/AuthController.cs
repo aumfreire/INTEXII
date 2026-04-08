@@ -247,7 +247,13 @@ public class AuthController(
         }
 
         var result = await signInManager.CheckPasswordSignInAsync(user, request.Password, lockoutOnFailure: true);
-        if (result.RequiresTwoFactor)
+        if (!result.Succeeded)
+        {
+            return Unauthorized(new { message = "Invalid email or password." });
+        }
+
+        var twoFactorEnabled = await userManager.GetTwoFactorEnabledAsync(user);
+        if (twoFactorEnabled)
         {
             if (!string.IsNullOrWhiteSpace(request.TwoFactorCode))
             {
@@ -277,13 +283,9 @@ public class AuthController(
             {
                 return BadRequest(new
                 {
-                    message = "Two-factor code or recovery code is required for this account."
+                    message = "Two-factor authentication is required for this account. Enter an authenticator code or recovery code."
                 });
             }
-        }
-        else if (!result.Succeeded)
-        {
-            return Unauthorized(new { message = "Invalid email or password." });
         }
 
         var accessToken = await BuildAccessTokenAsync(user);

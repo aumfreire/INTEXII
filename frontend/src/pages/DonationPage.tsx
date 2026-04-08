@@ -17,9 +17,9 @@ import AlertBanner from '../components/ui/AlertBanner';
 import FAQAccordion from '../components/ui/FAQAccordion';
 import Card from '../components/ui/Card';
 import { useAuth } from '../context/useAuth';
-import { getManagedProfile } from '../lib/authAPI';
+import { createMyDonation, getManagedProfile } from '../lib/authAPI';
 import { useLocation } from 'react-router-dom';
-import type { RepeatDonationState } from '../types/Donation';
+import type { DonorDonationCreateRequest, RepeatDonationState } from '../types/DonationTypes';
 import heroMain from '../assets/haven/hero-main.webp';
 import '../styles/pages/donation.css';
 
@@ -200,7 +200,7 @@ export default function DonationPage() {
     void loadDonorProfile();
   }, [isAuthenticated, loadDonorProfile]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
 
@@ -223,10 +223,34 @@ export default function DonationPage() {
 
     setErrors({});
     setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
+
+    try {
+      const payload: DonorDonationCreateRequest = {
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        displayName: `${firstName.trim()} ${lastName.trim()}`.trim(),
+        donationType,
+        donationDate: new Date().toISOString().slice(0, 10),
+        isRecurring: donationType === 'monthly',
+        campaignName: repeatDonation?.campaignName ?? null,
+        channelSource: repeatDonation?.channelSource ?? null,
+        currencyCode: 'USD',
+        amount: activeAmount,
+        estimatedValue: activeAmount,
+        impactUnit: null,
+        notes: dedication.trim() || null,
+        referralPostId: null,
+      };
+
+      await createMyDonation(payload);
       setShowSuccess(true);
-    }, 1500);
+    } catch (error) {
+      setErrors({
+        submit: error instanceof Error ? error.message : 'Unable to record donation.',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const resetForm = () => {
@@ -352,6 +376,16 @@ export default function DonationPage() {
                 <form onSubmit={handleSubmit} noValidate>
                   {errors.auth ? (
                     <AlertBanner message={errors.auth} type="warning" onClose={() => setErrors((prev) => ({ ...prev, auth: '' }))} />
+                  ) : null}
+
+                  {errors.submit ? (
+                    <div style={{ marginBottom: '16px' }}>
+                      <AlertBanner
+                        message={errors.submit}
+                        type="warning"
+                        onClose={() => setErrors((prev) => ({ ...prev, submit: '' }))}
+                      />
+                    </div>
                   ) : null}
 
                   {/* Step 1: Giving Type */}
