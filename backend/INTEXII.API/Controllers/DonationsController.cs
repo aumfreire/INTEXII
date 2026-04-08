@@ -127,6 +127,7 @@ public class DonationsController : ControllerBase
 
         var donation = new Donation
         {
+            DonationId = await GetNextDonationIdAsync(),
             SupporterId = supporter.SupporterId,
             DonationType = request.DonationType,
             DonationDate = ParseDateOrToday(request.DonationDate),
@@ -237,6 +238,7 @@ public class DonationsController : ControllerBase
 
         return new Donation
         {
+            DonationId = await GetNextDonationIdAsync(),
             SupporterId = supporter.SupporterId,
             DonationType = request.DonationType,
             DonationDate = ParseDateOrToday(request.DonationDate),
@@ -462,6 +464,11 @@ public class DonationsController : ControllerBase
     private async Task<int> GetNextSupporterIdAsync()
     {
         return (await _db.Supporters.MaxAsync(s => (int?)s.SupporterId) ?? 0) + 1;
+    }
+
+    private async Task<int> GetNextDonationIdAsync()
+    {
+        return (await _db.Donations.MaxAsync(d => (int?)d.DonationId) ?? 0) + 1;
     }
 
     private static void ApplySupporterFields(Supporter supporter, DonationUpsertRequest request)
