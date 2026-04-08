@@ -1,0 +1,108 @@
+name: Run ML Prediction Pipelines
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Triggers
+#   • Scheduled: 1st of every month at 6am UTC
+#   • Manual:    Go to Actions tab → "Run ML Prediction Pipelines" → Run workflow
+# ─────────────────────────────────────────────────────────────────────────────
+on:
+  schedule:
+    - cron: "0 6 1 * *"   # 1st of every month at 6am UTC
+  workflow_dispatch:        # Allows manual runs from the GitHub Actions tab
+
+# All 3 jobs run in parallel — they are independent of each other.
+# Each job reads fresh data from Azure SQL, retrains, and writes predictions back.
+jobs:
+
+  # ──────────────────────────────────────────────────────────────────────────
+  donor-lapse:
+    name: Donor Lapse Risk
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: "INTEX Data/ml-pipelines/scripts/requirements.txt"
+
+      - name: Install ODBC Driver 18 for SQL Server
+        run: |
+          curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
+          curl https://packages.microsoft.com/config/ubuntu/22.04/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list
+          sudo apt-get update
+          ACCEPT_EULA=Y sudo apt-get install -y msodbcsql18 unixodbc-dev
+
+      - name: Install Python dependencies
+        run: pip install -r "INTEX Data/ml-pipelines/scripts/requirements.txt"
+
+      - name: Run donor lapse pipeline
+        env:
+          INTEX_SQL_CONNECTION: ${{ secrets.INTEX_SQL_CONNECTION }}
+        working-directory: "INTEX Data/ml-pipelines/scripts"
+        run: python donor_lapse.py
+
+  # ──────────────────────────────────────────────────────────────────────────
+  safehouse-health:
+    name: Safehouse Health Forecast
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: "INTEX Data/ml-pipelines/scripts/requirements.txt"
+
+      - name: Install ODBC Driver 18 for SQL Server
+        run: |
+          curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
+          curl https://packages.microsoft.com/config/ubuntu/22.04/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list
+          sudo apt-get update
+          ACCEPT_EULA=Y sudo apt-get install -y msodbcsql18 unixodbc-dev
+
+      - name: Install Python dependencies
+        run: pip install -r "INTEX Data/ml-pipelines/scripts/requirements.txt"
+
+      - name: Run safehouse health pipeline
+        env:
+          INTEX_SQL_CONNECTION: ${{ secrets.INTEX_SQL_CONNECTION }}
+        working-directory: "INTEX Data/ml-pipelines/scripts"
+        run: python safehouse_health.py
+
+  # ──────────────────────────────────────────────────────────────────────────
+  social-engagement:
+    name: Social Media Engagement
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: "INTEX Data/ml-pipelines/scripts/requirements.txt"
+
+      - name: Install ODBC Driver 18 for SQL Server
+        run: |
+          curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
+          curl https://packages.microsoft.com/config/ubuntu/22.04/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list
+          sudo apt-get update
+          ACCEPT_EULA=Y sudo apt-get install -y msodbcsql18 unixodbc-dev
+
+      - name: Install Python dependencies
+        run: pip install -r "INTEX Data/ml-pipelines/scripts/requirements.txt"
+
+      - name: Run social engagement pipeline
+        env:
+          INTEX_SQL_CONNECTION: ${{ secrets.INTEX_SQL_CONNECTION }}
+        working-directory: "INTEX Data/ml-pipelines/scripts"
+        run: python social_engagement.py
