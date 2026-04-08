@@ -7,3 +7,43 @@
 .page-content {
   flex: 1;
 }
+
+.cookie-consent-banner {
+  position: fixed;
+  inset-inline: 1rem;
+  bottom: 1rem;
+  z-index: 1050;
+  display: grid;
+  gap: 1rem;
+  align-items: center;
+  padding: 1.1rem 1.3rem;
+  border: 1px solid rgba(58, 63, 59, 0.2);
+  border-radius: 1rem;
+  background: rgba(58, 63, 59, 0.96);
+  color: #fff7e6;
+}
+
+.cookie-consent-banner a {
+  color: #ffd8d1;
+  font-weight: 600;
+}
+
+.cookie-consent-copy {
+  text-align: left;
+}
+
+.cookie-consent-eyebrow {
+  color: #f9afb1;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+@media (min-width: 768px) {
+  .cookie-consent-banner {
+    inset-inline: auto 2rem;
+    max-width: 34rem;
+    grid-template-columns: 1fr auto;
+  }
+}

@@ -52,11 +52,13 @@ public class DonationsController : ControllerBase
         if (string.IsNullOrEmpty(email))
             return Unauthorized(new { message = "Could not determine authenticated user email." });
 
+        var normalizedEmail = email.Trim().ToLowerInvariant();
+
         var supporter = await _db.Supporters
-            .FirstOrDefaultAsync(s => s.Email == email);
+            .FirstOrDefaultAsync(s => s.Email != null && s.Email.ToLower() == normalizedEmail);
 
         if (supporter == null)
-            return NotFound(new { message = $"No supporter record found for email: {email}" });
+            return NotFound(new { message = $"No supporter record found for email: {normalizedEmail}" });
 
         var donations = await _db.Donations
             .Where(d => d.SupporterId == supporter.SupporterId)
@@ -64,6 +66,31 @@ public class DonationsController : ControllerBase
             .ToListAsync();
 
         return Ok(donations);
+    }
+
+    [HttpGet("admin/summary")]
+    [Authorize(Policy = AuthPolicies.ManageData)]
+    public async Task<IActionResult> GetAdminDonationSummary()
+    {
+        var donations = await _db.Donations
+            .AsNoTracking()
+            .ToListAsync();
+
+        var totalDonationCount = donations.Count;
+        var totalMonetaryAmount = donations.Sum(d => d.Amount ?? 0m);
+        var totalEstimatedValue = donations.Sum(d => d.EstimatedValue ?? 0m);
+        var latestDonationDate = donations
+            .Where(d => d.DonationDate != null)
+            .Select(d => d.DonationDate)
+            .OrderByDescending(d => d)
+            .FirstOrDefault();
+
+        return Ok(new AdminDonationSummaryDto(
+            totalDonationCount,
+            totalMonetaryAmount,
+            totalEstimatedValue,
+            latestDonationDate
+        ));
     }
 
     /// <summary>
@@ -106,4 +133,10 @@ public class DonationsController : ControllerBase
         await _db.SaveChangesAsync();
         return NoContent();
     }
+
+    public sealed record AdminDonationSummaryDto(
+        int TotalDonationCount,
+        decimal TotalMonetaryAmount,
+        decimal TotalEstimatedValue,
+        DateOnly? LatestDonationDate);
 }

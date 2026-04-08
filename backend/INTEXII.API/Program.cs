@@ -10,16 +10,22 @@ using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Load secrets file (not committed to git — holds Google OAuth credentials, admin password, etc.)
-// VIDEO NOTE: Show appsettings.Secrets.json exists locally but is listed in .gitignore.
-// On Azure, these values are set as App Service environment variables instead.
+// Optional local secrets file fallback for team members not using user-secrets yet.
 builder.Configuration.AddJsonFile("appsettings.Secrets.json", optional: true, reloadOnChange: false);
+
+// Local development secrets are loaded from .NET user-secrets.
+// Azure deployment should use environment variables (for example Authentication__Google__ClientId).
+if (builder.Environment.IsDevelopment())
+{
+    builder.Configuration.AddUserSecrets<Program>(optional: true);
+}
 
 const string FrontendCorsPolicy = "FrontendClient";
 const string DefaultFrontendUrl = "http://localhost:3000";
 var frontendUrl = builder.Configuration["FrontendUrl"] ?? DefaultFrontendUrl;
 var googleClientId = builder.Configuration["Authentication:Google:ClientId"];
 var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+var hasGoogleCredentials = IsConfiguredValue(googleClientId) && IsConfiguredValue(googleClientSecret);
 
 // -----------------------------------------------------------------------
 // Services
@@ -52,13 +58,13 @@ builder.Services.AddIdentityApiEndpoints<ApplicationUser>()
 
 // Google OAuth (only registered when credentials are present in config/secrets)
 // VIDEO NOTE: Show the Google sign-in button in the UI, click it, complete the OAuth flow.
-if (!string.IsNullOrEmpty(googleClientId) && !string.IsNullOrEmpty(googleClientSecret))
+if (hasGoogleCredentials)
 {
     builder.Services.AddAuthentication()
         .AddGoogle(options =>
         {
-            options.ClientId = googleClientId;
-            options.ClientSecret = googleClientSecret;
+            options.ClientId = googleClientId!;
+            options.ClientSecret = googleClientSecret!;
             options.SignInScheme = IdentityConstants.ExternalScheme;
             options.CallbackPath = "/signin-google";
         });
@@ -95,8 +101,14 @@ builder.Services.Configure<IdentityOptions>(options =>
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.HttpOnly = true;
-    options.Cookie.SameSite = SameSiteMode.Lax;
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+
+    // Local dev uses frontend and backend on different origins/ports.
+    // SameSite=None allows the auth cookie on cross-origin fetch with credentials.
+    options.Cookie.SameSite = builder.Environment.IsDevelopment()
+        ? SameSiteMode.None
+        : SameSiteMode.Lax;
+
     options.ExpireTimeSpan = TimeSpan.FromDays(7);
     options.SlidingExpiration = true;
 });
@@ -250,3 +262,13 @@ app.MapControllers();
 app.MapGroup("/api/auth").MapIdentityApi<ApplicationUser>();
 
 app.Run();
+
+static bool IsConfiguredValue(string? value)
+{
+    if (string.IsNullOrWhiteSpace(value))
+    {
+        return false;
+    }
+
+    return !value.StartsWith("YOUR_", StringComparison.OrdinalIgnoreCase);
+}

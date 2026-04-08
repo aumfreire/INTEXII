@@ -1,10 +1,8 @@
-/* ===== Login Page — Split Layout ===== */
 .login-page {
   display: flex;
   min-height: calc(100vh - 70px);
 }
 
-/* Left image panel */
 .login-image-panel {
   width: 45%;
   position: relative;
@@ -17,11 +15,9 @@
 .login-image-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    to bottom,
-    rgba(28, 16, 8, 0.55) 0%,
-    rgba(28, 16, 8, 0.7) 100%
-  );
+  background: linear-gradient(to bottom,
+      rgba(28, 16, 8, 0.55) 0%,
+      rgba(28, 16, 8, 0.7) 100%);
   z-index: 0;
 }
 
@@ -102,7 +98,6 @@
   font-weight: 500;
 }
 
-/* Right form panel */
 .login-form-panel {
   flex: 1;
   display: flex;
@@ -125,6 +120,20 @@
   color: var(--color-muted);
   margin-bottom: 28px;
   font-size: 0.95rem;
+}
+
+.auth-page-top-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+  text-decoration: none;
+  margin-bottom: 32px;
+}
+
+.auth-page-top-link:hover {
+  color: var(--color-cta);
 }
 
 /* Shared form elements */
@@ -199,7 +208,6 @@
   color: var(--color-muted);
 }
 
-/* ===== Sign Up Page — uses card layout (no image panel) ===== */
 .signup-page {
   min-height: calc(100vh - 70px);
   display: flex;
@@ -226,7 +234,7 @@
 
   .login-image-panel {
     width: 100%;
-    min-height: 250px;
+    min-height: 300px;
   }
 
   .login-form-panel {
@@ -239,6 +247,12 @@
 
   .signup-card {
     padding: 32px 28px;
+  }
+}
+
+@media (max-width: 576px) {
+  .login-panel-stats {
+    flex-direction: column;
   }
 }
 
