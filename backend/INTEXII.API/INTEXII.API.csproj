@@ -16,6 +16,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.4" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.4" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.4">
       <PrivateAssets>all</PrivateAssets>
@@ -23,9 +24,8 @@
     </PackageReference>
     <PackageReference Include="Scalar.AspNetCore" Version="2.13.20" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.7" />
-    <!-- LOCAL DEV: SQLite (INTEXIIdb.sqlite) — already included via Microsoft.EntityFrameworkCore.Sqlite above -->
-    <!-- AZURE PRODUCTION: Uncomment SqlServer, remove Sqlite, swap UseSqlite → UseSqlServer in Program.cs -->
-    <!-- <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.4" /> -->
+    <!-- LOCAL DEV: SQLite (INTEXIIdb.sqlite) stays enabled for local workflows -->
+    <!-- AZURE PRODUCTION: Use SQL Server by setting ConnectionStrings__* environment variables -->
   </ItemGroup>
 
 </Project>

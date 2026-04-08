@@ -21,7 +21,11 @@ export interface ManagedProfile {
     displayName: string;
 }
 
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '';
+const configuredApiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
+const apiBaseUrl =
+    configuredApiBaseUrl && configuredApiBaseUrl.length > 0
+        ? configuredApiBaseUrl.replace(/\/$/, '')
+        : 'https://intexii-backend.azurewebsites.net';
 
 async function readApiError(
     response: Response,

@@ -4,6 +4,7 @@ using INTEXII.API.Data;
 using INTEXII.API.Data.Models;
 using INTEXII.API.Infrastructure;
 using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Scalar.AspNetCore;
 using Swashbuckle.AspNetCore.SwaggerUI;
 using System.Text.Json;
@@ -38,18 +39,28 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1", new() { Title = "INTEXII API", Version = "v1" });
 });
 
-// Identity database (SQLite — local and Azure deployment)
-// VIDEO NOTE: Show INTEXII.Identity.sqlite was created by EF migration.
+var identityConnectionString = builder.Configuration.GetConnectionString("IdentityConnection")
+    ?? throw new InvalidOperationException("Connection string 'IdentityConnection' was not found.");
+var intexConnectionString = builder.Configuration.GetConnectionString("IntexConnection")
+    ?? throw new InvalidOperationException("Connection string 'IntexConnection' was not found.");
+
+// Identity database
+// Local development keeps SQLite by default; Azure can use SQL Server by setting
+// ConnectionStrings__IdentityConnection to a SQL Server style connection string.
 builder.Services.AddDbContext<AuthIdentityDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("IdentityConnection")));
+{
+    ConfigureDbProvider(options, identityConnectionString);
+    options.ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning));
+});
 
 // Operational database
 // Local dev: SQLite (INTEXIIdb.sqlite)
-// Azure production: swap to SqlServer — change connection string + swap UseSqlite → UseSqlServer
-// VIDEO NOTE: Show the connection string in appsettings.json points to the local SQLite file.
-// On Azure, set the IntexConnection App Service env variable to the Azure SQL connection string.
+// Azure production: use SQL Server by setting ConnectionStrings__IntexConnection.
 builder.Services.AddDbContext<IntexDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("IntexConnection")));
+{
+    ConfigureDbProvider(options, intexConnectionString);
+    options.ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning));
+});
 
 // ASP.NET Identity with role support, backed by the identity SQLite DB
 builder.Services.AddIdentityApiEndpoints<ApplicationUser>()
@@ -271,4 +282,38 @@ static bool IsConfiguredValue(string? value)
     }
 
     return !value.StartsWith("YOUR_", StringComparison.OrdinalIgnoreCase);
+}
+
+static void ConfigureDbProvider(DbContextOptionsBuilder options, string connectionString)
+{
+    if (LooksLikeSqlite(connectionString))
+    {
+        options.UseSqlite(connectionString);
+        return;
+    }
+
+    options.UseSqlServer(connectionString, sqlOptions =>
+    {
+        sqlOptions.EnableRetryOnFailure(
+            maxRetryCount: 5,
+            maxRetryDelay: TimeSpan.FromSeconds(10),
+            errorNumbersToAdd: null);
+    });
+}
+
+static bool LooksLikeSqlite(string connectionString)
+{
+    if (connectionString.Contains("Server=", StringComparison.OrdinalIgnoreCase)
+        || connectionString.Contains("Initial Catalog=", StringComparison.OrdinalIgnoreCase)
+        || connectionString.Contains("Database=", StringComparison.OrdinalIgnoreCase)
+        || connectionString.Contains("Encrypt=", StringComparison.OrdinalIgnoreCase)
+        || connectionString.Contains("TrustServerCertificate=", StringComparison.OrdinalIgnoreCase))
+    {
+        return false;
+    }
+
+    return connectionString.Contains(".sqlite", StringComparison.OrdinalIgnoreCase)
+        || connectionString.Contains("Filename=", StringComparison.OrdinalIgnoreCase)
+        || connectionString.EndsWith(".db", StringComparison.OrdinalIgnoreCase)
+        || connectionString.Contains("Data Source=", StringComparison.OrdinalIgnoreCase);
 }
