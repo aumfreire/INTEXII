@@ -20,7 +20,6 @@ import { useAuth } from '../context/useAuth';
 import { createMyDonation, getManagedProfile } from '../lib/authAPI';
 import { useLocation } from 'react-router-dom';
 import type { DonorDonationCreateRequest, RepeatDonationState } from '../types/DonationTypes';
-import heroMain from '../assets/haven/hero-main.webp';
 import '../styles/pages/donation.css';
 
 const donationHeroImageUrl =
