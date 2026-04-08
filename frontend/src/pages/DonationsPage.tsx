@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, ChevronLeft, ChevronRight, Filter, Search, RefreshCw } from 'lucide-react';
 import AlertBanner from '../components/ui/AlertBanner';
 import { formatCurrency } from '../lib/formatters';
 import { getMyDonations } from '../lib/authAPI';
-import type { DonationRecord, RepeatDonationState } from '../types/Donation';
+import type { DonationRecord, RepeatDonationState } from '../types/DonationTypes';
 
 export default function DonationsPage() {
     const navigate = useNavigate();
@@ -14,58 +14,43 @@ export default function DonationsPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [pageSize, setPageSize] = useState(10);
     const [page, setPage] = useState(1);
+    const [totalCount, setTotalCount] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
+
+    const loadDonations = useCallback(async () => {
+        setIsLoading(true);
+        setErrorMessage('');
+
+        try {
+            const response = await getMyDonations({
+                page,
+                pageSize,
+                search: searchTerm,
+            });
+
+            setDonations(response.items);
+            setTotalCount(response.totalCount);
+            setTotalPages(response.totalPages);
+        } catch (error) {
+            setErrorMessage(
+                error instanceof Error ? error.message : 'Unable to load donation history.'
+            );
+        } finally {
+            setIsLoading(false);
+        }
+    }, [page, pageSize, searchTerm]);
 
     useEffect(() => {
-        const loadDonations = async () => {
-            setIsLoading(true);
-            setErrorMessage('');
-
-            try {
-                const response = await getMyDonations();
-                setDonations(response);
-            } catch (error) {
-                setErrorMessage(
-                    error instanceof Error ? error.message : 'Unable to load donation history.'
-                );
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
         void loadDonations();
-    }, []);
+    }, [loadDonations]);
 
     useEffect(() => {
         setPage(1);
     }, [searchTerm, pageSize]);
 
-    const filteredDonations = useMemo(() => {
-        const term = searchTerm.trim().toLowerCase();
-
-        if (!term) {
-            return donations;
-        }
-
-        return donations.filter((donation) => {
-            const searchable = [
-                donation.donationType,
-                donation.campaignName,
-                donation.channelSource,
-                donation.notes,
-                donation.currencyCode,
-            ]
-                .filter(Boolean)
-                .join(' ')
-                .toLowerCase();
-
-            return searchable.includes(term);
-        });
-    }, [donations, searchTerm]);
-
-    const totalPages = Math.max(1, Math.ceil(filteredDonations.length / pageSize));
-    const currentPage = Math.min(page, totalPages);
-    const startIndex = (currentPage - 1) * pageSize;
-    const visibleDonations = filteredDonations.slice(startIndex, startIndex + pageSize);
+    const currentPage = totalPages === 0 ? 0 : Math.min(page, totalPages);
+    const visibleDonations = donations;
+    const startIndex = currentPage === 0 ? 0 : (currentPage - 1) * pageSize;
 
     const handleRepeatDonation = (donation: DonationRecord) => {
         const repeatState: RepeatDonationState = {
@@ -199,8 +184,8 @@ export default function DonationsPage() {
 
                 <div className="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mt-3">
                     <div className="text-muted small">
-                        Showing {filteredDonations.length === 0 ? 0 : startIndex + 1} to{' '}
-                        {Math.min(startIndex + pageSize, filteredDonations.length)} of {filteredDonations.length}
+                        Showing {totalCount === 0 ? 0 : startIndex + 1} to{' '}
+                        {Math.min(startIndex + pageSize, totalCount)} of {totalCount}
                     </div>
 
                     <nav aria-label="Donation pagination">

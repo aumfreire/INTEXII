@@ -6,11 +6,13 @@ using INTEXII.API.Infrastructure;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Data.SqlClient;
 using Scalar.AspNetCore;
 using Swashbuckle.AspNetCore.SwaggerUI;
 using Microsoft.IdentityModel.Tokens;
 using System.Text.Json;
 using System.Text;
+using System.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,6 +29,20 @@ if (builder.Environment.IsDevelopment())
 const string FrontendCorsPolicy = "FrontendClient";
 const string DefaultFrontendUrl = "http://localhost:3000";
 var frontendUrl = builder.Configuration["FrontendUrl"] ?? DefaultFrontendUrl;
+var frontendUrlsRaw = builder.Configuration["FrontendUrls"];
+var allowedFrontendOrigins = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+allowedFrontendOrigins.Add(NormalizeOrigin(frontendUrl));
+
+if (!string.IsNullOrWhiteSpace(frontendUrlsRaw))
+{
+    foreach (var candidate in frontendUrlsRaw.Split(',', ';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+    {
+        allowedFrontendOrigins.Add(NormalizeOrigin(candidate));
+    }
+}
+
+allowedFrontendOrigins.RemoveWhere(string.IsNullOrWhiteSpace);
 var googleClientId = builder.Configuration["Authentication:Google:ClientId"];
 var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
 var hasGoogleCredentials = IsConfiguredValue(googleClientId) && IsConfiguredValue(googleClientSecret);
@@ -176,7 +192,8 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy(FrontendCorsPolicy, policy =>
     {
-        policy.WithOrigins(frontendUrl)
+        policy.SetIsOriginAllowed(origin =>
+            IsAllowedFrontendOrigin(origin, allowedFrontendOrigins))
             .AllowCredentials()
             .AllowAnyMethod()
             .AllowAnyHeader();
@@ -188,6 +205,32 @@ builder.Services.AddCors(options =>
 // -----------------------------------------------------------------------
 
 var app = builder.Build();
+
+// Ensure database schemas are up to date before any seed logic runs.
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var identityDb = services.GetRequiredService<AuthIdentityDbContext>();
+    var intexDb = services.GetRequiredService<IntexDbContext>();
+
+    await MigrateWithSqlServerBaselineAsync(
+        identityDb,
+        markerTable: "AspNetUsers",
+        baselineMigrations:
+        [
+            "20260406221451_InitialIdentity",
+            "20260408031748_SyncAuthIdentitySchema"
+        ]);
+
+    await MigrateWithSqlServerBaselineAsync(
+        intexDb,
+        markerTable: "partners",
+        baselineMigrations:
+        [
+            "20260408023150_InitialIntexSchema",
+            "20260408031855_SyncIntexSqlServerModel"
+        ]);
+}
 
 // Seed identity: create roles (Admin, Donor) and default admin user
 using (var scope = app.Services.CreateScope())
@@ -366,4 +409,108 @@ static bool LooksLikeSqlite(string connectionString)
         || connectionString.Contains("Filename=", StringComparison.OrdinalIgnoreCase)
         || connectionString.EndsWith(".db", StringComparison.OrdinalIgnoreCase)
         || connectionString.Contains("Data Source=", StringComparison.OrdinalIgnoreCase);
+}
+
+static bool IsAllowedFrontendOrigin(string? origin, HashSet<string> allowedFrontendOrigins)
+{
+    if (string.IsNullOrWhiteSpace(origin))
+    {
+        return false;
+    }
+
+    var normalizedOrigin = NormalizeOrigin(origin);
+    if (allowedFrontendOrigins.Contains(normalizedOrigin))
+    {
+        return true;
+    }
+
+    if (!Uri.TryCreate(normalizedOrigin, UriKind.Absolute, out var uri))
+    {
+        return false;
+    }
+
+    // Permit Azure Static Web Apps default and preview domains.
+    return uri.Host.EndsWith(".azurestaticapps.net", StringComparison.OrdinalIgnoreCase);
+}
+
+static string NormalizeOrigin(string origin)
+{
+    if (string.IsNullOrWhiteSpace(origin))
+    {
+        return string.Empty;
+    }
+
+    return origin.Trim().TrimEnd('/');
+}
+
+static async Task MigrateWithSqlServerBaselineAsync(
+    DbContext db,
+    string markerTable,
+    IReadOnlyList<string> baselineMigrations)
+{
+    try
+    {
+        await db.Database.MigrateAsync();
+    }
+    catch (SqlException ex) when (
+        db.Database.IsSqlServer()
+        && ex.Number == 2714
+        && ex.Message.Contains("already an object named", StringComparison.OrdinalIgnoreCase))
+    {
+        await EnsureMigrationHistoryBaselineAsync(db, markerTable, baselineMigrations);
+        await db.Database.MigrateAsync();
+    }
+}
+
+static async Task EnsureMigrationHistoryBaselineAsync(
+    DbContext db,
+    string markerTable,
+    IReadOnlyList<string> baselineMigrations)
+{
+    if (!db.Database.IsSqlServer())
+    {
+        return;
+    }
+
+    var fullMarkerTableName = $"[dbo].[{markerTable}]";
+    var connection = db.Database.GetDbConnection();
+    var shouldCloseConnection = connection.State != ConnectionState.Open;
+
+    if (shouldCloseConnection)
+    {
+        await connection.OpenAsync();
+    }
+
+    int markerTableExists;
+    await using (var command = connection.CreateCommand())
+    {
+        command.CommandText = "SELECT CASE WHEN OBJECT_ID(@tableName, N'U') IS NULL THEN 0 ELSE 1 END;";
+        var parameter = command.CreateParameter();
+        parameter.ParameterName = "@tableName";
+        parameter.Value = fullMarkerTableName;
+        command.Parameters.Add(parameter);
+
+        markerTableExists = Convert.ToInt32(await command.ExecuteScalarAsync());
+    }
+
+    if (shouldCloseConnection)
+    {
+        await connection.CloseAsync();
+    }
+
+    if (markerTableExists == 0)
+    {
+        return;
+    }
+
+    await db.Database.ExecuteSqlRawAsync(
+        "IF OBJECT_ID(N'[dbo].[__EFMigrationsHistory]', N'U') IS NULL " +
+        "BEGIN CREATE TABLE [dbo].[__EFMigrationsHistory] ([MigrationId] nvarchar(150) NOT NULL, [ProductVersion] nvarchar(32) NOT NULL, CONSTRAINT [PK___EFMigrationsHistory] PRIMARY KEY ([MigrationId])); END;");
+
+    foreach (var migrationId in baselineMigrations)
+    {
+        const string productVersion = "10.0.0";
+        await db.Database.ExecuteSqlAsync(
+            $"IF NOT EXISTS (SELECT 1 FROM [dbo].[__EFMigrationsHistory] WHERE [MigrationId] = {migrationId}) BEGIN INSERT INTO [dbo].[__EFMigrationsHistory] ([MigrationId], [ProductVersion]) VALUES ({migrationId}, {productVersion}); END;");
+    }
 }

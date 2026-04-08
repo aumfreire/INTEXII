@@ -23,6 +23,7 @@ import DonationsPage from './pages/DonationsPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import EditProfilePage from './pages/EditProfilePage';
 import AdminUsersPage from './pages/AdminUsersPage';
+import AdminDonationsPage from './pages/AdminDonationsPage';
 import CookieConsentBanner from './components/CookieConsentBanner';
 import CookiePolicyPage from './pages/CookiePolicyPage';
 import AuthCallbackPage from './pages/AuthCallbackPage';
@@ -135,6 +136,14 @@ function App() {
                   element={
                     <RequireAuth adminOnly>
                       <AdminUsersPage />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/admin/donations"
+                  element={
+                    <RequireAuth adminOnly>
+                      <AdminDonationsPage />
                     </RequireAuth>
                   }
                 />

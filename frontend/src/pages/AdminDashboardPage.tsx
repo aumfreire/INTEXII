@@ -38,7 +38,11 @@ export default function AdminDashboardPage() {
     }, []);
 
     useEffect(() => {
-        void loadMetrics();
+        const timer = window.setTimeout(() => {
+            void loadMetrics();
+        }, 0);
+
+        return () => window.clearTimeout(timer);
     }, [loadMetrics]);
 
     return (
@@ -54,6 +58,9 @@ export default function AdminDashboardPage() {
                     <div className="d-flex gap-2 flex-wrap">
                         <Link to="/admin/users" className="btn btn-primary">
                             Manage Users
+                        </Link>
+                        <Link to="/admin/donations" className="btn btn-outline-primary">
+                            Manage Donations
                         </Link>
                         <Link to="/dashboard" className="btn btn-outline-secondary">
                             Back to My Dashboard

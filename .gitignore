@@ -52,3 +52,8 @@ coverage/
 TestResults/
 *.coverage
 *.coveragexml
+
+# ----- Local deployment/debug artifacts -----
+.backup/
+backend/INTEXII.API/publish/
+backend/INTEXII.API/backend-deploy.zip

@@ -1,15 +1,50 @@
 import { useEffect, useRef, useState } from 'react';
 import { NavLink, Link } from 'react-router-dom';
-import { Menu, X, Heart, ChevronDown } from 'lucide-react';
+import {
+    Menu,
+    X,
+    Heart,
+    ChevronDown,
+    LayoutDashboard,
+    Settings,
+    ShieldCheck,
+    HandCoins,
+    LogOut,
+} from 'lucide-react';
 import { useAuth } from '../../context/useAuth';
 
 export default function Navbar() {
     const [isOpen, setIsOpen] = useState(false);
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const userMenuRef = useRef<HTMLDivElement | null>(null);
+    const closeMenuTimeoutRef = useRef<number | null>(null);
     const { authSession, isAuthenticated, isLoading } = useAuth();
     const isAdmin = authSession.roles.includes('Admin');
     const displayName = authSession.displayName ?? authSession.userName ?? authSession.email ?? 'User';
+
+    const clearMenuCloseTimeout = () => {
+        if (closeMenuTimeoutRef.current !== null) {
+            window.clearTimeout(closeMenuTimeoutRef.current);
+            closeMenuTimeoutRef.current = null;
+        }
+    };
+
+    const openUserMenu = () => {
+        if (!isAdmin) {
+            clearMenuCloseTimeout();
+            setIsUserMenuOpen(true);
+        } else {
+            clearMenuCloseTimeout();
+            setIsUserMenuOpen(true);
+        }
+    };
+
+    const scheduleUserMenuClose = () => {
+        clearMenuCloseTimeout();
+        closeMenuTimeoutRef.current = window.setTimeout(() => {
+            setIsUserMenuOpen(false);
+        }, 120);
+    };
 
     const navLinkStyle = ({
         isActive,
@@ -26,9 +61,16 @@ export default function Navbar() {
     });
 
     const closeMenus = () => {
+        clearMenuCloseTimeout();
         setIsOpen(false);
         setIsUserMenuOpen(false);
     };
+
+    useEffect(() => {
+        return () => {
+            clearMenuCloseTimeout();
+        };
+    }, []);
 
     useEffect(() => {
         if (!isUserMenuOpen) {
@@ -124,95 +166,122 @@ export default function Navbar() {
                             </NavLink>
                         ) : null}
                         {!isLoading && isAuthenticated ? (
-                            <div ref={userMenuRef} style={{ position: 'relative', marginLeft: '8px' }}>
-                                <button
-                                    type="button"
-                                    onClick={() => setIsUserMenuOpen((prev) => !prev)}
+                            <div
+                                ref={userMenuRef}
+                                style={{ position: 'relative', marginLeft: '8px' }}
+                                onMouseEnter={() => {
+                                    clearMenuCloseTimeout();
+                                    setIsUserMenuOpen(true);
+                                }}
+                                onMouseLeave={scheduleUserMenuClose}
+                            >
+                                <Link
+                                    to="/dashboard"
+                                    onClick={closeMenus}
+                                    onFocus={openUserMenu}
                                     style={{
                                         display: 'inline-flex',
                                         alignItems: 'center',
                                         gap: '8px',
-                                        border: '1px solid var(--color-light-gray)',
-                                        backgroundColor: 'var(--color-white)',
+                                        border: '1px solid rgba(58, 63, 59, 0.16)',
+                                        background:
+                                            'linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(248,244,236,0.98) 100%)',
                                         color: 'var(--color-charcoal)',
-                                        borderRadius: 'var(--radius-sm)',
-                                        padding: '8px 12px',
+                                        borderRadius: '999px',
+                                        padding: '9px 14px',
                                         fontSize: '0.9rem',
-                                        fontWeight: 600,
+                                        fontWeight: 700,
+                                        boxShadow: '0 8px 16px rgba(0,0,0,0.06)',
+                                        textDecoration: 'none',
+                                        transition: 'transform var(--transition-fast), box-shadow var(--transition-fast)',
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.transform = 'translateY(-1px)';
+                                        e.currentTarget.style.boxShadow = '0 10px 18px rgba(0,0,0,0.08)';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.transform = 'translateY(0)';
+                                        e.currentTarget.style.boxShadow = '0 8px 16px rgba(0,0,0,0.06)';
                                     }}
                                 >
-                                    Hello, {displayName}
-                                    <ChevronDown size={16} />
-                                </button>
+                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                                        <span style={{ maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                            {displayName}
+                                        </span>
+                                        <ChevronDown size={15} />
+                                    </span>
+                                </Link>
                                 {isUserMenuOpen ? (
                                     <div
                                         style={{
                                             position: 'absolute',
-                                            top: '110%',
+                                            top: 'calc(100% + 10px)',
                                             right: 0,
-                                            minWidth: '220px',
-                                            backgroundColor: 'var(--color-white)',
-                                            border: '1px solid var(--color-light-gray)',
-                                            borderRadius: 'var(--radius-sm)',
-                                            boxShadow: 'var(--shadow-md)',
-                                            padding: '8px',
+                                            minWidth: '280px',
+                                            background:
+                                                'linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(252,249,243,0.98) 100%)',
+                                            border: '1px solid rgba(58, 63, 59, 0.12)',
+                                            borderRadius: '18px',
+                                            boxShadow: '0 20px 40px rgba(25, 31, 28, 0.14)',
+                                            padding: '12px',
                                             zIndex: 2000,
                                         }}
                                     >
-                                        <Link
-                                            to="/dashboard"
-                                            onClick={() => setIsUserMenuOpen(false)}
-                                            style={{
-                                                display: 'block',
-                                                textDecoration: 'none',
-                                                color: 'var(--color-charcoal)',
-                                                padding: '8px 10px',
-                                                borderRadius: 'var(--radius-sm)',
-                                            }}
-                                        >
-                                            My Dashboard
-                                        </Link>
-                                        <Link
-                                            to="/profile"
-                                            onClick={() => setIsUserMenuOpen(false)}
-                                            style={{
-                                                display: 'block',
-                                                textDecoration: 'none',
-                                                color: 'var(--color-charcoal)',
-                                                padding: '8px 10px',
-                                                borderRadius: 'var(--radius-sm)',
-                                            }}
-                                        >
-                                            Edit Profile
-                                        </Link>
+                                        <div style={{ padding: '4px 8px 10px' }}>
+                                            <div style={{ fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--color-muted)' }}>
+                                                Account
+                                            </div>
+                                            <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--color-charcoal)', marginTop: '4px' }}>
+                                                {displayName}
+                                            </div>
+                                        </div>
+
+                                        <div style={{ borderTop: '1px solid rgba(58, 63, 59, 0.10)', margin: '8px 0' }} />
+
+                                        <div style={{ display: 'grid', gap: '4px' }}>
+                                            <MenuLink to="/dashboard" icon={LayoutDashboard} label="My Dashboard" description="Overview and quick actions" onClick={closeMenus} />
+                                            <MenuLink to="/profile" icon={Settings} label="Edit Profile" description="Update personal details" onClick={closeMenus} />
+                                        </div>
+
                                         {isAdmin ? (
-                                            <Link
-                                                to="/admin"
-                                                onClick={() => setIsUserMenuOpen(false)}
-                                                style={{
-                                                    display: 'block',
-                                                    textDecoration: 'none',
-                                                    color: 'var(--color-charcoal)',
-                                                    padding: '8px 10px',
-                                                    borderRadius: 'var(--radius-sm)',
-                                                }}
-                                            >
-                                                Admin Dashboard
-                                            </Link>
+                                            <>
+                                                <div style={{ borderTop: '1px solid rgba(58, 63, 59, 0.10)', margin: '10px 0' }} />
+                                                <div style={{ padding: '0 8px 8px', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--color-muted)' }}>
+                                                    Admin Tools
+                                                </div>
+                                                <div style={{ display: 'grid', gap: '4px' }}>
+                                                    <MenuLink to="/admin" icon={ShieldCheck} label="Admin Dashboard" description="User management and metrics" onClick={closeMenus} />
+                                                    <MenuLink to="/admin/donations" icon={HandCoins} label="Manage Donations" description="Review and edit donation records" onClick={closeMenus} />
+                                                </div>
+                                            </>
                                         ) : null}
+
+                                        <div style={{ borderTop: '1px solid rgba(58, 63, 59, 0.12)', margin: '10px 0 8px' }} />
+
                                         <Link
                                             to="/logout"
-                                            onClick={() => setIsUserMenuOpen(false)}
+                                            onClick={closeMenus}
                                             style={{
-                                                display: 'block',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '12px',
                                                 textDecoration: 'none',
-                                                color: 'var(--color-cta)',
-                                                padding: '8px 10px',
-                                                borderRadius: 'var(--radius-sm)',
-                                                fontWeight: 600,
+                                                color: '#9d2f21',
+                                                padding: '12px 12px',
+                                                borderRadius: '14px',
+                                                background: 'rgba(193, 96, 58, 0.10)',
+                                                fontWeight: 800,
                                             }}
                                         >
-                                            Logout
+                                            <span style={{ width: '32px', height: '32px', borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(157, 47, 33, 0.12)', flexShrink: 0 }}>
+                                                <LogOut size={16} />
+                                            </span>
+                                            <span>
+                                                <span style={{ display: 'block' }}>Logout</span>
+                                                <span style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'rgba(157, 47, 33, 0.78)' }}>
+                                                    End your session securely
+                                                </span>
+                                            </span>
                                         </Link>
                                     </div>
                                 ) : null}
@@ -326,36 +395,43 @@ export default function Navbar() {
                                 >
                                     Hello, {displayName}
                                 </div>
-                                <NavLink
-                                    to="/dashboard"
-                                    style={navLinkStyle}
-                                    onClick={() => setIsOpen(false)}
-                                >
-                                    My Dashboard
-                                </NavLink>
-                                <NavLink
-                                    to="/profile"
-                                    style={navLinkStyle}
-                                    onClick={() => setIsOpen(false)}
-                                >
-                                    Edit Profile
-                                </NavLink>
+                                <MobileMenuSection title="Account">
+                                    <MobileMenuLink to="/dashboard" icon={LayoutDashboard} label="My Dashboard" description="Overview and quick actions" onClick={closeMenus} />
+                                    <MobileMenuLink to="/profile" icon={Settings} label="Edit Profile" description="Update personal details" onClick={closeMenus} />
+                                </MobileMenuSection>
                                 {isAdmin ? (
-                                    <NavLink
-                                        to="/admin"
-                                        style={navLinkStyle}
-                                        onClick={() => setIsOpen(false)}
-                                    >
-                                        Admin Dashboard
-                                    </NavLink>
+                                    <MobileMenuSection title="Admin Tools">
+                                        <MobileMenuLink to="/admin" icon={ShieldCheck} label="Admin Dashboard" description="User management and metrics" onClick={closeMenus} />
+                                        <MobileMenuLink to="/admin/donations" icon={HandCoins} label="Manage Donations" description="Review and edit donation records" onClick={closeMenus} />
+                                    </MobileMenuSection>
                                 ) : null}
-                                <NavLink
+                                <Link
                                     to="/logout"
-                                    style={navLinkStyle}
-                                    onClick={() => setIsOpen(false)}
+                                    onClick={closeMenus}
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '12px',
+                                        textDecoration: 'none',
+                                        color: '#9d2f21',
+                                        padding: '12px 16px',
+                                        borderRadius: '16px',
+                                        background: 'rgba(193, 96, 58, 0.10)',
+                                        fontWeight: 800,
+                                        marginTop: '8px',
+                                        border: '1px solid rgba(157, 47, 33, 0.10)',
+                                    }}
                                 >
-                                    Logout
-                                </NavLink>
+                                    <span style={{ width: '32px', height: '32px', borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(157, 47, 33, 0.12)', flexShrink: 0 }}>
+                                        <LogOut size={16} />
+                                    </span>
+                                    <span>
+                                        <span style={{ display: 'block' }}>Logout</span>
+                                        <span style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'rgba(157, 47, 33, 0.78)' }}>
+                                            End your session securely
+                                        </span>
+                                    </span>
+                                </Link>
                             </>
                         ) : null}
                         <Link
@@ -386,5 +462,104 @@ export default function Navbar() {
                 )}
             </div>
         </nav>
+    );
+}
+
+function MenuLink({
+    to,
+    icon: Icon,
+    label,
+    description,
+    onClick,
+}: {
+    to: string;
+    icon: typeof LayoutDashboard;
+    label: string;
+    description: string;
+    onClick: () => void;
+}) {
+    return (
+        <Link
+            to={to}
+            onClick={onClick}
+            style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                textDecoration: 'none',
+                color: 'var(--color-charcoal)',
+                padding: '12px 12px',
+                borderRadius: '14px',
+                transition: 'background-color var(--transition-fast), transform var(--transition-fast)',
+            }}
+            onMouseEnter={(event) => {
+                event.currentTarget.style.backgroundColor = 'rgba(193, 96, 58, 0.08)';
+                event.currentTarget.style.transform = 'translateX(2px)';
+            }}
+            onMouseLeave={(event) => {
+                event.currentTarget.style.backgroundColor = 'transparent';
+                event.currentTarget.style.transform = 'translateX(0)';
+            }}
+        >
+            <span style={{ width: '36px', height: '36px', borderRadius: '12px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(180deg, rgba(193,96,58,0.12), rgba(171,85,58,0.06))', color: 'var(--color-cta)', flexShrink: 0 }}>
+                <Icon size={18} />
+            </span>
+            <span style={{ minWidth: 0 }}>
+                <span style={{ display: 'block', fontWeight: 700, lineHeight: 1.2 }}>{label}</span>
+                <span style={{ display: 'block', fontSize: '0.82rem', color: 'var(--color-muted)', lineHeight: 1.35 }}>{description}</span>
+            </span>
+        </Link>
+    );
+}
+
+function MobileMenuSection({ title, children }: { title: string; children: React.ReactNode }) {
+    return (
+        <div style={{ marginTop: '10px' }}>
+            <div style={{ padding: '6px 16px 10px', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--color-muted)' }}>
+                {title}
+            </div>
+            <div style={{ display: 'grid', gap: '4px' }}>{children}</div>
+            <div style={{ margin: '12px 16px 0', borderTop: '1px solid rgba(58, 63, 59, 0.10)' }} />
+        </div>
+    );
+}
+
+function MobileMenuLink({
+    to,
+    icon: Icon,
+    label,
+    description,
+    onClick,
+}: {
+    to: string;
+    icon: typeof LayoutDashboard;
+    label: string;
+    description: string;
+    onClick: () => void;
+}) {
+    return (
+        <Link
+            to={to}
+            onClick={onClick}
+            style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                textDecoration: 'none',
+                color: 'var(--color-charcoal)',
+                padding: '12px 16px',
+                borderRadius: '16px',
+                background: 'rgba(255,255,255,0.8)',
+                border: '1px solid rgba(58, 63, 59, 0.08)',
+            }}
+        >
+            <span style={{ width: '36px', height: '36px', borderRadius: '12px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(180deg, rgba(193,96,58,0.12), rgba(171,85,58,0.06))', color: 'var(--color-cta)', flexShrink: 0 }}>
+                <Icon size={18} />
+            </span>
+            <span style={{ minWidth: 0 }}>
+                <span style={{ display: 'block', fontWeight: 700, lineHeight: 1.2 }}>{label}</span>
+                <span style={{ display: 'block', fontSize: '0.82rem', color: 'var(--color-muted)', lineHeight: 1.35 }}>{description}</span>
+            </span>
+        </Link>
     );
 }

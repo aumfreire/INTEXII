@@ -612,7 +612,17 @@ export default function AdminUsersPage() {
                                     </div>
 
                                     <div className="border rounded-3 p-2 mb-3">
-                                        <div className="fw-semibold mb-2">Recent Donations</div>
+                                        <div className="d-flex justify-content-between align-items-center gap-2 mb-2">
+                                            <div className="fw-semibold">Recent Donations</div>
+                                            {selectedUser.supporter?.supporterId && selectedUser.donationSummary.totalDonationCount > selectedUser.recentDonations.length ? (
+                                                <Link
+                                                    to={`/admin/donations?supporterId=${selectedUser.supporter.supporterId}&supporterName=${encodeURIComponent(selectedUser.supporter.displayName ?? selectedUser.preferredDisplayName)}`}
+                                                    className="btn btn-outline-primary btn-sm"
+                                                >
+                                                    View full history
+                                                </Link>
+                                            ) : null}
+                                        </div>
                                         {selectedUser.recentDonations.length === 0 ? (
                                             <div className="small text-muted">No donation history linked to this supporter.</div>
                                         ) : (
