@@ -1,18 +1,18 @@
 import { Link } from 'react-router-dom';
-import { Heart, Globe, MessageCircle, Camera, Mail, Phone, MapPin } from 'lucide-react';
+import { Shield, Globe, MessageCircle, Camera, Play, Mail, Phone, MapPin } from 'lucide-react';
 
 export default function Footer() {
   return (
     <footer
       style={{
-        backgroundColor: 'var(--color-charcoal)',
+        backgroundColor: 'var(--color-dark)',
         color: 'rgba(255,255,255,0.8)',
         padding: '60px 0 0',
       }}
     >
       <div className="container" style={{ padding: '0 24px' }}>
         <div className="row g-4">
-          {/* Mission */}
+          {/* Brand & Mission */}
           <div className="col-lg-4 col-md-6">
             <div
               style={{
@@ -22,10 +22,10 @@ export default function Footer() {
                 marginBottom: '16px',
               }}
             >
-              <Heart
+              <Shield
                 size={24}
-                style={{ color: 'var(--color-rose-accent)' }}
-                fill="var(--color-rose-accent)"
+                style={{ color: 'var(--color-primary)' }}
+                fill="var(--color-primary)"
               />
               <span
                 style={{
@@ -35,7 +35,7 @@ export default function Footer() {
                   color: 'var(--color-white)',
                 }}
               >
-                Haven of Hope
+                Haven
               </span>
             </div>
             <p
@@ -45,12 +45,46 @@ export default function Footer() {
                 maxWidth: '320px',
               }}
             >
-              Dedicated to helping vulnerable girls find safety, healing, and a
-              future full of possibility. Together, we create lasting change.
+              Protecting, supporting, healing, and empowering vulnerable girls
+              — because every girl deserves to be safe, seen, and free.
             </p>
+            <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
+              {[Globe, MessageCircle, Camera, Play].map((Icon, i) => (
+                <a
+                  key={i}
+                  href="#"
+                  aria-label="Social link"
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '50%',
+                    backgroundColor: 'rgba(255,255,255,0.1)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'rgba(255,255,255,0.7)',
+                    transition:
+                      'background-color var(--transition-fast), color var(--transition-fast)',
+                    textDecoration: 'none',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor =
+                      'var(--color-primary)';
+                    e.currentTarget.style.color = 'var(--color-white)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor =
+                      'rgba(255,255,255,0.1)';
+                    e.currentTarget.style.color = 'rgba(255,255,255,0.7)';
+                  }}
+                >
+                  <Icon size={16} />
+                </a>
+              ))}
+            </div>
           </div>
 
-          {/* Quick Links */}
+          {/* Organization */}
           <div className="col-lg-2 col-md-6">
             <h4
               style={{
@@ -61,7 +95,56 @@ export default function Footer() {
                 fontFamily: 'var(--font-body)',
               }}
             >
-              Quick Links
+              Organization
+            </h4>
+            <ul
+              style={{
+                listStyle: 'none',
+                padding: 0,
+                margin: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '10px',
+              }}
+            >
+              {['About Us', 'Our Team', 'Careers', 'Financials', 'Annual Report'].map(
+                (label) => (
+                  <li key={label}>
+                    <a
+                      href="#"
+                      style={{
+                        color: 'rgba(255,255,255,0.7)',
+                        textDecoration: 'none',
+                        fontSize: '0.9rem',
+                        transition: 'color var(--transition-fast)',
+                      }}
+                      onMouseEnter={(e) =>
+                        (e.currentTarget.style.color = 'var(--color-primary-light)')
+                      }
+                      onMouseLeave={(e) =>
+                        (e.currentTarget.style.color = 'rgba(255,255,255,0.7)')
+                      }
+                    >
+                      {label}
+                    </a>
+                  </li>
+                )
+              )}
+            </ul>
+          </div>
+
+          {/* Get Involved */}
+          <div className="col-lg-2 col-md-6">
+            <h4
+              style={{
+                color: 'var(--color-white)',
+                fontSize: '1rem',
+                fontWeight: 600,
+                marginBottom: '16px',
+                fontFamily: 'var(--font-body)',
+              }}
+            >
+              Get Involved
             </h4>
             <ul
               style={{
@@ -74,11 +157,13 @@ export default function Footer() {
               }}
             >
               {[
-                { to: '/', label: 'Home' },
                 { to: '/donate', label: 'Donate' },
-                { to: '/login', label: 'Login' },
+                { to: '#', label: 'Volunteer' },
+                { to: '#', label: 'Fundraise for Us' },
+                { to: '#', label: 'Corporate Partners' },
+                { to: '#', label: 'Share Our Story' },
               ].map(({ to, label }) => (
-                <li key={to}>
+                <li key={label}>
                   <Link
                     to={to}
                     style={{
@@ -88,7 +173,7 @@ export default function Footer() {
                       transition: 'color var(--transition-fast)',
                     }}
                     onMouseEnter={(e) =>
-                      (e.currentTarget.style.color = 'var(--color-rose-accent)')
+                      (e.currentTarget.style.color = 'var(--color-primary-light)')
                     }
                     onMouseLeave={(e) =>
                       (e.currentTarget.style.color = 'rgba(255,255,255,0.7)')
@@ -102,7 +187,7 @@ export default function Footer() {
           </div>
 
           {/* Contact */}
-          <div className="col-lg-3 col-md-6">
+          <div className="col-lg-4 col-md-6">
             <h4
               style={{
                 color: 'var(--color-white)',
@@ -124,65 +209,55 @@ export default function Footer() {
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <MapPin size={16} style={{ flexShrink: 0 }} />
-                <span>123 Hope Street, City, ST 00000</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Mail size={16} style={{ flexShrink: 0 }} />
-                <span>hello@havenofhope.org</span>
+                <span>123 Haven Way, Washington, DC 20001</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Phone size={16} style={{ flexShrink: 0 }} />
-                <span>(555) 123-4567</span>
+                <span>+1 (800) 555-HAVEN</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Mail size={16} style={{ flexShrink: 0 }} />
+                <span>hello@havenforgirls.org</span>
               </div>
             </div>
-          </div>
 
-          {/* Social */}
-          <div className="col-lg-3 col-md-6">
-            <h4
-              style={{
-                color: 'var(--color-white)',
-                fontSize: '1rem',
-                fontWeight: 600,
-                marginBottom: '16px',
-                fontFamily: 'var(--font-body)',
-              }}
-            >
-              Follow Us
-            </h4>
-            <div style={{ display: 'flex', gap: '12px' }}>
-              {[Globe, MessageCircle, Camera].map((Icon, i) => (
-                <a
-                  key={i}
-                  href="#"
-                  aria-label={Icon.displayName || 'Social link'}
+            {/* Newsletter signup */}
+            <div style={{ marginTop: '20px' }}>
+              <p style={{ fontSize: '0.85rem', marginBottom: '8px' }}>
+                Stay updated with our newsletter
+              </p>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input
+                  type="email"
+                  placeholder="Your email"
                   style={{
-                    width: '40px',
-                    height: '40px',
-                    borderRadius: '50%',
-                    backgroundColor: 'rgba(255,255,255,0.1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'rgba(255,255,255,0.7)',
-                    transition:
-                      'background-color var(--transition-fast), color var(--transition-fast)',
-                    textDecoration: 'none',
+                    flex: 1,
+                    padding: '8px 12px',
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    borderRadius: 'var(--radius-sm)',
+                    background: 'rgba(255,255,255,0.05)',
+                    color: 'var(--color-white)',
+                    fontSize: '0.85rem',
+                    fontFamily: 'var(--font-body)',
+                    outline: 'none',
                   }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor =
-                      'var(--color-rose-accent)';
-                    e.currentTarget.style.color = 'var(--color-white)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor =
-                      'rgba(255,255,255,0.1)';
-                    e.currentTarget.style.color = 'rgba(255,255,255,0.7)';
+                />
+                <button
+                  style={{
+                    padding: '8px 16px',
+                    backgroundColor: 'var(--color-primary-dark)',
+                    color: 'var(--color-white)',
+                    border: 'none',
+                    borderRadius: 'var(--radius-sm)',
+                    fontWeight: 600,
+                    fontSize: '0.85rem',
+                    cursor: 'pointer',
+                    fontFamily: 'var(--font-body)',
                   }}
                 >
-                  <Icon size={18} />
-                </a>
-              ))}
+                  Subscribe
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -199,7 +274,30 @@ export default function Footer() {
           color: 'rgba(255,255,255,0.5)',
         }}
       >
-        &copy; {new Date().getFullYear()} Haven of Hope. All rights reserved.
+        <div className="container">
+          &copy; {new Date().getFullYear()} Haven. All rights
+          reserved. A registered 501(c)(3) nonprofit organization.
+          <span style={{ margin: '0 12px' }}>|</span>
+          <a
+            href="#"
+            style={{
+              color: 'rgba(255,255,255,0.5)',
+              textDecoration: 'none',
+            }}
+          >
+            Privacy Policy
+          </a>
+          <span style={{ margin: '0 8px' }}>|</span>
+          <a
+            href="#"
+            style={{
+              color: 'rgba(255,255,255,0.5)',
+              textDecoration: 'none',
+            }}
+          >
+            Terms of Use
+          </a>
+        </div>
       </div>
     </footer>
   );

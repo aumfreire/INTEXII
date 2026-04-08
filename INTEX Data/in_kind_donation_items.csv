@@ -1,0 +1,130 @@
+item_id,donation_id,item_name,item_category,quantity,unit_of_measure,estimated_unit_value,intended_use,received_condition
+1,5,School Supplies,SchoolMaterials,10,sets,779.49,Health,New
+2,9,Bags,Food,16,packs,793.39,Shelter,Good
+3,13,Medicines,Supplies,12,sets,774.73,Health,Good
+4,15,Furniture,Medical,28,packs,318.23,Hygiene,New
+5,27,Medicines,Hygiene,15,boxes,385.34,Education,New
+6,30,Medicines,Food,13,kg,94.81,Health,Good
+7,30,Blankets,Supplies,24,packs,219.11,Hygiene,New
+8,39,Books,Clothing,24,sets,1123.96,Hygiene,Good
+9,43,Bags,SchoolMaterials,23,kg,931.92,Education,New
+10,43,Blankets,SchoolMaterials,15,sets,612.65,Hygiene,New
+11,44,Medicines,SchoolMaterials,5,boxes,1045.38,Education,New
+12,48,School Supplies,Furniture,17,boxes,45.13,Health,New
+13,48,Books,Medical,1,pcs,943.77,Education,Good
+14,51,Bags,Food,30,pcs,143.1,Health,New
+15,51,Books,Supplies,18,sets,1072.69,Meals,New
+16,60,Books,Hygiene,5,boxes,1195.2,Education,Fair
+17,61,Blankets,SchoolMaterials,28,kg,1109.97,Shelter,New
+18,65,School Supplies,Hygiene,27,pcs,1052.09,Hygiene,New
+19,68,Rice,Supplies,21,packs,396.55,Health,Good
+20,72,Books,Medical,1,packs,970.59,Hygiene,New
+21,74,Hygiene Kits,Clothing,16,pcs,849.56,Hygiene,New
+22,88,Medicines,Hygiene,1,packs,130.96,Health,New
+23,97,Bags,Furniture,10,pcs,15.65,Education,New
+24,103,Books,Hygiene,13,sets,276.74,Health,New
+25,104,Bags,Supplies,1,boxes,1114.27,Hygiene,New
+26,108,Uniforms,Medical,17,kg,186.35,Shelter,Good
+27,114,Books,Supplies,10,sets,1089.17,Meals,New
+28,115,Uniforms,SchoolMaterials,29,pcs,786.43,Shelter,New
+29,115,Furniture,SchoolMaterials,18,kg,656.05,Hygiene,New
+30,126,Books,Furniture,15,sets,144.24,Health,New
+31,134,Furniture,Furniture,15,pcs,1027.36,Hygiene,Good
+32,134,Bags,Food,30,boxes,436.06,Health,New
+33,134,Medicines,Supplies,21,packs,76.61,Health,New
+34,135,Uniforms,Clothing,21,boxes,1071.34,Shelter,New
+35,138,Rice,Supplies,3,packs,741.11,Shelter,Good
+36,140,Hygiene Kits,Medical,28,packs,888.48,Education,New
+37,143,Hygiene Kits,Supplies,20,sets,591.09,Meals,New
+38,143,Uniforms,Furniture,2,sets,171.26,Education,Good
+39,146,Blankets,Clothing,4,packs,642.53,Hygiene,New
+40,146,Rice,Food,12,packs,188.67,Shelter,New
+41,149,Bags,Furniture,18,pcs,883.78,Hygiene,Good
+42,154,Medicines,Furniture,16,pcs,31.33,Hygiene,New
+43,154,Uniforms,Clothing,16,boxes,743.87,Hygiene,New
+44,155,Rice,Supplies,4,kg,523.89,Shelter,New
+45,155,Blankets,SchoolMaterials,13,pcs,733.87,Education,New
+46,158,School Supplies,Medical,12,packs,82.28,Education,New
+47,172,Uniforms,Supplies,8,pcs,618.13,Hygiene,New
+48,181,Bags,Medical,29,packs,1074.09,Health,New
+49,181,Books,Hygiene,3,pcs,266.64,Health,Fair
+50,187,School Supplies,SchoolMaterials,20,pcs,584.27,Education,New
+51,187,Rice,Food,20,packs,536.54,Meals,New
+52,191,Bags,Clothing,2,sets,367.03,Health,New
+53,191,Bags,Hygiene,8,pcs,576.51,Shelter,New
+54,191,Bags,Food,24,sets,14.45,Education,New
+55,194,School Supplies,Clothing,10,packs,416.08,Health,New
+56,195,Furniture,SchoolMaterials,14,boxes,1138.03,Meals,New
+57,204,Books,SchoolMaterials,10,kg,475.62,Health,Fair
+58,210,Blankets,Food,4,packs,884.82,Education,Good
+59,213,Hygiene Kits,Medical,13,packs,280.5,Health,Good
+60,215,Medicines,SchoolMaterials,1,sets,361.19,Meals,New
+61,215,Hygiene Kits,SchoolMaterials,26,boxes,886.66,Shelter,Good
+62,221,School Supplies,Medical,16,pcs,475.72,Hygiene,Fair
+63,222,Furniture,SchoolMaterials,21,boxes,71.71,Health,New
+64,223,Bags,Clothing,18,packs,691.54,Education,New
+65,226,Furniture,Furniture,16,pcs,307.76,Health,New
+66,236,Medicines,Medical,19,kg,171.44,Education,Good
+67,241,Blankets,Supplies,11,packs,275.27,Education,Good
+68,244,Bags,Clothing,23,pcs,170.91,Education,New
+69,247,School Supplies,Hygiene,5,boxes,1153.28,Shelter,New
+70,247,Medicines,SchoolMaterials,10,boxes,449.71,Meals,New
+71,248,Bags,Hygiene,4,boxes,587.61,Education,Fair
+72,249,Bags,Medical,10,boxes,1011.08,Health,New
+73,249,School Supplies,Supplies,28,sets,658.36,Health,New
+74,257,School Supplies,Food,13,sets,1062.28,Shelter,New
+75,257,Furniture,Furniture,20,packs,1151.16,Health,Good
+76,259,Hygiene Kits,Furniture,1,boxes,169.22,Health,Good
+77,263,Furniture,Hygiene,3,pcs,666.67,Health,New
+78,263,Rice,Food,21,boxes,956.67,Education,Fair
+79,264,Furniture,SchoolMaterials,1,kg,13.68,Education,New
+80,265,Rice,Medical,30,pcs,128.67,Education,New
+81,268,Books,Hygiene,27,sets,322.52,Meals,New
+82,270,Uniforms,Furniture,21,boxes,1126.79,Meals,Good
+83,273,Hygiene Kits,Clothing,27,kg,74.46,Hygiene,New
+84,273,School Supplies,Clothing,24,kg,352.54,Education,Good
+85,275,Furniture,Food,12,boxes,1015.6,Shelter,Good
+86,285,Rice,Supplies,11,pcs,615.11,Health,New
+87,287,Rice,Hygiene,13,kg,695.28,Shelter,New
+88,287,Books,Clothing,20,kg,33.86,Hygiene,Good
+89,292,Rice,Hygiene,4,pcs,808.85,Shelter,New
+90,292,Medicines,Supplies,24,packs,376.49,Meals,New
+91,293,Medicines,Clothing,12,packs,388.92,Education,New
+92,298,Bags,Supplies,11,sets,731.53,Education,New
+93,298,Blankets,Medical,7,kg,102.56,Health,Good
+94,299,Rice,Clothing,15,boxes,706.58,Health,New
+95,304,Medicines,SchoolMaterials,29,packs,878.9,Hygiene,New
+96,306,Furniture,Food,22,sets,1009.03,Hygiene,New
+97,308,Books,Clothing,16,boxes,1050.44,Hygiene,Fair
+98,308,Blankets,Furniture,29,sets,1165.36,Meals,New
+99,309,Rice,Medical,13,kg,189.09,Health,New
+100,312,Books,Furniture,7,kg,1008.32,Meals,New
+101,312,Hygiene Kits,SchoolMaterials,12,sets,355.82,Shelter,New
+102,313,Books,SchoolMaterials,29,boxes,474.27,Hygiene,New
+103,313,School Supplies,SchoolMaterials,4,sets,851.19,Meals,New
+104,313,Medicines,SchoolMaterials,7,kg,174.74,Meals,New
+105,315,Medicines,Supplies,18,kg,910.39,Meals,Good
+106,320,Furniture,Medical,4,kg,86.03,Education,New
+107,322,Furniture,Food,18,pcs,776.36,Hygiene,New
+108,327,Books,Clothing,14,sets,187.34,Meals,Good
+109,331,Rice,Hygiene,15,boxes,88.6,Shelter,New
+110,337,Furniture,Clothing,22,packs,658.92,Meals,New
+111,337,School Supplies,Supplies,20,pcs,596.36,Meals,New
+112,342,Hygiene Kits,Clothing,17,boxes,455.07,Shelter,New
+113,342,Uniforms,Medical,14,packs,578.05,Shelter,New
+114,348,School Supplies,Supplies,5,pcs,109.62,Shelter,New
+115,348,Rice,Medical,18,pcs,653.14,Health,New
+116,349,Blankets,Supplies,10,packs,813.7,Hygiene,New
+117,356,Bags,Clothing,25,sets,334.07,Education,Fair
+118,367,Furniture,Medical,15,packs,1007.62,Health,New
+119,385,Medicines,SchoolMaterials,16,packs,778.65,Education,New
+120,386,Uniforms,Food,11,kg,793.8,Shelter,Good
+121,388,Furniture,Food,1,packs,125.76,Health,Good
+122,389,Uniforms,Clothing,21,pcs,794.85,Health,Fair
+123,393,Books,Supplies,28,kg,212.68,Meals,New
+124,397,Books,Furniture,3,kg,135.87,Shelter,New
+125,402,Furniture,Medical,21,boxes,129.71,Hygiene,New
+126,410,Blankets,Hygiene,7,boxes,727.26,Education,New
+127,414,Rice,Supplies,12,pcs,329.96,Meals,New
+128,419,Medicines,Medical,25,kg,677.44,Hygiene,New
+129,420,Bags,Supplies,27,pcs,525.15,Education,Good

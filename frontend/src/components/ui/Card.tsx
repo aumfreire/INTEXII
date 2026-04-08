@@ -6,6 +6,7 @@ interface CardProps {
   description: string;
   className?: string;
   accentColor?: string;
+  children?: ReactNode;
 }
 
 export default function Card({
@@ -14,6 +15,7 @@ export default function Card({
   description,
   className = '',
   accentColor,
+  children,
 }: CardProps) {
   return (
     <div
@@ -38,7 +40,7 @@ export default function Card({
       }}
     >
       {icon && (
-        <div style={{ marginBottom: '16px', color: 'var(--color-lavender)' }}>
+        <div style={{ marginBottom: '16px', color: 'var(--color-primary)' }}>
           {icon}
         </div>
       )}
@@ -46,7 +48,7 @@ export default function Card({
         style={{
           fontSize: '1.2rem',
           marginBottom: '10px',
-          color: 'var(--color-charcoal)',
+          color: 'var(--color-dark)',
         }}
       >
         {title}
@@ -56,11 +58,12 @@ export default function Card({
           color: 'var(--color-muted)',
           fontSize: '0.95rem',
           lineHeight: '1.65',
-          marginBottom: 0,
+          marginBottom: children ? '16px' : 0,
         }}
       >
         {description}
       </p>
+      {children}
     </div>
   );
 }

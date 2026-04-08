@@ -1,0 +1,61 @@
+supporter_id,supporter_type,display_name,organization_name,first_name,last_name,relationship_type,region,country,email,phone,status,created_at,first_donation_date,acquisition_channel
+1,SocialMediaAdvocate,Mila Alvarez,,Mila,Alvarez,Local,Luzon,Philippines,mila-alvarez@smart.com.ph,+63 997 578 1887,Active,2022-01-01 00:00:00,2023-07-02,SocialMedia
+2,Volunteer,Aria Brown,,Aria,Brown,Local,Mindanao,Philippines,aria-brown@pldt.net.ph,+63 927 354 4139,Active,2022-01-06 00:00:00,2023-09-25,SocialMedia
+3,MonetaryDonor,Noah Chen,,Noah,Chen,Local,Luzon,Philippines,noah-chen@globe.com.ph,+63 917 553 2604,Active,2022-01-11 00:00:00,2023-06-25,SocialMedia
+4,MonetaryDonor,Liam Diaz,,Liam,Diaz,PartnerOrganization,Mindanao,Philippines,liam-diaz@globe.com.ph,+63 945 516 8956,Active,2022-01-16 00:00:00,2026-03-01,Church
+5,InKindDonor,Emma Evans,,Emma,Evans,PartnerOrganization,Mindanao,Philippines,emma-evans@yahoo.com.ph,+63 995 371 8454,Active,2022-01-21 00:00:00,2024-01-18,Website
+6,MonetaryDonor,Olivia Ford,,Olivia,Ford,International,Visayas,USA,olivia-ford@yahoo.com,+1 (206) 358-4111,Active,2022-01-26 00:00:00,2023-03-22,WordOfMouth
+7,MonetaryDonor,Ethan Garcia,,Ethan,Garcia,International,Mindanao,USA,ethan-garcia@aol.com,+1 (212) 251-8811,Active,2022-01-31 00:00:00,2023-10-19,Event
+8,InKindDonor,Isla Hernandez,,Isla,Hernandez,Local,Mindanao,Philippines,isla-hernandez@yahoo.com.ph,+63 953 170 2113,Active,2022-02-05 00:00:00,2023-11-06,Church
+9,Volunteer,Sophia Ibrahim,,Sophia,Ibrahim,Local,Luzon,Philippines,sophia-ibrahim@globe.com.ph,+63 949 708 1651,Active,2022-02-10 00:00:00,2024-11-04,PartnerReferral
+10,Volunteer,Lucas Jones,,Lucas,Jones,International,Luzon,Singapore,lucas-jones@gmail.com,+65 8785 6147,Active,2022-02-15 00:00:00,2024-10-18,Event
+11,MonetaryDonor,Maya Kim,,Maya,Kim,International,Luzon,USA,maya-kim@gmail.com,+1 (469) 274-1152,Active,2022-02-20 00:00:00,2024-08-20,SocialMedia
+12,InKindDonor,Ella Lopez,,Ella,Lopez,PartnerOrganization,Mindanao,Philippines,ella-lopez@globe.com.ph,+63 929 371 3170,Active,2022-02-25 00:00:00,2023-02-24,Website
+13,PartnerOrganization,Hope Group,Hope Group,,,Local,Luzon,Philippines,hope-group@hopegroup.ph,+63 976 726 9666,Active,2022-03-02 00:00:00,2023-02-10,PartnerReferral
+14,MonetaryDonor,Owen Nguyen,,Owen,Nguyen,Local,Mindanao,Philippines,owen-nguyen@globe.com.ph,+63 966 218 2753,Active,2022-03-07 00:00:00,2023-12-25,WordOfMouth
+15,SkillsContributor,Zoe Ortiz,,Zoe,Ortiz,Local,Luzon,Philippines,zoe-ortiz@pldt.net.ph,+63 955 803 5325,Active,2022-03-12 00:00:00,2024-09-15,Website
+16,InKindDonor,Iris Patel,,Iris,Patel,PartnerOrganization,Luzon,Philippines,iris-patel@smart.com.ph,+63 967 145 1058,Active,2022-03-17 00:00:00,2025-07-15,Website
+17,MonetaryDonor,Hana Quinn,,Hana,Quinn,PartnerOrganization,Luzon,Philippines,hana-quinn@smart.com.ph,+63 947 822 8007,Active,2022-03-22 00:00:00,2024-12-29,Website
+18,InKindDonor,Theo Reed,,Theo,Reed,PartnerOrganization,Luzon,Philippines,theo-reed@globe.com.ph,+63 946 136 7049,Active,2022-03-27 00:00:00,2024-10-09,WordOfMouth
+19,Volunteer,Nora Singh,,Nora,Singh,Local,Luzon,Philippines,nora-singh@yahoo.com.ph,+63 979 315 5088,Active,2022-04-01 00:00:00,2024-12-02,SocialMedia
+20,Volunteer,Ezra Taylor,,Ezra,Taylor,International,Luzon,Canada,ezra-taylor@gmail.com,+1 (347) 358-4878,Active,2022-04-06 00:00:00,2023-03-23,PartnerReferral
+21,SocialMediaAdvocate,June Usman,,June,Usman,PartnerOrganization,Mindanao,Philippines,june-usman@yahoo.com.ph,+63 953 854 6442,Active,2022-04-11 00:00:00,2023-07-25,PartnerReferral
+22,SkillsContributor,Nico Vasquez,,Nico,Vasquez,International,Luzon,USA,nico-vasquez@gmail.com,+1 (415) 918-2771,Active,2022-04-16 00:00:00,2025-11-13,WordOfMouth
+23,MonetaryDonor,Ria White,,Ria,White,Local,Luzon,Philippines,ria-white@smart.com.ph,+63 979 412 4728,Active,2022-04-21 00:00:00,2024-11-21,Website
+24,MonetaryDonor,Sean Xu,,Sean,Xu,Local,Visayas,Philippines,sean-xu@yahoo.com.ph,+63 967 459 9346,Active,2022-04-26 00:00:00,2023-11-08,SocialMedia
+25,MonetaryDonor,Tina Young,,Tina,Young,Local,Mindanao,Philippines,tina-young@yahoo.com.ph,+63 966 282 5349,Active,2022-05-01 00:00:00,2025-12-02,Church
+26,MonetaryDonor,Margo Zhang,,Margo,Zhang,Local,Visayas,Philippines,margo-zhang@smart.com.ph,+63 951 623 2894,Active,2022-05-06 00:00:00,2024-11-20,WordOfMouth
+27,MonetaryDonor,Jules Abe,,Jules,Abe,Local,Visayas,Philippines,jules-abe@yahoo.com.ph,+63 939 925 9821,Active,2022-05-11 00:00:00,2024-08-03,WordOfMouth
+28,Volunteer,Pia Baker,,Pia,Baker,International,Mindanao,USA,pia-baker@gmail.com,+1 (718) 538-6143,Active,2022-05-16 00:00:00,,Website
+29,Volunteer,Seth Clark,,Seth,Clark,PartnerOrganization,Luzon,Philippines,seth-clark@smart.com.ph,+63 977 512 5844,Active,2022-05-21 00:00:00,2025-09-28,Event
+30,InKindDonor,Rina Davis,,Rina,Davis,International,Luzon,USA,rina-davis@gmail.com,+1 (415) 830-5930,Active,2022-05-26 00:00:00,2025-07-29,SocialMedia
+31,MonetaryDonor,Jon Edwards,,Jon,Edwards,Local,Mindanao,Philippines,jon-edwards@eastern.com.ph,+63 951 770 6279,Active,2022-05-31 00:00:00,2023-12-26,Website
+32,InKindDonor,Luz Fisher,,Luz,Fisher,Local,Luzon,Philippines,luz-fisher@globe.com.ph,+63 991 186 5649,Active,2022-06-05 00:00:00,2023-02-02,Event
+33,InKindDonor,Tara Green,,Tara,Green,Local,Visayas,Philippines,tara-green@globe.com.ph,+63 992 417 4680,Active,2022-06-10 00:00:00,2023-09-11,PartnerReferral
+34,SocialMediaAdvocate,Mia Hill,,Mia,Hill,Local,Luzon,Philippines,mia-hill@eastern.com.ph,+63 917 566 7790,Active,2022-06-15 00:00:00,2025-05-07,Church
+35,SocialMediaAdvocate,Jose Inoue,,Jose,Inoue,International,Visayas,USA,jose-inoue@gmail.com,+1 (415) 871-1090,Active,2022-06-20 00:00:00,2024-03-27,SocialMedia
+36,SocialMediaAdvocate,Lara Johnson,,Lara,Johnson,PartnerOrganization,Mindanao,Philippines,lara-johnson@globe.com.ph,+63 953 923 9486,Active,2022-06-25 00:00:00,2023-04-16,WordOfMouth
+37,InKindDonor,Rae Klein,,Rae,Klein,PartnerOrganization,Visayas,Philippines,rae-klein@globe.com.ph,+63 920 783 9702,Active,2022-06-30 00:00:00,2024-02-06,Website
+38,PartnerOrganization,Faith Partners,Faith Partners,,,PartnerOrganization,Mindanao,Philippines,faith-partners@faithpartners.ph,+63 929 536 9976,Active,2022-07-05 00:00:00,2025-10-28,WordOfMouth
+39,InKindDonor,Ben Morris,,Ben,Morris,PartnerOrganization,Luzon,Philippines,ben-morris@globe.com.ph,+63 998 383 9540,Active,2022-07-10 00:00:00,2023-09-12,Event
+40,InKindDonor,Lena Nash,,Lena,Nash,Local,Luzon,Philippines,lena-nash@globe.com.ph,+63 967 443 6238,Active,2022-07-15 00:00:00,2025-07-22,WordOfMouth
+41,SocialMediaAdvocate,Cleo Owens,,Cleo,Owens,Local,Luzon,Philippines,cleo-owens@globe.com.ph,+63 955 165 7797,Active,2022-07-20 00:00:00,2024-01-13,SocialMedia
+42,MonetaryDonor,Finn Price,,Finn,Price,Local,Visayas,Philippines,finn-price@smart.com.ph,+63 995 888 1320,Active,2022-07-25 00:00:00,2025-12-31,Website
+43,SocialMediaAdvocate,Hugo Ross,,Hugo,Ross,Local,Mindanao,Philippines,hugo-ross@pldt.net.ph,+63 976 871 7389,Active,2022-07-30 00:00:00,2023-08-12,Website
+44,SocialMediaAdvocate,Vera Stone,,Vera,Stone,Local,Mindanao,Philippines,vera-stone@eastern.com.ph,+63 951 325 8999,Active,2022-08-04 00:00:00,2025-10-05,WordOfMouth
+45,MonetaryDonor,Noel Turner,,Noel,Turner,Local,Luzon,Philippines,noel-turner@smart.com.ph,+63 945 960 8657,Active,2022-08-09 00:00:00,2024-10-25,SocialMedia
+46,PartnerOrganization,Faith Alliance,Faith Alliance,,,Local,Luzon,Philippines,faith-alliance@faithalliance.ph,+63 906 185 8022,Inactive,2022-08-14 00:00:00,2025-04-22,Event
+47,MonetaryDonor,Kaya Ward,,Kaya,Ward,Local,Luzon,Philippines,kaya-ward@globe.com.ph,+63 920 434 6529,Inactive,2022-08-19 00:00:00,2025-10-07,SocialMedia
+48,SkillsContributor,Ian Xu,,Ian,Xu,PartnerOrganization,Luzon,Philippines,ian-xu@pldt.net.ph,+63 926 581 1317,Inactive,2022-08-24 00:00:00,2024-05-04,PartnerReferral
+49,SkillsContributor,Faye Yu,,Faye,Yu,PartnerOrganization,Luzon,Philippines,faye-yu@yahoo.com.ph,+63 999 141 1508,Inactive,2022-08-29 00:00:00,2026-01-22,Website
+50,PartnerOrganization,Bright Foundation,Bright Foundation,,,Local,Visayas,Philippines,bright-foundation@brightfoundation.ph,+63 935 677 4571,Inactive,2022-09-03 00:00:00,2025-01-24,Event
+51,InKindDonor,Mira Bello,,Mira,Bello,Local,Luzon,Philippines,mira-bello@yahoo.com.ph,+63 945 418 2771,Inactive,2022-09-08 00:00:00,2026-01-06,WordOfMouth
+52,InKindDonor,Cole Cruz,,Cole,Cruz,International,Mindanao,USA,cole-cruz@gmail.com,+1 (347) 403-2245,Inactive,2022-09-13 00:00:00,2024-05-16,Church
+53,Volunteer,Dina DelosReyes,,Dina,DelosReyes,Local,Mindanao,Philippines,dina-delosreyes@pldt.net.ph,+63 992 714 2983,Inactive,2022-09-18 00:00:00,2024-11-09,WordOfMouth
+54,SkillsContributor,Sara Escobar,,Sara,Escobar,Local,Visayas,Philippines,sara-escobar@pldt.net.ph,+63 917 618 6590,Inactive,2022-09-23 00:00:00,2023-09-25,Event
+55,MonetaryDonor,Kian Farah,,Kian,Farah,Local,Luzon,Philippines,kian-farah@pldt.net.ph,+63 998 948 8532,Inactive,2022-09-28 00:00:00,2023-11-03,SocialMedia
+56,SkillsContributor,Lyle Gomez,,Lyle,Gomez,International,Luzon,USA,lyle-gomez@gmail.com,+1 (469) 751-8921,Inactive,2022-10-03 00:00:00,2024-03-04,Church
+57,InKindDonor,Paz Hale,,Paz,Hale,International,Mindanao,USA,paz-hale@gmail.com,+1 (818) 288-5569,Inactive,2022-10-08 00:00:00,2025-12-06,SocialMedia
+58,SocialMediaAdvocate,Rico Iglesias,,Rico,Iglesias,Local,Luzon,Philippines,rico-iglesias@smart.com.ph,+63 978 129 9098,Inactive,2022-10-13 00:00:00,2023-01-09,WordOfMouth
+59,SocialMediaAdvocate,Lea Jain,,Lea,Jain,Local,Luzon,Philippines,lea-jain@pldt.net.ph,+63 967 710 5526,Inactive,2022-10-18 00:00:00,2025-03-05,WordOfMouth
+60,InKindDonor,Tess Khan,,Tess,Khan,Local,Visayas,Philippines,tess-khan@smart.com.ph,+63 928 668 4937,Inactive,2022-10-23 00:00:00,2023-08-14,Website
