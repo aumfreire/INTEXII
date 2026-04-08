@@ -16,7 +16,6 @@ export default function SignUpPage() {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    const [agreedToTerms, setAgreedToTerms] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
@@ -55,8 +54,6 @@ export default function SignUpPage() {
         } else if (password !== confirmPassword) {
             errors.confirmPassword = 'Passwords do not match';
         }
-        if (!agreedToTerms) errors.terms = 'You must agree to the terms';
-
         if (Object.keys(errors).length > 0) {
             setFieldErrors(errors);
             return;
@@ -202,55 +199,6 @@ export default function SignUpPage() {
                             {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                         </button>
                     </FormInput>
-
-                    <div style={{ marginBottom: '20px' }}>
-                        <label
-                            style={{
-                                display: 'flex',
-                                alignItems: 'flex-start',
-                                gap: '8px',
-                                cursor: 'pointer',
-                                fontSize: '0.9rem',
-                                color: 'var(--color-charcoal)',
-                            }}
-                        >
-                            <input
-                                type="checkbox"
-                                checked={agreedToTerms}
-                                onChange={(e) => {
-                                    setAgreedToTerms(e.target.checked);
-                                    clearError('terms');
-                                }}
-                                style={{
-                                    accentColor: 'var(--color-cta)',
-                                    marginTop: '3px',
-                                }}
-                            />
-                            <span>
-                                I agree to the{' '}
-                                <Link to="/coming-soon?topic=terms-of-service" style={{ color: 'var(--color-cta)' }}>
-                                    Terms of Service
-                                </Link>{' '}
-                                and{' '}
-                                <Link to="/cookies" style={{ color: 'var(--color-cta)' }}>
-                                    Privacy Policy
-                                </Link>
-                            </span>
-                        </label>
-                        {fieldErrors.terms && (
-                            <span
-                                style={{
-                                    display: 'block',
-                                    marginTop: '4px',
-                                    fontSize: '0.82rem',
-                                    color: 'var(--color-cta)',
-                                    paddingLeft: '24px',
-                                }}
-                            >
-                                {fieldErrors.terms}
-                            </span>
-                        )}
-                    </div>
 
                     <PrimaryButton
                         type="submit"
