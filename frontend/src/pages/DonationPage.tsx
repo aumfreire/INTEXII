@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Heart,
   Shield,
@@ -20,22 +21,40 @@ import { useAuth } from '../context/useAuth';
 import { createMyDonation, getManagedProfile } from '../lib/authAPI';
 import { useLocation } from 'react-router-dom';
 import type { DonorDonationCreateRequest, RepeatDonationState } from '../types/DonationTypes';
-import heroMain from '../assets/haven/hero-main.webp';
 import '../styles/pages/donation.css';
 
 const donationHeroImageUrl =
   'https://images.unsplash.com/photo-1747509228690-8f1fef36d0bf?auto=format&fit=crop&w=1600&q=80';
 
-const amounts = [25, 50, 75, 150, 300, 500];
+const amounts = [250, 500, 1000, 1500, 2000, 2500];
 
 const impactItems = [
-  { amount: 25, text: 'School supplies for one girl for a full term' },
-  { amount: 50, text: 'One week of trauma-informed counseling sessions' },
-  { amount: 75, text: 'Educational materials and tutoring for one month' },
-  { amount: 150, text: 'One month of safe housing and nutritious meals' },
-  { amount: 300, text: 'Complete life skills and vocational training course' },
-  { amount: 500, text: 'Full program enrollment for one girl for three months' },
+  { amount: 250, text: 'School supplies for one girl for a full term' },
+  { amount: 500, text: 'One week of trauma-informed counseling sessions' },
+  { amount: 1000, text: 'Educational materials and tutoring for one month' },
+  { amount: 1500, text: 'One month of safe housing and nutritious meals' },
+  { amount: 2000, text: 'Complete life skills and vocational training course' },
+  { amount: 2500, text: 'Full program enrollment for one girl for three months' },
 ];
+
+function formatPhp(amount: number): string {
+  return `₱${amount.toLocaleString('en-PH', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  })}`;
+}
+
+/** Impact copy is based on donation amount in Philippine pesos (₱). */
+function getDonationImpactMessagePhp(amountPhp: number): string {
+  const php = Math.round(amountPhp * 100) / 100;
+  if (php < 500) {
+    return 'You provided a meal for a girl in need';
+  }
+  if (php <= 2000) {
+    return 'You covered a week of school supplies';
+  }
+  return 'You funded a month of shelter and care';
+}
 
 const faqItems = [
   {
@@ -94,7 +113,7 @@ export default function DonationPage() {
     repeatDonation?.donationType === 'one-time' ? 'one-time' : 'monthly'
   );
   const [selectedAmount, setSelectedAmount] = useState<number | null>(
-    repeatDonation?.amount ?? 50
+    repeatDonation?.amount ?? 500
   );
   const [customAmount, setCustomAmount] = useState(
     repeatDonation?.amount ? repeatDonation.amount.toString() : ''
@@ -110,6 +129,11 @@ export default function DonationPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [thankYouDetails, setThankYouDetails] = useState<{
+    amountPhp: number;
+    donationType: 'monthly' | 'one-time';
+    firstName: string;
+  } | null>(null);
   const [isPrefilling, setIsPrefilling] = useState(false);
 
   const activeAmount = customAmount
@@ -225,8 +249,12 @@ export default function DonationPage() {
     }
 
     setErrors({});
-    setIsSubmitting(true);
+    const confirmedAmountPhp = activeAmount;
+    if (!confirmedAmountPhp || confirmedAmountPhp <= 0) {
+      return;
+    }
 
+    setIsSubmitting(true);
     try {
       const payload: DonorDonationCreateRequest = {
         firstName: firstName.trim(),
@@ -237,15 +265,20 @@ export default function DonationPage() {
         isRecurring: donationType === 'monthly',
         campaignName: repeatDonation?.campaignName ?? null,
         channelSource: repeatDonation?.channelSource ?? null,
-        currencyCode: 'USD',
-        amount: activeAmount,
-        estimatedValue: activeAmount,
+        currencyCode: 'PHP',
+        amount: confirmedAmountPhp,
+        estimatedValue: confirmedAmountPhp,
         impactUnit: null,
         notes: dedication.trim() || null,
         referralPostId: null,
       };
 
       await createMyDonation(payload);
+      setThankYouDetails({
+        amountPhp: confirmedAmountPhp,
+        donationType,
+        firstName: firstName.trim(),
+      });
       setShowSuccess(true);
     } catch (error) {
       setErrors({
@@ -258,11 +291,12 @@ export default function DonationPage() {
 
   const resetForm = () => {
     setShowSuccess(false);
+    setThankYouDetails(null);
     if (typeof repeatDonation?.amount === 'number' && repeatDonation.amount > 0) {
       setSelectedAmount(repeatDonation.amount);
       setCustomAmount(repeatDonation.amount.toString());
     } else {
-      setSelectedAmount(50);
+      setSelectedAmount(500);
       setCustomAmount('');
     }
 
@@ -282,6 +316,17 @@ export default function DonationPage() {
   const clearError = (field: string) => {
     if (errors[field]) setErrors((prev) => ({ ...prev, [field]: '' }));
   };
+
+  useEffect(() => {
+    if (!showSuccess) {
+      return;
+    }
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [showSuccess]);
 
   return (
     <>
@@ -352,26 +397,7 @@ export default function DonationPage() {
           ) : null}
 
           {showSuccess ? (
-            <div className="donation-success">
-              <CheckCircle size={64} className="success-icon" />
-              <h2 style={{ marginBottom: '12px' }}>Thank You!</h2>
-              <p
-                style={{
-                  color: 'var(--color-muted)',
-                  fontSize: '1.1rem',
-                  maxWidth: '480px',
-                  margin: '0 auto 28px',
-                  lineHeight: '1.7',
-                }}
-              >
-                Your {donationType === 'monthly' ? 'monthly ' : ''}donation of
-                <strong> ${activeAmount?.toFixed(2)}</strong> will help create
-                safety and healing for girls who need it most.
-              </p>
-              <PrimaryButton onClick={resetForm}>
-                Make Another Donation
-              </PrimaryButton>
-            </div>
+            <div className="donation-success-placeholder" aria-hidden="true" />
           ) : (
             <div className="row g-4">
               {/* Left: Stepped Form */}
@@ -444,7 +470,7 @@ export default function DonationPage() {
                           onClick={() => handleAmountClick(amt)}
                           disabled={!isAuthenticated}
                         >
-                          ${amt}
+                          {formatPhp(amt)}
                         </button>
                       ))}
                     </div>
@@ -459,7 +485,7 @@ export default function DonationPage() {
                           fontWeight: 500,
                         }}
                       >
-                        $
+                        ₱
                       </span>
                       <input
                         type="text"
@@ -631,7 +657,7 @@ export default function DonationPage() {
                           {donationType === 'monthly' ? 'Monthly ' : ''}
                           Donation
                           {activeAmount && activeAmount > 0
-                            ? ` — $${activeAmount.toFixed(2)}`
+                            ? ` — ${formatPhp(activeAmount)}`
                             : ''}
                           {donationType === 'monthly' ? '/mo' : ''}
                         </>
@@ -669,7 +695,7 @@ export default function DonationPage() {
                           }}
                         >
                           {activeAmount && activeAmount > 0
-                            ? `$${activeAmount.toFixed(0)}`
+                            ? formatPhp(activeAmount)
                             : '—'}
                         </strong>
                       </div>
@@ -679,7 +705,7 @@ export default function DonationPage() {
                           <strong
                             style={{ color: 'var(--color-primary-dark)' }}
                           >
-                            ${annualImpact.toLocaleString()}/year
+                            {formatPhp(annualImpact)}/year
                           </strong>
                         </div>
                       )}
@@ -705,7 +731,7 @@ export default function DonationPage() {
                             }}
                           />
                           <div>
-                            <strong>${item.amount} provides</strong>
+                            <strong>{formatPhp(item.amount)} provides</strong>
                             <p>{item.text}</p>
                           </div>
                         </div>
@@ -773,6 +799,45 @@ export default function DonationPage() {
           </div>
         </div>
       </section>
+
+      {showSuccess && thankYouDetails
+        ? createPortal(
+            <div
+              className="donation-thankyou-backdrop"
+              role="presentation"
+              onClick={resetForm}
+            >
+              <div
+                className="donation-thankyou-modal"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="donation-thankyou-title"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <CheckCircle size={56} className="donation-thankyou-icon" />
+                <h2 id="donation-thankyou-title" className="donation-thankyou-heading">
+                  {thankYouDetails.firstName
+                    ? `Thank you, ${thankYouDetails.firstName}!`
+                    : 'Thank you!'}
+                </h2>
+                <p className="donation-thankyou-amount">
+                  Your {thankYouDetails.donationType === 'monthly' ? 'monthly ' : ''}
+                  gift of{' '}
+                  <strong>{formatPhp(thankYouDetails.amountPhp)}</strong>
+                  {thankYouDetails.donationType === 'monthly' ? ' / month' : ''}{' '}
+                  is on its way to girls who need it most.
+                </p>
+                <p className="donation-thankyou-impact">
+                  {getDonationImpactMessagePhp(thankYouDetails.amountPhp)}
+                </p>
+                <PrimaryButton type="button" onClick={resetForm} fullWidth>
+                  Make Another Donation
+                </PrimaryButton>
+              </div>
+            </div>,
+            document.body
+          )
+        : null}
     </>
   );
 }
