@@ -36,7 +36,7 @@ const helpCards = [
     title: 'Spread the Word',
     description:
       'Share our mission with your network. Follow us on social media, share our stories, and help raise awareness about the challenges girls face.',
-    link: '#',
+    link: '/coming-soon?topic=share-our-story',
     linkText: 'Share Our Story',
   },
   {
@@ -44,7 +44,7 @@ const helpCards = [
     title: 'Corporate Partnership',
     description:
       'Align your business with a cause that matters. Corporate sponsors enjoy brand visibility while making a meaningful impact on girls\' lives.',
-    link: '#',
+    link: '/coming-soon?topic=corporate-partnership',
     linkText: 'Become a Partner',
   },
 ];
