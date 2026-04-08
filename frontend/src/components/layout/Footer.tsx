@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Shield, Globe, MessageCircle, Camera, Play, Mail, Phone, MapPin } from 'lucide-react';
+import { Heart, Globe, MessageCircle, Camera, Play, Mail, Phone, MapPin } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -22,7 +22,7 @@ export default function Footer() {
                 marginBottom: '16px',
               }}
             >
-              <Shield
+              <Heart
                 size={24}
                 style={{ color: 'var(--color-primary)' }}
                 fill="var(--color-primary)"

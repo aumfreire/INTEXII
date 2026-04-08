@@ -1,7 +1,7 @@
 import { createContext, useContext, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 
-const cookieConsentStorageKey = 'intex-cookie-consent';
+const cookieConsentStorageKey = 'intex-cookie-consent-v2';
 
 interface CookieConsentContextValue {
     hasAcknowledgedConsent: boolean;

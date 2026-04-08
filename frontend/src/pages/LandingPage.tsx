@@ -99,7 +99,7 @@ export default function LandingPage() {
               <Heart size={18} />
               Donate Now
             </PrimaryButton>
-            <SecondaryButton href="#impact" light>
+            <SecondaryButton href="/#impact" light>
               See Our Impact
               <ArrowRight size={18} />
             </SecondaryButton>
@@ -252,17 +252,6 @@ export default function LandingPage() {
             <Link to="/donate" className="cta-band-btn">
               <Heart size={18} />
               Donate Now
-            </Link>
-            <Link
-              to="/"
-              className="cta-band-btn"
-              style={{
-                backgroundColor: 'transparent',
-                color: 'var(--color-cream)',
-                border: '2px solid var(--color-cream)',
-              }}
-            >
-              Learn More
             </Link>
           </div>
         </div>

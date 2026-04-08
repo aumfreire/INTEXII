@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Mail, Lock, Eye, EyeOff, Shield, ArrowLeft } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Heart, ArrowLeft } from 'lucide-react';
 import FormInput from '../components/ui/FormInput';
 import PrimaryButton from '../components/ui/PrimaryButton';
 import AlertBanner from '../components/ui/AlertBanner';
@@ -25,7 +25,6 @@ export default function LoginPage() {
     const [twoFactorCode, setTwoFactorCode] = useState('');
     const [recoveryCode, setRecoveryCode] = useState('');
     const [showPassword, setShowPassword] = useState(false);
-    const [rememberMe, setRememberMe] = useState(true);
     const [externalProviders, setExternalProviders] = useState<ExternalAuthProvider[]>([]);
     const [providersLoaded, setProvidersLoaded] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -67,7 +66,7 @@ export default function LoginPage() {
             await loginUser(
                 email,
                 password,
-                rememberMe,
+                true,
                 twoFactorCode || undefined,
                 recoveryCode || undefined
             );
@@ -106,7 +105,7 @@ export default function LoginPage() {
                 <div className="login-image-overlay" />
                 <div className="login-image-content">
                     <div className="login-panel-logo">
-                        <Shield
+                        <Heart
                             size={24}
                             fill="rgba(255,255,255,0.9)"
                             style={{ color: 'rgba(255,255,255,0.9)' }}
@@ -233,38 +232,6 @@ export default function LoginPage() {
                             onChange={(e) => setRecoveryCode(e.target.value)}
                             placeholder="Use if you cannot access your authenticator"
                         />
-
-                        <div className="login-utilities">
-                            <label
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '8px',
-                                    cursor: 'pointer',
-                                    color: 'var(--color-charcoal)',
-                                }}
-                            >
-                                <input
-                                    type="checkbox"
-                                    checked={rememberMe}
-                                    onChange={(e) => setRememberMe(e.target.checked)}
-                                    style={{ accentColor: 'var(--color-cta)' }}
-                                />
-                                Remember me
-                            </label>
-                            <a
-                                href="#"
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    alert(
-                                        'Password reset is not configured yet. Use Edit Profile after login to change your password.'
-                                    );
-                                }}
-                                style={{ color: 'var(--color-cta)', fontSize: '0.9rem' }}
-                            >
-                                Forgot password?
-                            </a>
-                        </div>
 
                         <PrimaryButton
                             type="submit"

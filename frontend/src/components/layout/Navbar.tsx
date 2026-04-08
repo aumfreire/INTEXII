@@ -75,6 +75,7 @@ export default function Navbar() {
                 >
                     <Link
                         to="/"
+                        onClick={() => window.scrollTo({ top: 0, left: 0, behavior: 'smooth' })}
                         style={{
                             display: 'flex',
                             alignItems: 'center',
@@ -103,15 +104,20 @@ export default function Navbar() {
                         className="d-none d-lg-flex"
                         style={{ alignItems: 'center', gap: '4px' }}
                     >
-                        <NavLink to="/" style={navLinkStyle} end>
+                        <NavLink
+                            to="/"
+                            style={navLinkStyle}
+                            end
+                            onClick={() => window.scrollTo({ top: 0, left: 0, behavior: 'smooth' })}
+                        >
                             Home
                         </NavLink>
-                        <a href="#mission" style={{ ...navLinkStyle({ isActive: false }) }}>
+                        <Link to="/#mission" style={{ ...navLinkStyle({ isActive: false }) }}>
                             About
-                        </a>
-                        <a href="#impact" style={{ ...navLinkStyle({ isActive: false }) }}>
+                        </Link>
+                        <Link to="/#impact" style={{ ...navLinkStyle({ isActive: false }) }}>
                             Impact
-                        </a>
+                        </Link>
                         {!isLoading && !isAuthenticated ? (
                             <NavLink to="/login" style={navLinkStyle}>
                                 Login
@@ -277,25 +283,28 @@ export default function Navbar() {
                         <NavLink
                             to="/"
                             style={navLinkStyle}
-                            onClick={() => setIsOpen(false)}
+                            onClick={() => {
+                                setIsOpen(false);
+                                window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+                            }}
                             end
                         >
                             Home
                         </NavLink>
-                        <a
-                            href="#mission"
+                        <Link
+                            to="/#mission"
                             style={{ ...navLinkStyle({ isActive: false }) }}
                             onClick={closeMenus}
                         >
                             About
-                        </a>
-                        <a
-                            href="#impact"
+                        </Link>
+                        <Link
+                            to="/#impact"
                             style={{ ...navLinkStyle({ isActive: false }) }}
                             onClick={closeMenus}
                         >
                             Impact
-                        </a>
+                        </Link>
                         {!isLoading && !isAuthenticated ? (
                             <NavLink
                                 to="/login"
