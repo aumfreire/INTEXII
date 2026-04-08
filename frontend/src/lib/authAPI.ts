@@ -21,11 +21,67 @@ export interface ManagedProfile {
     displayName: string;
 }
 
+interface TokenLoginResponse {
+    accessToken: string;
+    tokenType: string;
+    expiresInSeconds: number;
+}
+
 const configuredApiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
 const apiBaseUrl =
     configuredApiBaseUrl && configuredApiBaseUrl.length > 0
         ? configuredApiBaseUrl.replace(/\/$/, '')
         : 'https://intexii-backend.azurewebsites.net';
+const authTokenStorageKey = 'intex-auth-token-v1';
+
+function getStoredAuthToken(): string | null {
+    if (typeof window === 'undefined') {
+        return null;
+    }
+
+    return window.localStorage.getItem(authTokenStorageKey);
+}
+
+export function setStoredAuthToken(token: string): void {
+    if (typeof window === 'undefined') {
+        return;
+    }
+
+    const normalized = token.trim();
+    if (!normalized) {
+        window.localStorage.removeItem(authTokenStorageKey);
+        return;
+    }
+
+    window.localStorage.setItem(authTokenStorageKey, normalized);
+}
+
+export function clearStoredAuthToken(): void {
+    if (typeof window === 'undefined') {
+        return;
+    }
+
+    window.localStorage.removeItem(authTokenStorageKey);
+}
+
+function createAuthHeaders(headers?: HeadersInit): Headers {
+    const combined = new Headers(headers);
+    const authToken = getStoredAuthToken();
+
+    if (authToken) {
+        combined.set('Authorization', `Bearer ${authToken}`);
+    }
+
+    return combined;
+}
+
+async function apiFetch(path: string, init?: RequestInit): Promise<Response> {
+    return fetch(`${apiBaseUrl}${path}`, {
+        credentials: 'include',
+        ...init,
+        headers: createAuthHeaders(init?.headers),
+    });
+}
 
 async function readApiError(
     response: Response,
@@ -65,12 +121,11 @@ async function readApiError(
 }
 
 async function postTwoFactorRequest(payload: object): Promise<TwoFactorStatus> {
-    const response = await fetch(`${apiBaseUrl}/api/auth/manage/2fa`, {
+    const response = await apiFetch('/api/auth/manage/2fa', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        credentials: 'include',
         body: JSON.stringify(payload),
     });
 
@@ -96,9 +151,7 @@ export function buildExternalLoginUrl(
 }
 
 export async function getExternalProviders(): Promise<ExternalAuthProvider[]> {
-    const response = await fetch(`${apiBaseUrl}/api/auth/providers`, {
-        credentials: 'include',
-    });
+    const response = await apiFetch('/api/auth/providers');
 
     if (!response.ok) {
         throw new Error(
@@ -110,9 +163,7 @@ export async function getExternalProviders(): Promise<ExternalAuthProvider[]> {
 }
 
 export async function getAuthSession(): Promise<AuthSession> {
-    const response = await fetch(`${apiBaseUrl}/api/auth/me`, {
-        credentials: 'include',
-    });
+    const response = await apiFetch('/api/auth/me');
 
     if (!response.ok) {
         throw new Error('Unable to load auth session.');
@@ -122,12 +173,11 @@ export async function getAuthSession(): Promise<AuthSession> {
 }
 
 export async function registerUser(email: string, password: string): Promise<void> {
-    const response = await fetch(`${apiBaseUrl}/api/auth/register`, {
+    const response = await apiFetch('/api/auth/register', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        credentials: 'include',
         body: JSON.stringify({ email, password }),
     });
 
@@ -141,18 +191,10 @@ export async function registerUser(email: string, password: string): Promise<voi
 export async function loginUser(
     email: string,
     password: string,
-    rememberMe: boolean,
+    _rememberMe: boolean,
     twoFactorCode?: string,
     twoFactorRecoveryCode?: string
 ): Promise<void> {
-    const searchParams = new URLSearchParams();
-
-    if (rememberMe) {
-        searchParams.set('useCookies', 'true');
-    } else {
-        searchParams.set('useSessionCookies', 'true');
-    }
-
     const body: Record<string, string> = {
         email,
         password,
@@ -166,12 +208,11 @@ export async function loginUser(
         body.twoFactorRecoveryCode = twoFactorRecoveryCode;
     }
 
-    const response = await fetch(`${apiBaseUrl}/api/auth/login?${searchParams.toString()}`, {
+    const response = await apiFetch('/api/auth/token-login', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        credentials: 'include',
         body: JSON.stringify(body),
     });
 
@@ -183,13 +224,21 @@ export async function loginUser(
             )
         );
     }
+
+    const payload = (await response.json()) as TokenLoginResponse;
+    if (!payload.accessToken) {
+        throw new Error('Login succeeded but no access token was returned.');
+    }
+
+    setStoredAuthToken(payload.accessToken);
 }
 
 export async function logoutUser(): Promise<void> {
-    const response = await fetch(`${apiBaseUrl}/api/auth/logout`, {
+    const response = await apiFetch('/api/auth/logout', {
         method: 'POST',
-        credentials: 'include',
     });
+
+    clearStoredAuthToken();
 
     if (!response.ok) {
         throw new Error(await readApiError(response, 'Unable to log out.'));
@@ -226,12 +275,11 @@ export async function updatePassword(
     oldPassword: string,
     newPassword: string
 ): Promise<void> {
-    const response = await fetch(`${apiBaseUrl}/api/auth/manage/info`, {
+    const response = await apiFetch('/api/auth/manage/info', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        credentials: 'include',
         body: JSON.stringify({
             oldPassword,
             newPassword,
@@ -246,9 +294,7 @@ export async function updatePassword(
 }
 
 export async function getManagedProfile(): Promise<ManagedProfile> {
-    const response = await fetch(`${apiBaseUrl}/api/auth/manage/profile`, {
-        credentials: 'include',
-    });
+    const response = await apiFetch('/api/auth/manage/profile');
 
     if (!response.ok) {
         throw new Error(
@@ -262,12 +308,11 @@ export async function getManagedProfile(): Promise<ManagedProfile> {
 export async function updateManagedProfile(
     payload: Partial<Pick<ManagedProfile, 'firstName' | 'lastName' | 'displayName'>>
 ): Promise<ManagedProfile> {
-    const response = await fetch(`${apiBaseUrl}/api/auth/manage/profile`, {
+    const response = await apiFetch('/api/auth/manage/profile', {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
         },
-        credentials: 'include',
         body: JSON.stringify(payload),
     });
 
@@ -281,9 +326,7 @@ export async function updateManagedProfile(
 }
 
 export async function getAdminSummary(): Promise<AdminUserSummaryMetrics> {
-    const response = await fetch(`${apiBaseUrl}/api/admin/users/summary`, {
-        credentials: 'include',
-    });
+    const response = await apiFetch('/api/admin/users/summary');
 
     if (!response.ok) {
         throw new Error(
@@ -295,9 +338,7 @@ export async function getAdminSummary(): Promise<AdminUserSummaryMetrics> {
 }
 
 export async function getAdminDonationSummary(): Promise<AdminDonationSummary> {
-    const response = await fetch(`${apiBaseUrl}/api/donations/admin/summary`, {
-        credentials: 'include',
-    });
+    const response = await apiFetch('/api/donations/admin/summary');
 
     if (!response.ok) {
         throw new Error(
@@ -314,12 +355,7 @@ export async function listAdminUsers(search = ''): Promise<AdminUserSummary[]> {
         query.set('search', search.trim());
     }
 
-    const response = await fetch(
-        `${apiBaseUrl}/api/admin/users${query.toString() ? `?${query.toString()}` : ''}`,
-        {
-            credentials: 'include',
-        }
-    );
+    const response = await apiFetch(`/api/admin/users${query.toString() ? `?${query.toString()}` : ''}`);
 
     if (!response.ok) {
         throw new Error(await readApiError(response, 'Unable to load users.'));
@@ -329,9 +365,7 @@ export async function listAdminUsers(search = ''): Promise<AdminUserSummary[]> {
 }
 
 export async function getAdminUserById(userId: string): Promise<AdminUserDetail> {
-    const response = await fetch(`${apiBaseUrl}/api/admin/users/${userId}`, {
-        credentials: 'include',
-    });
+    const response = await apiFetch(`/api/admin/users/${userId}`);
 
     if (!response.ok) {
         throw new Error(await readApiError(response, 'Unable to load user details.'));
@@ -343,12 +377,11 @@ export async function getAdminUserById(userId: string): Promise<AdminUserDetail>
 export async function adminCreateUser(
     payload: AdminCreateUserRequest
 ): Promise<AdminCreateUserResponse> {
-    const response = await fetch(`${apiBaseUrl}/api/admin/users`, {
+    const response = await apiFetch('/api/admin/users', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        credentials: 'include',
         body: JSON.stringify(payload),
     });
 
@@ -363,12 +396,11 @@ export async function adminUpdateUserProfile(
     userId: string,
     payload: AdminUpdateProfileRequest
 ): Promise<void> {
-    const response = await fetch(`${apiBaseUrl}/api/admin/users/${userId}/profile`, {
+    const response = await apiFetch(`/api/admin/users/${userId}/profile`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
         },
-        credentials: 'include',
         body: JSON.stringify(payload),
     });
 
@@ -381,12 +413,11 @@ export async function adminResetUserPassword(
     userId: string,
     newPassword: string
 ): Promise<void> {
-    const response = await fetch(`${apiBaseUrl}/api/admin/users/${userId}/password`, {
+    const response = await apiFetch(`/api/admin/users/${userId}/password`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        credentials: 'include',
         body: JSON.stringify({ newPassword }),
     });
 
@@ -396,9 +427,8 @@ export async function adminResetUserPassword(
 }
 
 export async function adminResetUserMfa(userId: string): Promise<void> {
-    const response = await fetch(`${apiBaseUrl}/api/admin/users/${userId}/mfa/reset`, {
+    const response = await apiFetch(`/api/admin/users/${userId}/mfa/reset`, {
         method: 'POST',
-        credentials: 'include',
     });
 
     if (!response.ok) {
@@ -407,12 +437,11 @@ export async function adminResetUserMfa(userId: string): Promise<void> {
 }
 
 export async function adminUpdateUserRoles(userId: string, roles: string[]): Promise<string[]> {
-    const response = await fetch(`${apiBaseUrl}/api/admin/users/${userId}/roles`, {
+    const response = await apiFetch(`/api/admin/users/${userId}/roles`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
         },
-        credentials: 'include',
         body: JSON.stringify({ roles }),
     });
 
@@ -425,9 +454,8 @@ export async function adminUpdateUserRoles(userId: string, roles: string[]): Pro
 }
 
 export async function deleteAdminUser(userId: string): Promise<void> {
-    const response = await fetch(`${apiBaseUrl}/api/admin/users/${userId}`, {
+    const response = await apiFetch(`/api/admin/users/${userId}`, {
         method: 'DELETE',
-        credentials: 'include',
     });
 
     if (!response.ok) {

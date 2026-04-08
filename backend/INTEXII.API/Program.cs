@@ -4,10 +4,13 @@ using INTEXII.API.Data;
 using INTEXII.API.Data.Models;
 using INTEXII.API.Infrastructure;
 using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Scalar.AspNetCore;
 using Swashbuckle.AspNetCore.SwaggerUI;
+using Microsoft.IdentityModel.Tokens;
 using System.Text.Json;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,6 +30,14 @@ var frontendUrl = builder.Configuration["FrontendUrl"] ?? DefaultFrontendUrl;
 var googleClientId = builder.Configuration["Authentication:Google:ClientId"];
 var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
 var hasGoogleCredentials = IsConfiguredValue(googleClientId) && IsConfiguredValue(googleClientSecret);
+var jwtSigningKey = builder.Configuration["Authentication:Jwt:SigningKey"];
+if (string.IsNullOrWhiteSpace(jwtSigningKey))
+{
+    // Fallback key for local/dev or emergency cloud runtime if app setting was not provided.
+    jwtSigningKey = "INTEXII_Fallback_JwtSigningKey_Replace_In_Azure_AppSettings_2026";
+}
+var jwtIssuer = builder.Configuration["Authentication:Jwt:Issuer"] ?? "INTEXII.API";
+var jwtAudience = builder.Configuration["Authentication:Jwt:Audience"] ?? "INTEXII.Frontend";
 
 // -----------------------------------------------------------------------
 // Services
@@ -66,6 +77,43 @@ builder.Services.AddDbContext<IntexDbContext>(options =>
 builder.Services.AddIdentityApiEndpoints<ApplicationUser>()
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<AuthIdentityDbContext>();
+
+builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultScheme = "JwtOrCookie";
+        options.DefaultAuthenticateScheme = "JwtOrCookie";
+        options.DefaultChallengeScheme = "JwtOrCookie";
+    })
+    .AddPolicyScheme("JwtOrCookie", "JWT or Identity cookie", options =>
+    {
+        options.ForwardDefaultSelector = context =>
+        {
+            var authorization = context.Request.Headers.Authorization.ToString();
+            if (!string.IsNullOrWhiteSpace(authorization)
+                && authorization.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+            {
+                return JwtBearerDefaults.AuthenticationScheme;
+            }
+
+            return IdentityConstants.ApplicationScheme;
+        };
+    })
+    .AddJwtBearer(options =>
+    {
+        options.RequireHttpsMetadata = true;
+        options.SaveToken = false;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateIssuerSigningKey = true,
+            ValidateLifetime = true,
+            ValidIssuer = jwtIssuer,
+            ValidAudience = jwtAudience,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSigningKey!)),
+            ClockSkew = TimeSpan.FromMinutes(1)
+        };
+    });
 
 // Google OAuth (only registered when credentials are present in config/secrets)
 // VIDEO NOTE: Show the Google sign-in button in the UI, click it, complete the OAuth flow.

@@ -1,10 +1,13 @@
 using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
 using System.Text.Encodings.Web;
+using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.IdentityModel.Tokens;
 using INTEXII.API.Data;
 using INTEXII.API.Data.Models;
 using Microsoft.EntityFrameworkCore;
@@ -21,6 +24,13 @@ public class AuthController(
 {
     private const string DefaultFrontendUrl = "http://localhost:3000";
     private const string DefaultExternalReturnPath = "/dashboard";
+    private const string AuthTokenQueryKey = "authToken";
+
+    public sealed record TokenLoginRequest(
+        string Email,
+        string Password,
+        string? TwoFactorCode,
+        string? TwoFactorRecoveryCode);
 
     /// <summary>
     /// Returns the current authenticated session info.
@@ -174,6 +184,9 @@ public class AuthController(
             if (existingUser is not null)
             {
                 await EnsureDonorRoleAndSupporterSyncAsync(existingUser, externalFirstName, externalLastName);
+
+                var accessToken = await BuildAccessTokenAsync(existingUser);
+                return Redirect(BuildFrontendSuccessUrl(returnPath, accessToken));
             }
 
             return Redirect(BuildFrontendSuccessUrl(returnPath));
@@ -214,7 +227,72 @@ public class AuthController(
         await EnsureDonorRoleAndSupporterSyncAsync(user, externalFirstName, externalLastName, email);
 
         await signInManager.SignInAsync(user, isPersistent: false, info.LoginProvider);
-        return Redirect(BuildFrontendSuccessUrl(returnPath));
+        var newAccessToken = await BuildAccessTokenAsync(user);
+        return Redirect(BuildFrontendSuccessUrl(returnPath, newAccessToken));
+    }
+
+    [HttpPost("token-login")]
+    public async Task<IActionResult> TokenLogin([FromBody] TokenLoginRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
+        {
+            return BadRequest(new { message = "Email and password are required." });
+        }
+
+        var normalizedEmail = request.Email.Trim();
+        var user = await userManager.FindByEmailAsync(normalizedEmail);
+        if (user is null)
+        {
+            return Unauthorized(new { message = "Invalid email or password." });
+        }
+
+        var result = await signInManager.CheckPasswordSignInAsync(user, request.Password, lockoutOnFailure: true);
+        if (result.RequiresTwoFactor)
+        {
+            if (!string.IsNullOrWhiteSpace(request.TwoFactorCode))
+            {
+                var normalizedCode = NormalizeAuthenticatorCode(request.TwoFactorCode);
+                var isValidCode = await userManager.VerifyTwoFactorTokenAsync(
+                    user,
+                    TokenOptions.DefaultAuthenticatorProvider,
+                    normalizedCode);
+
+                if (!isValidCode)
+                {
+                    return BadRequest(new { message = "Invalid authenticator code." });
+                }
+            }
+            else if (!string.IsNullOrWhiteSpace(request.TwoFactorRecoveryCode))
+            {
+                var recoveryResult = await userManager.RedeemTwoFactorRecoveryCodeAsync(
+                    user,
+                    request.TwoFactorRecoveryCode.Trim());
+
+                if (!recoveryResult.Succeeded)
+                {
+                    return BadRequest(new { message = "Invalid recovery code." });
+                }
+            }
+            else
+            {
+                return BadRequest(new
+                {
+                    message = "Two-factor code or recovery code is required for this account."
+                });
+            }
+        }
+        else if (!result.Succeeded)
+        {
+            return Unauthorized(new { message = "Invalid email or password." });
+        }
+
+        var accessToken = await BuildAccessTokenAsync(user);
+        return Ok(new
+        {
+            accessToken,
+            tokenType = "Bearer",
+            expiresInSeconds = 60 * 60 * 24 * 7
+        });
     }
 
     /// <summary>
@@ -450,10 +528,22 @@ public class AuthController(
         return returnPath;
     }
 
-    private string BuildFrontendSuccessUrl(string? returnPath)
+    private string BuildFrontendSuccessUrl(string? returnPath, string? accessToken = null)
     {
         var frontendUrl = configuration["FrontendUrl"] ?? DefaultFrontendUrl;
-        return $"{frontendUrl.TrimEnd('/')}{NormalizeReturnPath(returnPath)}";
+        var baseUrl = $"{frontendUrl.TrimEnd('/')}/auth/callback";
+
+        var query = new Dictionary<string, string?>
+        {
+            ["returnPath"] = NormalizeReturnPath(returnPath)
+        };
+
+        if (!string.IsNullOrWhiteSpace(accessToken))
+        {
+            query[AuthTokenQueryKey] = accessToken;
+        }
+
+        return QueryHelpers.AddQueryString(baseUrl, query!);
     }
 
     private string BuildFrontendErrorUrl(string errorMessage)
@@ -649,6 +739,50 @@ public class AuthController(
         }
 
         return string.IsNullOrWhiteSpace(fallback) ? "User" : fallback.Trim();
+    }
+
+    private async Task<string> BuildAccessTokenAsync(ApplicationUser user)
+    {
+        var key = configuration["Authentication:Jwt:SigningKey"];
+        if (string.IsNullOrWhiteSpace(key))
+        {
+            key = "INTEXII_Fallback_JwtSigningKey_Replace_In_Azure_AppSettings_2026";
+        }
+
+        var issuer = configuration["Authentication:Jwt:Issuer"] ?? "INTEXII.API";
+        var audience = configuration["Authentication:Jwt:Audience"] ?? "INTEXII.Frontend";
+        var roles = await userManager.GetRolesAsync(user);
+
+        var claims = new List<Claim>
+        {
+            new(JwtRegisteredClaimNames.Sub, user.Id),
+            new(JwtRegisteredClaimNames.Email, user.Email ?? string.Empty),
+            new(JwtRegisteredClaimNames.UniqueName, user.UserName ?? user.Email ?? user.Id),
+            new(ClaimTypes.NameIdentifier, user.Id)
+        };
+
+        if (!string.IsNullOrWhiteSpace(user.UserName))
+        {
+            claims.Add(new Claim(ClaimTypes.Name, user.UserName));
+        }
+
+        foreach (var role in roles)
+        {
+            claims.Add(new Claim(ClaimTypes.Role, role));
+        }
+
+        var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
+        var credentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256);
+
+        var token = new JwtSecurityToken(
+            issuer: issuer,
+            audience: audience,
+            claims: claims,
+            notBefore: DateTime.UtcNow,
+            expires: DateTime.UtcNow.AddDays(7),
+            signingCredentials: credentials);
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
     public sealed record ManageInfoRequest(string OldPassword, string NewPassword);
