@@ -26,31 +26,44 @@ import '../styles/pages/donation.css';
 const donationHeroImageUrl =
   'https://images.unsplash.com/photo-1747509228690-8f1fef36d0bf?auto=format&fit=crop&w=1600&q=80';
 
-const amounts = [250, 500, 1000, 1500, 2000, 2500];
+const MIN_DONATION_USD = 1;
+const DEFAULT_DONATION_USD = 50;
+
+const amounts = [5, 10, 25, 50, 100, 250, 500, 1000, 2500];
 
 const impactItems = [
-  { amount: 250, text: 'School supplies for one girl for a full term' },
-  { amount: 500, text: 'One week of trauma-informed counseling sessions' },
-  { amount: 1000, text: 'Educational materials and tutoring for one month' },
-  { amount: 1500, text: 'One month of safe housing and nutritious meals' },
-  { amount: 2000, text: 'Complete life skills and vocational training course' },
-  { amount: 2500, text: 'Full program enrollment for one girl for three months' },
+  { amount: 10, text: 'A warm meal and snacks for a girl in our care' },
+  { amount: 25, text: 'School supplies for one girl for a week' },
+  { amount: 50, text: 'One week of trauma-informed counseling support' },
+  { amount: 100, text: 'Educational materials and tutoring for one month' },
+  { amount: 250, text: 'One month of safe housing basics and meals' },
+  { amount: 500, text: 'Expanded program support for a girl for several months' },
+  { amount: 1000, text: 'Deepened counseling, education, and reintegration support' },
+  { amount: 2500, text: 'Major investment in long-term safety and opportunity for girls' },
 ];
 
-function formatPhp(amount: number): string {
-  return `₱${amount.toLocaleString('en-PH', {
+function normalizeDonationUsd(amount: number): number {
+  if (!Number.isFinite(amount)) {
+    return DEFAULT_DONATION_USD;
+  }
+  const rounded = Math.round(amount * 100) / 100;
+  return Math.max(MIN_DONATION_USD, rounded);
+}
+
+function formatUsd(amount: number): string {
+  return `$${amount.toLocaleString('en-US', {
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,
   })}`;
 }
 
-/** Impact copy is based on donation amount in Philippine pesos (₱). */
-function getDonationImpactMessagePhp(amountPhp: number): string {
-  const php = Math.round(amountPhp * 100) / 100;
-  if (php < 500) {
+/** Thank-you impact copy by gift size (USD). */
+function getDonationImpactMessageUsd(amountUsd: number): string {
+  const usd = Math.round(amountUsd * 100) / 100;
+  if (usd < 50) {
     return 'You provided a meal for a girl in need';
   }
-  if (php <= 2000) {
+  if (usd <= 199) {
     return 'You covered a week of school supplies';
   }
   return 'You funded a month of shelter and care';
@@ -113,10 +126,14 @@ export default function DonationPage() {
     repeatDonation?.donationType === 'one-time' ? 'one-time' : 'monthly'
   );
   const [selectedAmount, setSelectedAmount] = useState<number | null>(
-    repeatDonation?.amount ?? 500
+    typeof repeatDonation?.amount === 'number' && repeatDonation.amount > 0
+      ? normalizeDonationUsd(repeatDonation.amount)
+      : DEFAULT_DONATION_USD
   );
   const [customAmount, setCustomAmount] = useState(
-    repeatDonation?.amount ? repeatDonation.amount.toString() : ''
+    typeof repeatDonation?.amount === 'number' && repeatDonation.amount > 0
+      ? normalizeDonationUsd(repeatDonation.amount).toString()
+      : ''
   );
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -130,7 +147,7 @@ export default function DonationPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [thankYouDetails, setThankYouDetails] = useState<{
-    amountPhp: number;
+    amountUsd: number;
     donationType: 'monthly' | 'one-time';
     firstName: string;
   } | null>(null);
@@ -139,11 +156,6 @@ export default function DonationPage() {
   const activeAmount = customAmount
     ? parseFloat(customAmount)
     : selectedAmount;
-
-  const annualImpact =
-    donationType === 'monthly' && activeAmount
-      ? activeAmount * 12
-      : null;
 
   const handleAmountClick = (amount: number) => {
     if (!isAuthenticated) {
@@ -178,8 +190,9 @@ export default function DonationPage() {
     }
 
     if (typeof repeatDonation.amount === 'number' && repeatDonation.amount > 0) {
-      setSelectedAmount(repeatDonation.amount);
-      setCustomAmount(repeatDonation.amount.toString());
+      const normalized = normalizeDonationUsd(repeatDonation.amount);
+      setSelectedAmount(normalized);
+      setCustomAmount(normalized.toString());
     }
 
     if (typeof repeatDonation.notes === 'string') {
@@ -237,8 +250,11 @@ export default function DonationPage() {
       return;
     }
 
-    if (!activeAmount || activeAmount <= 0)
+    if (!activeAmount || Number.isNaN(activeAmount)) {
       newErrors.amount = 'Please select or enter an amount';
+    } else if (activeAmount < MIN_DONATION_USD) {
+      newErrors.amount = `Enter an amount of at least ${formatUsd(MIN_DONATION_USD)}`;
+    }
     if (!firstName.trim()) newErrors.firstName = 'First name is required';
     if (!lastName.trim()) newErrors.lastName = 'Last name is required';
     if (!email.trim()) newErrors.email = 'Email is required';
@@ -249,8 +265,9 @@ export default function DonationPage() {
     }
 
     setErrors({});
-    const confirmedAmountPhp = activeAmount;
-    if (!confirmedAmountPhp || confirmedAmountPhp <= 0) {
+    const validatedAmount = activeAmount as number;
+    const confirmedAmountUsd = normalizeDonationUsd(validatedAmount);
+    if (confirmedAmountUsd < MIN_DONATION_USD) {
       return;
     }
 
@@ -265,9 +282,9 @@ export default function DonationPage() {
         isRecurring: donationType === 'monthly',
         campaignName: repeatDonation?.campaignName ?? null,
         channelSource: repeatDonation?.channelSource ?? null,
-        currencyCode: 'PHP',
-        amount: confirmedAmountPhp,
-        estimatedValue: confirmedAmountPhp,
+        currencyCode: 'USD',
+        amount: confirmedAmountUsd,
+        estimatedValue: confirmedAmountUsd,
         impactUnit: null,
         notes: dedication.trim() || null,
         referralPostId: null,
@@ -275,7 +292,7 @@ export default function DonationPage() {
 
       await createMyDonation(payload);
       setThankYouDetails({
-        amountPhp: confirmedAmountPhp,
+        amountUsd: confirmedAmountUsd,
         donationType,
         firstName: firstName.trim(),
       });
@@ -293,10 +310,11 @@ export default function DonationPage() {
     setShowSuccess(false);
     setThankYouDetails(null);
     if (typeof repeatDonation?.amount === 'number' && repeatDonation.amount > 0) {
-      setSelectedAmount(repeatDonation.amount);
-      setCustomAmount(repeatDonation.amount.toString());
+      const normalized = normalizeDonationUsd(repeatDonation.amount);
+      setSelectedAmount(normalized);
+      setCustomAmount(normalized.toString());
     } else {
-      setSelectedAmount(500);
+      setSelectedAmount(DEFAULT_DONATION_USD);
       setCustomAmount('');
     }
 
@@ -461,6 +479,17 @@ export default function DonationPage() {
                       <span className="donate-step-num">2.</span> Select Your
                       Amount
                     </h3>
+                    <p
+                      style={{
+                        fontSize: '0.9rem',
+                        color: 'var(--color-muted)',
+                        marginTop: '-12px',
+                        marginBottom: '16px',
+                      }}
+                    >
+                      Pick a suggested amount or enter any custom gift (minimum{' '}
+                      {formatUsd(MIN_DONATION_USD)}).
+                    </p>
                     <div className="amount-grid">
                       {amounts.map((amt) => (
                         <button
@@ -470,7 +499,7 @@ export default function DonationPage() {
                           onClick={() => handleAmountClick(amt)}
                           disabled={!isAuthenticated}
                         >
-                          {formatPhp(amt)}
+                          {formatUsd(amt)}
                         </button>
                       ))}
                     </div>
@@ -485,11 +514,11 @@ export default function DonationPage() {
                           fontWeight: 500,
                         }}
                       >
-                        ₱
+                        $
                       </span>
                       <input
                         type="text"
-                        placeholder="Enter custom amount"
+                        placeholder="Custom amount"
                         value={customAmount}
                         onChange={handleCustomAmountChange}
                         className="custom-amount-input"
@@ -657,7 +686,7 @@ export default function DonationPage() {
                           {donationType === 'monthly' ? 'Monthly ' : ''}
                           Donation
                           {activeAmount && activeAmount > 0
-                            ? ` — ${formatPhp(activeAmount)}`
+                            ? ` — ${formatUsd(activeAmount)}`
                             : ''}
                           {donationType === 'monthly' ? '/mo' : ''}
                         </>
@@ -695,20 +724,10 @@ export default function DonationPage() {
                           }}
                         >
                           {activeAmount && activeAmount > 0
-                            ? formatPhp(activeAmount)
+                            ? formatUsd(activeAmount)
                             : '—'}
                         </strong>
                       </div>
-                      {annualImpact && (
-                        <div className="gift-summary-row">
-                          <span>Annual Impact</span>
-                          <strong
-                            style={{ color: 'var(--color-primary-dark)' }}
-                          >
-                            {formatPhp(annualImpact)}/year
-                          </strong>
-                        </div>
-                      )}
                       <div className="gift-summary-secure">
                         <Shield size={14} />
                         Secure &middot; Encrypted &middot; Tax-deductible
@@ -731,7 +750,7 @@ export default function DonationPage() {
                             }}
                           />
                           <div>
-                            <strong>{formatPhp(item.amount)} provides</strong>
+                            <strong>{formatUsd(item.amount)} provides</strong>
                             <p>{item.text}</p>
                           </div>
                         </div>
@@ -823,12 +842,12 @@ export default function DonationPage() {
                 <p className="donation-thankyou-amount">
                   Your {thankYouDetails.donationType === 'monthly' ? 'monthly ' : ''}
                   gift of{' '}
-                  <strong>{formatPhp(thankYouDetails.amountPhp)}</strong>
+                  <strong>{formatUsd(thankYouDetails.amountUsd)}</strong>
                   {thankYouDetails.donationType === 'monthly' ? ' / month' : ''}{' '}
                   is on its way to girls who need it most.
                 </p>
                 <p className="donation-thankyou-impact">
-                  {getDonationImpactMessagePhp(thankYouDetails.amountPhp)}
+                  {getDonationImpactMessageUsd(thankYouDetails.amountUsd)}
                 </p>
                 <PrimaryButton type="button" onClick={resetForm} fullWidth>
                   Make Another Donation
