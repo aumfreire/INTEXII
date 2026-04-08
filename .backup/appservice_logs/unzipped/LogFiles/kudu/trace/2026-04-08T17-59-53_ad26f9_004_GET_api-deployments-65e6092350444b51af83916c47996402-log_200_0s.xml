@@ -1,6 +1,0 @@
-<step title="Incoming Request" date="2026-04-08T17:59:53.232" instance="ad26f9" url="/api/deployments/65e6092350444b51af83916c47996402/log" method="GET" type="request" pid="2468,2,13" Accept="*/*" Accept-Encoding="gzip, deflate" Authorization="Bea..." Host="intexii-backend.scm.azurewebsites.net" User-Agent="AZURECLI/2.84.0 (HOMEBREW)" x-ms-client-request-id="bca0e75c-3374-11f1-876f-ce896707949d" X-ARR-LOG-ID="bca0e75c-3374-11f1-876f-ce896707949d" CLIENT-IP="66.7.118.66:52132" X-SITE-DEPLOYMENT-ID="INTEXII-Backend" WAS-DEFAULT-HOSTNAME="intexii-backend.scm.azurewebsites.net" X-Forwarded-Proto="https" X-AppService-Proto="https" X-Forwarded-TlsVersion="1.3" X-WAWS-Unencoded-URL="/api/deployments/65e6092350444b51af83916c47996402/log" >
-  <step title="DeploymentService.GetLogEntry" date="2026-04-08T17:59:53.263" >
-    <step title="DeploymentManager.GetLogEntries(id:65e6092350444b51af83916c47996402)" date="2026-04-08T17:59:53.263" /><!-- duration: 16ms -->
-  </step><!-- duration: 31ms -->
-  <step title="Outgoing response" date="2026-04-08T17:59:53.295" type="response" statusCode="200" statusText="OK" Server="Microsoft-IIS/10.0" x-ms-request-id="bca0e75c-3374-11f1-876f-ce896707949d" Cache-Control="private" X-AspNet-Version="4.0.30319" Content-Type="application/json; charset=utf-8" /><!-- duration: 0ms -->
-</step><!-- duration: 78ms -->
