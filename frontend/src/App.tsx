@@ -15,6 +15,8 @@ import LoginPage from './pages/LoginPage';
 import SignUpPage from './pages/SignUpPage';
 import CaseloadPage from './pages/CaseloadPage';
 import ResidentDetailPage from './pages/ResidentDetailPage';
+import DonorsPage from './pages/DonorsPage';
+import AdminDashboardPage from './pages/AdminDashboardPage';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -56,12 +58,12 @@ function App() {
       <Routes>
         {/* Admin routes — own layout, no public Navbar/Footer */}
         <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<AdminPlaceholder title="Dashboard" subtitle="Overview of shelter operations and key metrics." />} />
+          <Route index element={<AdminDashboardPage />} />
           <Route path="caseload" element={<CaseloadPage />} />
           <Route path="residents" element={<AdminPlaceholder title="Residents" subtitle="Current and past residents of the shelter." />} />
           <Route path="residents/:id" element={<ResidentDetailPage />} />
-          <Route path="donors" element={<AdminPlaceholder title="Donors" subtitle="View and manage donor information." />} />
-          <Route path="contributions" element={<AdminPlaceholder title="Contributions" subtitle="Track donations and financial contributions." />} />
+          <Route path="donors" element={<DonorsPage />} />
+          <Route path="contributions" element={<DonorsPage />} />
           <Route path="process-recordings" element={<AdminPlaceholder title="Process Recordings" subtitle="Document and review case interactions." />} />
           <Route path="home-visits" element={<AdminPlaceholder title="Home Visits" subtitle="Schedule and log home visit records." />} />
           <Route path="case-conferences" element={<AdminPlaceholder title="Case Conferences" subtitle="Plan and track multi-disciplinary meetings." />} />
