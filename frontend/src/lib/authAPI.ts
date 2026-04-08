@@ -9,6 +9,7 @@ import type {
     AdminUserSummaryMetrics,
     AdminUpdateProfileRequest,
 } from '../types/AdminUser';
+import type { DonationRecord } from '../types/Donation';
 
 export interface ExternalAuthProvider {
     name: string;
@@ -348,6 +349,18 @@ export async function getAdminDonationSummary(): Promise<AdminDonationSummary> {
     if (!response.ok) {
         throw new Error(
             await readApiError(response, 'Unable to load donation metrics.')
+        );
+    }
+
+    return response.json();
+}
+
+export async function getMyDonations(): Promise<DonationRecord[]> {
+    const response = await apiFetch('/api/donations/my');
+
+    if (!response.ok) {
+        throw new Error(
+            await readApiError(response, 'Unable to load your donation history.')
         );
     }
 

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Heart,
   Shield,
@@ -16,6 +16,10 @@ import FormInput from '../components/ui/FormInput';
 import AlertBanner from '../components/ui/AlertBanner';
 import FAQAccordion from '../components/ui/FAQAccordion';
 import Card from '../components/ui/Card';
+import { useAuth } from '../context/useAuth';
+import { getManagedProfile } from '../lib/authAPI';
+import { useLocation } from 'react-router-dom';
+import type { RepeatDonationState } from '../types/Donation';
 import heroMain from '../assets/haven/hero-main.webp';
 import '../styles/pages/donation.css';
 
@@ -80,11 +84,18 @@ const whyGiveCards = [
 ];
 
 export default function DonationPage() {
+  const { authSession, isAuthenticated, isLoading } = useAuth();
+  const location = useLocation();
+  const repeatDonation = location.state as RepeatDonationState | null;
   const [donationType, setDonationType] = useState<'monthly' | 'one-time'>(
-    'monthly'
+    repeatDonation?.donationType === 'one-time' ? 'one-time' : 'monthly'
   );
-  const [selectedAmount, setSelectedAmount] = useState<number | null>(50);
-  const [customAmount, setCustomAmount] = useState('');
+  const [selectedAmount, setSelectedAmount] = useState<number | null>(
+    repeatDonation?.amount ?? 50
+  );
+  const [customAmount, setCustomAmount] = useState(
+    repeatDonation?.amount ? repeatDonation.amount.toString() : ''
+  );
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -93,10 +104,10 @@ export default function DonationPage() {
   const [expiry, setExpiry] = useState('');
   const [cvc, setCvc] = useState('');
   const [zip, setZip] = useState('');
-  const [coverFees, setCoverFees] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isPrefilling, setIsPrefilling] = useState(false);
 
   const activeAmount = customAmount
     ? parseFloat(customAmount)
@@ -108,6 +119,10 @@ export default function DonationPage() {
       : null;
 
   const handleAmountClick = (amount: number) => {
+    if (!isAuthenticated) {
+      return;
+    }
+
     setSelectedAmount(amount);
     setCustomAmount('');
     if (errors.amount) setErrors((prev) => ({ ...prev, amount: '' }));
@@ -116,25 +131,90 @@ export default function DonationPage() {
   const handleCustomAmountChange = (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
+    if (!isAuthenticated) {
+      return;
+    }
+
     const val = e.target.value.replace(/[^0-9.]/g, '');
     setCustomAmount(val);
     if (val) setSelectedAmount(null);
     if (errors.amount) setErrors((prev) => ({ ...prev, amount: '' }));
   };
 
+  useEffect(() => {
+    if (!repeatDonation) {
+      return;
+    }
+
+    if (repeatDonation.donationType === 'one-time' || repeatDonation.donationType === 'monthly') {
+      setDonationType(repeatDonation.donationType);
+    }
+
+    if (typeof repeatDonation.amount === 'number' && repeatDonation.amount > 0) {
+      setSelectedAmount(repeatDonation.amount);
+      setCustomAmount(repeatDonation.amount.toString());
+    }
+
+    if (typeof repeatDonation.notes === 'string') {
+      setDedication(repeatDonation.notes);
+    }
+  }, [repeatDonation]);
+
+  const loadDonorProfile = useCallback(async () => {
+    if (!isAuthenticated) {
+      return;
+    }
+
+    setIsPrefilling(true);
+
+    try {
+      const profile = await getManagedProfile();
+      setFirstName(profile.firstName ?? '');
+      setLastName(profile.lastName ?? '');
+      setEmail(authSession.email ?? '');
+    } catch {
+      const fallbackDisplayName = authSession.displayName ?? authSession.userName ?? '';
+      const fallbackParts = fallbackDisplayName.trim().split(/\s+/).filter(Boolean);
+
+      setFirstName(fallbackParts[0] ?? '');
+      setLastName(fallbackParts.slice(1).join(' ') || '');
+      setEmail(authSession.email ?? '');
+    } finally {
+      setIsPrefilling(false);
+    }
+  }, [authSession.displayName, authSession.email, authSession.userName, isAuthenticated]);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setFirstName('');
+      setLastName('');
+      setEmail('');
+      setDedication('');
+      setCardNumber('');
+      setExpiry('');
+      setCvc('');
+      setZip('');
+      return;
+    }
+
+    void loadDonorProfile();
+  }, [isAuthenticated, loadDonorProfile]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
+
+    if (!isAuthenticated) {
+      newErrors.auth = 'You need to log in or create an account to donate.';
+      setErrors(newErrors);
+      return;
+    }
 
     if (!activeAmount || activeAmount <= 0)
       newErrors.amount = 'Please select or enter an amount';
     if (!firstName.trim()) newErrors.firstName = 'First name is required';
     if (!lastName.trim()) newErrors.lastName = 'Last name is required';
     if (!email.trim()) newErrors.email = 'Email is required';
-    if (!cardNumber.trim()) newErrors.cardNumber = 'Card number is required';
-    if (!expiry.trim()) newErrors.expiry = 'Expiration is required';
-    if (!cvc.trim()) newErrors.cvc = 'CVC is required';
-    if (!zip.trim()) newErrors.zip = 'ZIP code is required';
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -151,18 +231,25 @@ export default function DonationPage() {
 
   const resetForm = () => {
     setShowSuccess(false);
-    setSelectedAmount(50);
-    setCustomAmount('');
-    setFirstName('');
-    setLastName('');
-    setEmail('');
-    setDedication('');
+    if (typeof repeatDonation?.amount === 'number' && repeatDonation.amount > 0) {
+      setSelectedAmount(repeatDonation.amount);
+      setCustomAmount(repeatDonation.amount.toString());
+    } else {
+      setSelectedAmount(50);
+      setCustomAmount('');
+    }
+
+    void loadDonorProfile();
+    setDedication(repeatDonation?.notes ?? '');
     setCardNumber('');
     setExpiry('');
     setCvc('');
     setZip('');
-    setCoverFees(false);
-    setDonationType('monthly');
+    if (repeatDonation?.donationType === 'one-time' || repeatDonation?.donationType === 'monthly') {
+      setDonationType(repeatDonation.donationType);
+    } else {
+      setDonationType('monthly');
+    }
   };
 
   const clearError = (field: string) => {
@@ -211,6 +298,32 @@ export default function DonationPage() {
       {/* Main content */}
       <section className="donation-content">
         <div className="container" style={{ padding: '0 24px' }}>
+          {!isLoading && !isAuthenticated ? (
+            <div style={{ marginBottom: '20px' }}>
+              <div
+                style={{
+                  padding: '16px 18px',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--color-primary)',
+                  background: 'rgba(193, 96, 58, 0.08)',
+                  color: 'var(--color-dark)',
+                  lineHeight: 1.6,
+                }}
+              >
+                <strong>Log in to donate.</strong> You need an account before you can submit a donation.
+                {' '}
+                <Link to="/login" style={{ fontWeight: 700 }}>
+                  Log in
+                </Link>
+                {' '}or{' '}
+                <Link to="/signup" style={{ fontWeight: 700 }}>
+                  create an account
+                </Link>
+                {' '}to continue.
+              </div>
+            </div>
+          ) : null}
+
           {showSuccess ? (
             <div className="donation-success">
               <CheckCircle size={64} className="success-icon" />
@@ -237,6 +350,10 @@ export default function DonationPage() {
               {/* Left: Stepped Form */}
               <div className="col-lg-8">
                 <form onSubmit={handleSubmit} noValidate>
+                  {errors.auth ? (
+                    <AlertBanner message={errors.auth} type="warning" onClose={() => setErrors((prev) => ({ ...prev, auth: '' }))} />
+                  ) : null}
+
                   {/* Step 1: Giving Type */}
                   <div className="donate-step-card">
                     <h3 className="donate-step-title">
@@ -248,6 +365,7 @@ export default function DonationPage() {
                         type="button"
                         className={`giving-type-btn ${donationType === 'monthly' ? 'active' : ''}`}
                         onClick={() => setDonationType('monthly')}
+                        disabled={!isAuthenticated}
                       >
                         <RefreshCw size={18} />
                         Give Monthly
@@ -259,6 +377,7 @@ export default function DonationPage() {
                         type="button"
                         className={`giving-type-btn ${donationType === 'one-time' ? 'active' : ''}`}
                         onClick={() => setDonationType('one-time')}
+                        disabled={!isAuthenticated}
                       >
                         <Heart size={18} />
                         Give Once
@@ -286,6 +405,7 @@ export default function DonationPage() {
                           type="button"
                           className={`amount-btn ${selectedAmount === amt && !customAmount ? 'selected' : ''}`}
                           onClick={() => handleAmountClick(amt)}
+                          disabled={!isAuthenticated}
                         >
                           ${amt}
                         </button>
@@ -310,6 +430,7 @@ export default function DonationPage() {
                         value={customAmount}
                         onChange={handleCustomAmountChange}
                         className="custom-amount-input"
+                        disabled={!isAuthenticated}
                       />
                     </div>
                     {errors.amount && (
@@ -335,6 +456,7 @@ export default function DonationPage() {
                           }}
                           placeholder="Jane"
                           error={errors.firstName}
+                          disabled={!isAuthenticated || isPrefilling}
                           required
                         />
                       </div>
@@ -349,6 +471,7 @@ export default function DonationPage() {
                           }}
                           placeholder="Smith"
                           error={errors.lastName}
+                          disabled={!isAuthenticated || isPrefilling}
                           required
                         />
                       </div>
@@ -364,6 +487,7 @@ export default function DonationPage() {
                       }}
                       placeholder="jane@example.com"
                       error={errors.email}
+                      disabled={!isAuthenticated || isPrefilling}
                       required
                     />
                     <FormInput
@@ -372,6 +496,7 @@ export default function DonationPage() {
                       value={dedication}
                       onChange={(e) => setDedication(e.target.value)}
                       placeholder="In honor of..."
+                      disabled={!isAuthenticated}
                     />
                   </div>
 
@@ -403,7 +528,7 @@ export default function DonationPage() {
                       }}
                       placeholder="1234 5678 9012 3456"
                       error={errors.cardNumber}
-                      required
+                      disabled={!isAuthenticated}
                     />
                     <div className="row g-3">
                       <div className="col-4">
@@ -417,7 +542,7 @@ export default function DonationPage() {
                           }}
                           placeholder="MM/YY"
                           error={errors.expiry}
-                          required
+                          disabled={!isAuthenticated}
                         />
                       </div>
                       <div className="col-4">
@@ -431,7 +556,7 @@ export default function DonationPage() {
                           }}
                           placeholder="123"
                           error={errors.cvc}
-                          required
+                          disabled={!isAuthenticated}
                         />
                       </div>
                       <div className="col-4">
@@ -445,42 +570,24 @@ export default function DonationPage() {
                           }}
                           placeholder="00000"
                           error={errors.zip}
-                          required
+                          disabled={!isAuthenticated}
                         />
                       </div>
                     </div>
 
-                    <label
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '10px',
-                        marginBottom: '24px',
-                        fontSize: '0.9rem',
-                        color: 'var(--color-dark)',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={coverFees}
-                        onChange={(e) => setCoverFees(e.target.checked)}
-                        style={{ accentColor: 'var(--color-primary)' }}
-                      />
-                      Cover processing fees so 100% goes to the mission
-                    </label>
-
                     <PrimaryButton
                       type="submit"
                       fullWidth
-                      loading={isSubmitting}
-                      disabled={isSubmitting}
+                      loading={isSubmitting || isPrefilling}
+                      disabled={isSubmitting || isPrefilling || !isAuthenticated}
                     >
-                      {isSubmitting ? (
+                      {isSubmitting || isPrefilling ? (
                         <>
                           <Loader2 size={18} className="spin-icon" />{' '}
                           Processing...
                         </>
+                      ) : !isAuthenticated ? (
+                        'Log in to Donate'
                       ) : (
                         <>
                           Complete{' '}

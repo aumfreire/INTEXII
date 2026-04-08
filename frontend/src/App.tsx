@@ -19,6 +19,7 @@ import { useAuth } from './context/useAuth';
 import LogoutPage from './pages/LogoutPage';
 import ManageMfaPage from './pages/ManageMfaPage';
 import DashboardPage from './pages/DashboardPage';
+import DonationsPage from './pages/DonationsPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import EditProfilePage from './pages/EditProfilePage';
 import AdminUsersPage from './pages/AdminUsersPage';
@@ -87,6 +88,14 @@ function App() {
                 <Route path="/signup" element={<SignUpPage />} />
                 <Route path="/register" element={<SignUpPage />} />
                 <Route path="/logout" element={<LogoutPage />} />
+                <Route
+                  path="/donations"
+                  element={
+                    <RequireAuth>
+                      <DonationsPage />
+                    </RequireAuth>
+                  }
+                />
                 <Route
                   path="/dashboard"
                   element={

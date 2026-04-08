@@ -24,8 +24,11 @@ export default function DashboardPage() {
                     <Link to="/mfa" className="btn btn-outline-secondary">
                         Manage MFA
                     </Link>
-                    <Link to="/donate" className="btn btn-outline-secondary">
-                        Go to Donations
+                    <Link to="/donations" className="btn btn-outline-secondary">
+                        Donations
+                    </Link>
+                    <Link to="/donate" className="btn btn-primary">
+                        Make Donation
                     </Link>
                 </div>
             </div>
