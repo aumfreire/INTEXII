@@ -9,7 +9,9 @@ import type {
     AdminUserSummaryMetrics,
     AdminUpdateProfileRequest,
 } from '../types/AdminUser';
-import type { DonationRecord } from '../types/Donation';
+import type { DonationRecord, PagedDonationResponse } from '../types/DonationTypes';
+import type { DonationSupporterOption, DonationUpsertRequest } from '../types/AdminDonation';
+import type { DonorDonationCreateRequest } from '../types/DonationTypes';
 
 export interface ExternalAuthProvider {
     name: string;
@@ -355,8 +357,40 @@ export async function getAdminDonationSummary(): Promise<AdminDonationSummary> {
     return response.json();
 }
 
-export async function getMyDonations(): Promise<DonationRecord[]> {
-    const response = await apiFetch('/api/donations/my');
+function buildDonationQueryParams(options: {
+    page?: number;
+    pageSize?: number;
+    search?: string;
+    supporterId?: string | number;
+}): string {
+    const query = new URLSearchParams();
+
+    if (options.page && options.page > 0) {
+        query.set('page', String(options.page));
+    }
+
+    if (options.pageSize && options.pageSize > 0) {
+        query.set('pageSize', String(options.pageSize));
+    }
+
+    if (options.search && options.search.trim().length > 0) {
+        query.set('search', options.search.trim());
+    }
+
+    if (options.supporterId !== undefined && options.supporterId !== null && `${options.supporterId}`.trim().length > 0) {
+        query.set('supporterId', `${options.supporterId}`.trim());
+    }
+
+    const serialized = query.toString();
+    return serialized.length > 0 ? `?${serialized}` : '';
+}
+
+export async function getMyDonations(options: {
+    page?: number;
+    pageSize?: number;
+    search?: string;
+} = {}): Promise<PagedDonationResponse<DonationRecord>> {
+    const response = await apiFetch(`/api/donations/my${buildDonationQueryParams(options)}`);
 
     if (!response.ok) {
         throw new Error(
@@ -365,6 +399,112 @@ export async function getMyDonations(): Promise<DonationRecord[]> {
     }
 
     return response.json();
+}
+
+export async function getAdminDonations(options: {
+    page?: number;
+    pageSize?: number;
+    search?: string;
+    supporterId?: string | number;
+} = {}): Promise<PagedDonationResponse<DonationRecord>> {
+    const response = await apiFetch(`/api/donations${buildDonationQueryParams(options)}`);
+
+    if (!response.ok) {
+        throw new Error(
+            await readApiError(response, 'Unable to load donations.')
+        );
+    }
+
+    return response.json();
+}
+
+export async function getDonationSupporters(search = ''): Promise<DonationSupporterOption[]> {
+    const query = new URLSearchParams();
+
+    if (search.trim().length > 0) {
+        query.set('search', search.trim());
+    }
+
+    const response = await apiFetch(
+        `/api/donations/supporters${query.toString() ? `?${query.toString()}` : ''}`
+    );
+
+    if (!response.ok) {
+        throw new Error(
+            await readApiError(response, 'Unable to load supporter options.')
+        );
+    }
+
+    return response.json();
+}
+
+export async function createDonation(payload: DonationUpsertRequest): Promise<DonationRecord> {
+    const response = await apiFetch('/api/donations', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+        throw new Error(
+            await readApiError(response, 'Unable to create donation.')
+        );
+    }
+
+    return response.json();
+}
+
+export async function createMyDonation(payload: DonorDonationCreateRequest): Promise<DonationRecord> {
+    const response = await apiFetch('/api/donations/my', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+        throw new Error(
+            await readApiError(response, 'Unable to create your donation.')
+        );
+    }
+
+    return response.json();
+}
+
+export async function updateDonation(
+    donationId: number,
+    payload: DonationUpsertRequest
+): Promise<DonationRecord> {
+    const response = await apiFetch(`/api/donations/${donationId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+        throw new Error(
+            await readApiError(response, 'Unable to update donation.')
+        );
+    }
+
+    return response.json();
+}
+
+export async function deleteDonation(donationId: number): Promise<void> {
+    const response = await apiFetch(`/api/donations/${donationId}`, {
+        method: 'DELETE',
+    });
+
+    if (!response.ok) {
+        throw new Error(
+            await readApiError(response, 'Unable to delete donation.')
+        );
+    }
 }
 
 export async function listAdminUsers(search = ''): Promise<AdminUserSummary[]> {

@@ -200,6 +200,21 @@ export default function Navbar() {
                                                 Admin Dashboard
                                             </Link>
                                         ) : null}
+                                        {isAdmin ? (
+                                            <Link
+                                                to="/admin/donations"
+                                                onClick={() => setIsUserMenuOpen(false)}
+                                                style={{
+                                                    display: 'block',
+                                                    textDecoration: 'none',
+                                                    color: 'var(--color-charcoal)',
+                                                    padding: '8px 10px',
+                                                    borderRadius: 'var(--radius-sm)',
+                                                }}
+                                            >
+                                                Manage Donations
+                                            </Link>
+                                        ) : null}
                                         <Link
                                             to="/logout"
                                             onClick={() => setIsUserMenuOpen(false)}
@@ -347,6 +362,15 @@ export default function Navbar() {
                                         onClick={() => setIsOpen(false)}
                                     >
                                         Admin Dashboard
+                                    </NavLink>
+                                ) : null}
+                                {isAdmin ? (
+                                    <NavLink
+                                        to="/admin/donations"
+                                        style={navLinkStyle}
+                                        onClick={() => setIsOpen(false)}
+                                    >
+                                        Manage Donations
                                     </NavLink>
                                 ) : null}
                                 <NavLink
