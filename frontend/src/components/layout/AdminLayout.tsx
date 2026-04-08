@@ -14,7 +14,6 @@ import {
   Shield,
   Menu,
   X,
-  LogOut,
 } from 'lucide-react';
 import '../../styles/pages/admin-layout.css';
 

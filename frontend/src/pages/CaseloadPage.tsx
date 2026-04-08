@@ -11,12 +11,12 @@ import {
   Eye,
   FileText,
   Home,
-  Loader2,
   Inbox,
   RefreshCw,
 } from 'lucide-react';
 import PrimaryButton from '../components/ui/PrimaryButton';
 import AlertBanner from '../components/ui/AlertBanner';
+import { getAdminCaseload, type AdminCaseloadResident } from '../lib/authAPI';
 import '../styles/pages/caseload.css';
 
 /* ===== Types ===== */
@@ -39,7 +39,7 @@ interface Resident {
 }
 
 /* ===== Mock Data ===== */
-const mockResidents: Resident[] = [
+const fallbackResidents: Resident[] = [
   { id: '1', name: 'Grace M.', code: 'HFG-2024-001', safehouse: 'Haven House A', caseStatus: 'active', caseCategory: 'trafficking', riskLevel: 'high', assignedWorker: 'Maria Johnson', reintegrationStatus: 'not-started', lastUpdate: '2026-04-07' },
   { id: '2', name: 'Faith K.', code: 'HFG-2024-002', safehouse: 'Haven House A', caseStatus: 'active', caseCategory: 'abuse', riskLevel: 'moderate', assignedWorker: 'Maria Johnson', reintegrationStatus: 'in-progress', lastUpdate: '2026-04-06' },
   { id: '3', name: 'Hope N.', code: 'HFG-2024-003', safehouse: 'Haven House B', caseStatus: 'reintegration', caseCategory: 'neglect', riskLevel: 'low', assignedWorker: 'Sarah Okonkwo', reintegrationStatus: 'ready', lastUpdate: '2026-04-05' },
@@ -118,13 +118,35 @@ export default function CaseloadPage() {
   const [filterCategory, setFilterCategory] = useState('');
   const [filterRisk, setFilterRisk] = useState('');
 
-  // Simulate loading
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-      setResidents(mockResidents);
-    }, 1200);
-    return () => clearTimeout(timer);
+    let isMounted = true;
+
+    async function loadCaseload() {
+      setIsLoading(true);
+      setHasError(false);
+
+      try {
+        const data = await getAdminCaseload();
+        if (!isMounted) return;
+
+        const mappedResidents = data.map(mapAdminResidentToUiResident);
+        setResidents(mappedResidents);
+      } catch {
+        if (!isMounted) return;
+        setHasError(true);
+        setResidents(fallbackResidents);
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    void loadCaseload();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // Filtered results
@@ -158,7 +180,7 @@ export default function CaseloadPage() {
             Your assigned residents and case statuses at a glance.
           </p>
         </div>
-        <PrimaryButton onClick={() => {}}>
+        <PrimaryButton onClick={() => { }}>
           <UserPlus size={16} />
           Add Resident
         </PrimaryButton>
@@ -448,4 +470,61 @@ export default function CaseloadPage() {
       )}
     </div>
   );
+}
+
+function mapAdminResidentToUiResident(resident: AdminCaseloadResident): Resident {
+  return {
+    id: String(resident.id),
+    name: resident.name,
+    code: resident.code,
+    safehouse: resident.safehouse,
+    caseStatus: normalizeCaseStatus(resident.caseStatus),
+    caseCategory: normalizeCaseCategory(resident.caseCategory),
+    riskLevel: normalizeRiskLevel(resident.riskLevel),
+    assignedWorker: resident.assignedWorker ?? 'Unassigned',
+    reintegrationStatus: normalizeReintegrationStatus(resident.reintegrationStatus),
+    lastUpdate: (resident.lastUpdate ?? '').slice(0, 10),
+  };
+}
+
+function normalizeCaseStatus(value: string): CaseStatus {
+  const normalized = value.trim().toLowerCase();
+  if (normalized === 'intake' || normalized === 'reintegration' || normalized === 'closed') {
+    return normalized;
+  }
+
+  return 'active';
+}
+
+function normalizeCaseCategory(value: string): CaseCategory {
+  const normalized = value.trim().toLowerCase();
+  if (
+    normalized === 'trafficking'
+    || normalized === 'abuse'
+    || normalized === 'neglect'
+    || normalized === 'abandonment'
+    || normalized === 'runaway'
+  ) {
+    return normalized;
+  }
+
+  return 'neglect';
+}
+
+function normalizeRiskLevel(value: string): RiskLevel {
+  const normalized = value.trim().toLowerCase();
+  if (normalized === 'low' || normalized === 'moderate' || normalized === 'high' || normalized === 'critical') {
+    return normalized;
+  }
+
+  return 'moderate';
+}
+
+function normalizeReintegrationStatus(value: string): ReintegrationStatus {
+  const normalized = value.trim().toLowerCase();
+  if (normalized === 'in-progress' || normalized === 'ready') {
+    return normalized;
+  }
+
+  return 'not-started';
 }

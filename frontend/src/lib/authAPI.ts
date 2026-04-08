@@ -30,6 +30,129 @@ interface TokenLoginResponse {
     expiresInSeconds: number;
 }
 
+export interface AdminCaseloadResident {
+    id: number;
+    name: string;
+    code: string;
+    safehouse: string;
+    caseStatus: string;
+    caseCategory: string;
+    riskLevel: string;
+    assignedWorker: string | null;
+    reintegrationStatus: string;
+    lastUpdate: string;
+}
+
+export interface AdminProcessRecording {
+    id: number;
+    date: string | null;
+    worker: string | null;
+    sessionType: string | null;
+    emotionStart: string | null;
+    emotionEnd: string | null;
+    progressNoted: boolean;
+    concernFlagged: boolean;
+    referralMade: boolean;
+    summary: string;
+}
+
+export interface AdminHomeVisit {
+    id: number;
+    date: string | null;
+    type: string | null;
+    worker: string | null;
+    cooperation: string | null;
+    safetyConcern: boolean;
+    followUpNeeded: boolean;
+    notes: string;
+}
+
+export interface AdminCaseConference {
+    id: number;
+    date: string | null;
+    upcoming: boolean;
+    attendees: string | null;
+    notes: string | null;
+}
+
+export interface AdminReintegrationIntervention {
+    id: number;
+    category: string | null;
+    description: string | null;
+    services: string | null;
+    targetDate: string | null;
+    status: string | null;
+}
+
+export interface AdminResidentDetail {
+    id: number;
+    name: string;
+    initials: string;
+    code: string;
+    caseControlNumber: string | null;
+    safehouse: string;
+    caseStatus: string;
+    riskLevel: string;
+    assignedWorker: string | null;
+    caseCategory: string;
+    caseSubCategory: string | null;
+    admissionDate: string | null;
+    dateOfBirth: string | null;
+    age: number | null;
+    gender: string | null;
+    nationality: string | null;
+    education: string | null;
+    referralSource: string | null;
+    referralOfficer: string | null;
+    referralDate: string | null;
+    familyStatus: string | null;
+    siblings: string | null;
+    familyContact: string | null;
+    reintegrationType: string | null;
+    reintegrationStatus: string;
+    notesRestricted: string | null;
+    recordings: AdminProcessRecording[];
+    visits: AdminHomeVisit[];
+    conferences: AdminCaseConference[];
+    reintegrationInterventions: AdminReintegrationIntervention[];
+}
+
+export interface AdminSupporterSummary {
+    id: number;
+    name: string;
+    organization: string | null;
+    type: string;
+    status: string;
+    channel: string;
+    firstDonation: string | null;
+    lastContribution: string | null;
+    lifetimeValue: number;
+}
+
+export interface AdminSupporterContribution {
+    donationId: number;
+    date: string | null;
+    description: string;
+    amount: number;
+}
+
+export interface AdminSupporterAllocation {
+    label: string;
+    percent: number;
+}
+
+export interface AdminSupporterDetail {
+    id: number;
+    name: string;
+    organization: string | null;
+    type: string;
+    status: string;
+    channel: string;
+    firstDonation: string | null;
+    contributions: AdminSupporterContribution[];
+    allocations: AdminSupporterAllocation[];
+}
+
 const configuredApiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
 const isLocalBrowser =
     typeof window !== 'undefined' &&
@@ -351,6 +474,66 @@ export async function getAdminDonationSummary(): Promise<AdminDonationSummary> {
     if (!response.ok) {
         throw new Error(
             await readApiError(response, 'Unable to load donation metrics.')
+        );
+    }
+
+    return response.json();
+}
+
+export async function getAdminCaseload(): Promise<AdminCaseloadResident[]> {
+    const response = await apiFetch('/api/residents/caseload');
+
+    if (!response.ok) {
+        throw new Error(
+            await readApiError(response, 'Unable to load caseload data.')
+        );
+    }
+
+    return response.json();
+}
+
+export async function getAdminResidentDetail(id: number | string): Promise<AdminResidentDetail> {
+    const response = await apiFetch(`/api/residents/${id}/detail`);
+
+    if (!response.ok) {
+        throw new Error(
+            await readApiError(response, 'Unable to load resident details.')
+        );
+    }
+
+    return response.json();
+}
+
+export async function getAdminSupporters(options: {
+    search?: string;
+    type?: string;
+    status?: string;
+    channel?: string;
+} = {}): Promise<AdminSupporterSummary[]> {
+    const query = new URLSearchParams();
+
+    if (options.search?.trim()) query.set('search', options.search.trim());
+    if (options.type?.trim()) query.set('type', options.type.trim());
+    if (options.status?.trim()) query.set('status', options.status.trim());
+    if (options.channel?.trim()) query.set('channel', options.channel.trim());
+
+    const response = await apiFetch(`/api/supporters${query.toString() ? `?${query.toString()}` : ''}`);
+
+    if (!response.ok) {
+        throw new Error(
+            await readApiError(response, 'Unable to load supporter data.')
+        );
+    }
+
+    return response.json();
+}
+
+export async function getAdminSupporterDetail(id: number | string): Promise<AdminSupporterDetail> {
+    const response = await apiFetch(`/api/supporters/${id}`);
+
+    if (!response.ok) {
+        throw new Error(
+            await readApiError(response, 'Unable to load supporter detail.')
         );
     }
 

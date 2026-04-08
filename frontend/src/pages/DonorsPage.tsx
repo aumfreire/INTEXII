@@ -10,13 +10,17 @@ import {
   PlusCircle,
   History,
   Inbox,
-  Loader2,
   UserPlus,
   X,
 } from 'lucide-react';
 import PrimaryButton from '../components/ui/PrimaryButton';
 import SecondaryButton from '../components/ui/SecondaryButton';
 import AlertBanner from '../components/ui/AlertBanner';
+import {
+  getAdminSupporterDetail,
+  getAdminSupporters,
+  type AdminSupporterAllocation,
+} from '../lib/authAPI';
 import '../styles/pages/donors.css';
 
 /* ===== Types ===== */
@@ -183,8 +187,66 @@ const channelLabels: Record<AcquisitionChannel, string> = {
 };
 
 function formatDate(iso: string): string {
+  if (!iso) {
+    return 'N/A';
+  }
+
   const d = new Date(iso + 'T00:00:00');
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function normalizeSupporterType(value: string): SupporterType {
+  const normalized = value.trim().toLowerCase();
+  if (
+    normalized === 'monetary'
+    || normalized === 'inkind'
+    || normalized === 'volunteer'
+    || normalized === 'skills'
+    || normalized === 'social'
+    || normalized === 'partner'
+  ) {
+    return normalized;
+  }
+
+  return 'monetary';
+}
+
+function normalizeSupporterStatus(value: string): SupporterStatus {
+  const normalized = value.trim().toLowerCase();
+  if (normalized === 'inactive' || normalized === 'lapsed') {
+    return normalized;
+  }
+
+  return 'active';
+}
+
+function normalizeSupporterChannel(value: string): AcquisitionChannel {
+  const normalized = value.trim().toLowerCase();
+  if (
+    normalized === 'referral'
+    || normalized === 'event'
+    || normalized === 'online'
+    || normalized === 'church'
+    || normalized === 'corporate'
+    || normalized === 'walk-in'
+  ) {
+    return normalized;
+  }
+
+  return 'online';
+}
+
+function allocationColor(index: number): Allocation['color'] {
+  const colors: Allocation['color'][] = ['primary', 'sage', 'light', 'dark'];
+  return colors[index % colors.length];
+}
+
+function mapAllocations(items: AdminSupporterAllocation[]): Allocation[] {
+  return items.map((item, index) => ({
+    label: item.label,
+    percent: item.percent,
+    color: allocationColor(index),
+  }));
 }
 
 /* ===== Action Menu Component ===== */
@@ -253,6 +315,7 @@ export default function DonorsPage() {
   const [hasError, setHasError] = useState(false);
   const [supporters, setSupporters] = useState<Supporter[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedDetail, setSelectedDetail] = useState<Supporter | null>(null);
 
   // Filters
   const [search, setSearch] = useState('');
@@ -260,14 +323,93 @@ export default function DonorsPage() {
   const [filterStatus, setFilterStatus] = useState('');
   const [filterChannel, setFilterChannel] = useState('');
 
-  // Simulate loading
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-      setSupporters(mockSupporters);
-    }, 1200);
-    return () => clearTimeout(timer);
+    let isMounted = true;
+
+    async function loadSupporters() {
+      setIsLoading(true);
+      setHasError(false);
+
+      try {
+        const data = await getAdminSupporters();
+        if (!isMounted) return;
+
+        setSupporters(
+          data.map((item) => ({
+            id: String(item.id),
+            name: item.name,
+            organization: item.organization ?? '',
+            type: normalizeSupporterType(item.type),
+            status: normalizeSupporterStatus(item.status),
+            channel: normalizeSupporterChannel(item.channel),
+            firstDonation: item.firstDonation ?? '',
+            lastContribution: item.lastContribution ?? '',
+            lifetimeValue: `$${Math.round(item.lifetimeValue).toLocaleString()}`,
+            contributions: [],
+            allocations: [],
+          }))
+        );
+      } catch {
+        if (!isMounted) return;
+        setHasError(true);
+        setSupporters(mockSupporters);
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    void loadSupporters();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadSupporterDetail() {
+      if (!selectedId) {
+        setSelectedDetail(null);
+        return;
+      }
+
+      try {
+        const detail = await getAdminSupporterDetail(selectedId);
+        if (!isMounted) return;
+
+        setSelectedDetail({
+          id: String(detail.id),
+          name: detail.name,
+          organization: detail.organization ?? '',
+          type: normalizeSupporterType(detail.type),
+          status: normalizeSupporterStatus(detail.status),
+          channel: normalizeSupporterChannel(detail.channel),
+          firstDonation: detail.firstDonation ?? '',
+          lastContribution: detail.contributions[0]?.date ?? '',
+          lifetimeValue: `$${Math.round(detail.contributions.reduce((sum, item) => sum + item.amount, 0)).toLocaleString()}`,
+          contributions: detail.contributions.map((item) => ({
+            date: item.date ?? '',
+            description: item.description,
+            amount: `$${Math.round(item.amount).toLocaleString()}`,
+          })),
+          allocations: mapAllocations(detail.allocations),
+        });
+      } catch {
+        if (!isMounted) return;
+        const fallback = supporters.find((s) => s.id === selectedId) ?? null;
+        setSelectedDetail(fallback);
+      }
+    }
+
+    void loadSupporterDetail();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedId, supporters]);
 
   // Filtered results
   const filtered = supporters.filter((s) => {
@@ -295,7 +437,7 @@ export default function DonorsPage() {
     (s) => s.status === 'active' && s.contributions.length >= 3
   ).length;
 
-  const selected = supporters.find((s) => s.id === selectedId) ?? null;
+  const selected = selectedDetail ?? supporters.find((s) => s.id === selectedId) ?? null;
 
   return (
     <div>
@@ -308,11 +450,11 @@ export default function DonorsPage() {
           </p>
         </div>
         <div className="donors-header-actions">
-          <SecondaryButton onClick={() => {}}>
+          <SecondaryButton onClick={() => { }}>
             <UserPlus size={16} />
             Add Supporter
           </SecondaryButton>
-          <PrimaryButton onClick={() => {}}>
+          <PrimaryButton onClick={() => { }}>
             <PlusCircle size={16} />
             Record Contribution
           </PrimaryButton>

@@ -16,14 +16,13 @@ import {
   Lock,
   Loader2,
   Inbox,
-  UserPlus,
   MapPin,
-  Phone,
   ArrowRightLeft,
 } from 'lucide-react';
 import PrimaryButton from '../components/ui/PrimaryButton';
 import SecondaryButton from '../components/ui/SecondaryButton';
 import AlertBanner from '../components/ui/AlertBanner';
+import { getAdminResidentDetail } from '../lib/authAPI';
 import '../styles/pages/resident-detail.css';
 
 /* ===== Types ===== */
@@ -148,8 +147,30 @@ const riskLabels: Record<RiskLevel, string> = { low: 'Low', moderate: 'Moderate'
 const statusLabels: Record<CaseStatus, string> = { active: 'Active', intake: 'Intake', reintegration: 'Reintegration', closed: 'Closed' };
 
 function formatDate(iso: string): string {
+  if (!iso) {
+    return 'N/A';
+  }
+
   const d = new Date(iso + 'T00:00:00');
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function normalizeCaseStatus(value: string): CaseStatus {
+  const normalized = value.trim().toLowerCase();
+  if (normalized === 'intake' || normalized === 'reintegration' || normalized === 'closed') {
+    return normalized;
+  }
+
+  return 'active';
+}
+
+function normalizeRiskLevel(value: string): RiskLevel {
+  const normalized = value.trim().toLowerCase();
+  if (normalized === 'low' || normalized === 'moderate' || normalized === 'high' || normalized === 'critical') {
+    return normalized;
+  }
+
+  return 'moderate';
 }
 
 /* ===== Component ===== */
@@ -158,15 +179,122 @@ export default function ResidentDetailPage() {
   const [activeTab, setActiveTab] = useState<Tab>('overview');
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [resident, setResident] = useState(mockResident);
+  const [recordings, setRecordings] = useState(mockRecordings);
+  const [visits, setVisits] = useState(mockVisits);
+  const [conferences, setConferences] = useState(mockConferences);
+  const [interventions, setInterventions] = useState(mockInterventions);
   const [expandedRecording, setExpandedRecording] = useState<string | null>(null);
   const [expandedVisit, setExpandedVisit] = useState<string | null>(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 900);
-    return () => clearTimeout(timer);
-  }, []);
+    let isMounted = true;
 
-  const r = mockResident;
+    async function loadResidentDetail() {
+      if (!id) {
+        setHasError(true);
+        setIsLoading(false);
+        return;
+      }
+
+      setHasError(false);
+      setIsLoading(true);
+
+      try {
+        const detail = await getAdminResidentDetail(id);
+        if (!isMounted) return;
+
+        setResident({
+          id: String(detail.id),
+          name: detail.name,
+          initials: detail.initials || 'R',
+          code: detail.code,
+          caseControlNumber: detail.caseControlNumber ?? `CCN-${detail.id}`,
+          safehouse: detail.safehouse,
+          caseStatus: normalizeCaseStatus(detail.caseStatus),
+          riskLevel: normalizeRiskLevel(detail.riskLevel),
+          assignedWorker: detail.assignedWorker ?? 'Unassigned',
+          caseCategory: detail.caseCategory,
+          caseSubCategory: detail.caseSubCategory ?? 'N/A',
+          admissionDate: detail.admissionDate ?? '',
+          dateOfBirth: detail.dateOfBirth ?? '',
+          age: detail.age ?? 0,
+          gender: detail.gender ?? 'N/A',
+          nationality: detail.nationality ?? 'N/A',
+          education: detail.education ?? 'N/A',
+          referralSource: detail.referralSource ?? 'N/A',
+          referralDate: detail.referralDate ?? '',
+          referralOfficer: detail.referralOfficer ?? 'N/A',
+          familyStatus: detail.familyStatus ?? 'N/A',
+          siblings: detail.siblings ?? 'N/A',
+          familyContact: detail.familyContact ?? 'N/A',
+          reintegrationStatus: detail.reintegrationStatus,
+          reintegrationType: detail.reintegrationType ?? 'Not assigned',
+        });
+
+        setRecordings(
+          detail.recordings.map((item) => ({
+            id: String(item.id),
+            date: item.date ?? '',
+            worker: item.worker ?? 'Unassigned',
+            sessionType: item.sessionType ?? 'Session',
+            emotionStart: item.emotionStart ?? 'N/A',
+            emotionEnd: item.emotionEnd ?? 'N/A',
+            progressNoted: item.progressNoted,
+            concernFlagged: item.concernFlagged,
+            referralMade: item.referralMade,
+            summary: item.summary,
+          }))
+        );
+
+        setVisits(
+          detail.visits.map((item) => ({
+            id: String(item.id),
+            date: item.date ?? '',
+            type: item.type ?? 'Visit',
+            worker: item.worker ?? 'Unassigned',
+            cooperation: item.cooperation ?? 'Neutral',
+            safetyConcern: item.safetyConcern,
+            followUpNeeded: item.followUpNeeded,
+            notes: item.notes,
+          }))
+        );
+
+        setConferences(
+          detail.conferences.map((item) => ({
+            id: String(item.id),
+            date: item.date ?? '',
+            upcoming: item.upcoming,
+            attendees: item.attendees ?? 'Unspecified attendees',
+            notes: item.notes ?? '',
+          }))
+        );
+
+        const mappedInterventions = detail.reintegrationInterventions
+          .map((item) => item.description || item.services || item.category || '')
+          .filter((item) => item.length > 0);
+
+        if (mappedInterventions.length > 0) {
+          setInterventions(mappedInterventions);
+        }
+      } catch {
+        if (!isMounted) return;
+        setHasError(true);
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    void loadResidentDetail();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id]);
+
+  const r = resident;
   const tabs: { key: Tab; label: string }[] = [
     { key: 'overview', label: 'Overview' },
     { key: 'recordings', label: 'Process Recordings' },
@@ -223,10 +351,10 @@ export default function ResidentDetailPage() {
             </div>
           </div>
           <div className="rd-header-actions">
-            <SecondaryButton onClick={() => {}}>
+            <SecondaryButton onClick={() => { }}>
               <FileText size={15} /> Add Recording
             </SecondaryButton>
-            <PrimaryButton onClick={() => {}}>
+            <PrimaryButton onClick={() => { }}>
               <Home size={15} /> Log Home Visit
             </PrimaryButton>
           </div>
@@ -379,11 +507,11 @@ export default function ResidentDetailPage() {
             <div className="rd-panel">
               <div className="rd-panel-header">
                 <h3 className="rd-panel-title">Process Recordings</h3>
-                <PrimaryButton onClick={() => {}}>
+                <PrimaryButton onClick={() => { }}>
                   <FileText size={15} /> Add Recording
                 </PrimaryButton>
               </div>
-              {mockRecordings.length === 0 ? (
+              {recordings.length === 0 ? (
                 <div className="rd-empty">
                   <Inbox size={40} className="rd-empty-icon" />
                   <h4 className="rd-empty-title">No process recordings yet</h4>
@@ -391,7 +519,7 @@ export default function ResidentDetailPage() {
                 </div>
               ) : (
                 <div className="rd-timeline">
-                  {mockRecordings.map((rec) => {
+                  {recordings.map((rec) => {
                     const isExpanded = expandedRecording === rec.id;
                     return (
                       <div className="rd-record" key={rec.id}>
@@ -442,11 +570,11 @@ export default function ResidentDetailPage() {
             <div className="rd-panel">
               <div className="rd-panel-header">
                 <h3 className="rd-panel-title">Home Visits</h3>
-                <PrimaryButton onClick={() => {}}>
+                <PrimaryButton onClick={() => { }}>
                   <Home size={15} /> Log Home Visit
                 </PrimaryButton>
               </div>
-              {mockVisits.length === 0 ? (
+              {visits.length === 0 ? (
                 <div className="rd-empty">
                   <Inbox size={40} className="rd-empty-icon" />
                   <h4 className="rd-empty-title">No home visits recorded</h4>
@@ -454,7 +582,7 @@ export default function ResidentDetailPage() {
                 </div>
               ) : (
                 <div className="rd-timeline">
-                  {mockVisits.map((v) => {
+                  {visits.map((v) => {
                     const isExpanded = expandedVisit === v.id;
                     return (
                       <div className="rd-record" key={v.id}>
@@ -518,7 +646,7 @@ export default function ResidentDetailPage() {
                   Upcoming Conferences
                 </h3>
                 <div style={{ marginTop: '16px' }}>
-                  {mockConferences.filter((c) => c.upcoming).map((c) => (
+                  {conferences.filter((c) => c.upcoming).map((c) => (
                     <div className="rd-conference-card" key={c.id}>
                       <div className="rd-conference-date">
                         {formatDate(c.date)}
@@ -537,7 +665,7 @@ export default function ResidentDetailPage() {
               <div className="rd-panel">
                 <h3 className="rd-panel-title">Past Conferences</h3>
                 <div style={{ marginTop: '16px' }}>
-                  {mockConferences.filter((c) => !c.upcoming).map((c) => (
+                  {conferences.filter((c) => !c.upcoming).map((c) => (
                     <div className="rd-conference-card" key={c.id}>
                       <div className="rd-conference-date">{formatDate(c.date)}</div>
                       <div className="rd-conference-attendees">Attendees: {c.attendees}</div>
@@ -551,7 +679,7 @@ export default function ResidentDetailPage() {
               <div className="rd-panel">
                 <h3 className="rd-panel-title">Active Intervention Plan</h3>
                 <ul className="rd-interventions" style={{ marginTop: '16px' }}>
-                  {mockInterventions.map((item, i) => (
+                  {interventions.map((item, i) => (
                     <li className="rd-intervention-item" key={i}>
                       <ArrowRightLeft size={14} className="rd-intervention-icon" />
                       {item}
@@ -662,11 +790,11 @@ export default function ResidentDetailPage() {
               </div>
               <div className="rd-field">
                 <span className="rd-field-label">Recordings</span>
-                <span className="rd-field-value">{mockRecordings.length} sessions</span>
+                <span className="rd-field-value">{recordings.length} sessions</span>
               </div>
               <div className="rd-field">
                 <span className="rd-field-label">Home Visits</span>
-                <span className="rd-field-value">{mockVisits.length} visits</span>
+                <span className="rd-field-value">{visits.length} visits</span>
               </div>
             </div>
           </div>
