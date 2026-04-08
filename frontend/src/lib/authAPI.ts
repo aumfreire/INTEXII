@@ -35,8 +35,8 @@ const apiBaseUrl =
     configuredApiBaseUrl && configuredApiBaseUrl.length > 0
         ? configuredApiBaseUrl.replace(/\/$/, '')
         : isLocalBrowser
-          ? ''
-          : 'https://intexii-backend.azurewebsites.net';
+            ? ''
+            : 'https://intexii-backend.azurewebsites.net';
 const authTokenStorageKey = 'intex-auth-token-v1';
 
 function getStoredAuthToken(): string | null {
