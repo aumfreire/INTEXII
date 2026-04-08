@@ -16,7 +16,7 @@ import { useAuth } from '../context/useAuth';
 import '../styles/pages/login.css';
 
 const loginPanelImageUrl =
-    'https://images.unsplash.com/photo-1529390079861-591de354faf5?auto=format&fit=crop&w=1200&q=80';
+    'https://images.unsplash.com/photo-1595406164160-642177342a32?auto=format&fit=crop&w=1200&q=80';
 
 export default function LoginPage() {
     const navigate = useNavigate();

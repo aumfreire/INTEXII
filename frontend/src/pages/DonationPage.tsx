@@ -23,7 +23,7 @@ import type { RepeatDonationState } from '../types/Donation';
 import '../styles/pages/donation.css';
 
 const donationHeroImageUrl =
-  'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=1600&q=80';
+  'https://images.unsplash.com/photo-1747509228690-8f1fef36d0bf?auto=format&fit=crop&w=1600&q=80';
 
 const amounts = [25, 50, 75, 150, 300, 500];
 
