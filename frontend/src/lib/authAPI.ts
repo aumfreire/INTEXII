@@ -28,10 +28,15 @@ interface TokenLoginResponse {
 }
 
 const configuredApiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
+const isLocalBrowser =
+    typeof window !== 'undefined' &&
+    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
 const apiBaseUrl =
     configuredApiBaseUrl && configuredApiBaseUrl.length > 0
         ? configuredApiBaseUrl.replace(/\/$/, '')
-        : 'https://intexii-backend.azurewebsites.net';
+        : isLocalBrowser
+          ? ''
+          : 'https://intexii-backend.azurewebsites.net';
 const authTokenStorageKey = 'intex-auth-token-v1';
 
 function getStoredAuthToken(): string | null {
