@@ -189,6 +189,17 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// Ensure database schemas are up to date before any seed logic runs.
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var identityDb = services.GetRequiredService<AuthIdentityDbContext>();
+    var intexDb = services.GetRequiredService<IntexDbContext>();
+
+    await identityDb.Database.MigrateAsync();
+    await intexDb.Database.MigrateAsync();
+}
+
 // Seed identity: create roles (Admin, Donor) and default admin user
 using (var scope = app.Services.CreateScope())
 {
