@@ -27,6 +27,20 @@ if (builder.Environment.IsDevelopment())
 const string FrontendCorsPolicy = "FrontendClient";
 const string DefaultFrontendUrl = "http://localhost:3000";
 var frontendUrl = builder.Configuration["FrontendUrl"] ?? DefaultFrontendUrl;
+var frontendUrlsRaw = builder.Configuration["FrontendUrls"];
+var allowedFrontendOrigins = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+allowedFrontendOrigins.Add(NormalizeOrigin(frontendUrl));
+
+if (!string.IsNullOrWhiteSpace(frontendUrlsRaw))
+{
+    foreach (var candidate in frontendUrlsRaw.Split(',', ';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+    {
+        allowedFrontendOrigins.Add(NormalizeOrigin(candidate));
+    }
+}
+
+allowedFrontendOrigins.RemoveWhere(string.IsNullOrWhiteSpace);
 var googleClientId = builder.Configuration["Authentication:Google:ClientId"];
 var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
 var hasGoogleCredentials = IsConfiguredValue(googleClientId) && IsConfiguredValue(googleClientSecret);
@@ -176,7 +190,8 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy(FrontendCorsPolicy, policy =>
     {
-        policy.WithOrigins(frontendUrl)
+        policy.SetIsOriginAllowed(origin =>
+            IsAllowedFrontendOrigin(origin, allowedFrontendOrigins))
             .AllowCredentials()
             .AllowAnyMethod()
             .AllowAnyHeader();
@@ -377,4 +392,36 @@ static bool LooksLikeSqlite(string connectionString)
         || connectionString.Contains("Filename=", StringComparison.OrdinalIgnoreCase)
         || connectionString.EndsWith(".db", StringComparison.OrdinalIgnoreCase)
         || connectionString.Contains("Data Source=", StringComparison.OrdinalIgnoreCase);
+}
+
+static bool IsAllowedFrontendOrigin(string? origin, HashSet<string> allowedFrontendOrigins)
+{
+    if (string.IsNullOrWhiteSpace(origin))
+    {
+        return false;
+    }
+
+    var normalizedOrigin = NormalizeOrigin(origin);
+    if (allowedFrontendOrigins.Contains(normalizedOrigin))
+    {
+        return true;
+    }
+
+    if (!Uri.TryCreate(normalizedOrigin, UriKind.Absolute, out var uri))
+    {
+        return false;
+    }
+
+    // Permit Azure Static Web Apps default and preview domains.
+    return uri.Host.EndsWith(".azurestaticapps.net", StringComparison.OrdinalIgnoreCase);
+}
+
+static string NormalizeOrigin(string origin)
+{
+    if (string.IsNullOrWhiteSpace(origin))
+    {
+        return string.Empty;
+    }
+
+    return origin.Trim().TrimEnd('/');
 }
