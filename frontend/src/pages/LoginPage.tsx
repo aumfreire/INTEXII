@@ -13,8 +13,10 @@ import {
     type ExternalAuthProvider,
 } from '../lib/authAPI';
 import { useAuth } from '../context/useAuth';
-import loginPanel from '../assets/haven/login-panel.webp';
 import '../styles/pages/login.css';
+
+const loginPanelImageUrl =
+    'https://images.unsplash.com/photo-1595406164160-642177342a32?auto=format&fit=crop&w=1200&q=80';
 
 export default function LoginPage() {
     const navigate = useNavigate();
@@ -100,7 +102,7 @@ export default function LoginPage() {
         <div className="login-page">
             <div
                 className="login-image-panel d-none d-lg-flex"
-                style={{ backgroundImage: `url(${loginPanel})` }}
+                style={{ backgroundImage: `url(${loginPanelImageUrl})` }}
             >
                 <div className="login-image-overlay" />
                 <div className="login-image-content">

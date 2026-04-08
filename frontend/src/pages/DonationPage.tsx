@@ -23,6 +23,9 @@ import type { DonorDonationCreateRequest, RepeatDonationState } from '../types/D
 import heroMain from '../assets/haven/hero-main.webp';
 import '../styles/pages/donation.css';
 
+const donationHeroImageUrl =
+  'https://images.unsplash.com/photo-1747509228690-8f1fef36d0bf?auto=format&fit=crop&w=1600&q=80';
+
 const amounts = [25, 50, 75, 150, 300, 500];
 
 const impactItems = [
@@ -285,7 +288,7 @@ export default function DonationPage() {
       {/* Hero — full-width background like landing page */}
       <section
         className="donation-hero"
-        style={{ backgroundImage: `url(${heroMain})` }}
+        style={{ backgroundImage: `url(${donationHeroImageUrl})` }}
       >
         <div className="donation-hero-overlay" />
         <div
