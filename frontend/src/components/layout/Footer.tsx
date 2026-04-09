@@ -289,13 +289,23 @@ export default function Footer() {
           reserved. A registered 501(c)(3) nonprofit organization.
           <span style={{ margin: '0 12px' }}>|</span>
           <Link
-            to="/cookies"
+            to="/privacy"
             style={{
               color: 'rgba(255,255,255,0.5)',
               textDecoration: 'none',
             }}
           >
             Privacy Policy
+          </Link>
+          <span style={{ margin: '0 8px' }}>|</span>
+          <Link
+            to="/cookies"
+            style={{
+              color: 'rgba(255,255,255,0.5)',
+              textDecoration: 'none',
+            }}
+          >
+            Cookie Policy
           </Link>
           <span style={{ margin: '0 8px' }}>|</span>
           <Link

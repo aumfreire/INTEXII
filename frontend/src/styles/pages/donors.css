@@ -234,17 +234,51 @@
 }
 
 /* Type badges */
-.donors-badge.type-monetary { background-color: rgba(122, 158, 126, 0.1); color: var(--color-sage); }
-.donors-badge.type-inkind { background-color: rgba(212, 146, 122, 0.12); color: var(--color-primary-light); }
-.donors-badge.type-volunteer { background-color: rgba(193, 96, 58, 0.08); color: var(--color-primary); }
-.donors-badge.type-skills { background-color: rgba(171, 85, 58, 0.1); color: var(--color-primary-dark); }
-.donors-badge.type-social { background-color: rgba(133, 132, 129, 0.1); color: var(--color-muted); }
-.donors-badge.type-partner { background-color: rgba(193, 96, 58, 0.08); color: var(--color-primary); }
+.donors-badge.type-monetary {
+  background-color: rgba(122, 158, 126, 0.1);
+  color: var(--color-sage);
+}
+
+.donors-badge.type-inkind {
+  background-color: rgba(212, 146, 122, 0.12);
+  color: var(--color-primary-light);
+}
+
+.donors-badge.type-volunteer {
+  background-color: rgba(193, 96, 58, 0.08);
+  color: var(--color-primary);
+}
+
+.donors-badge.type-skills {
+  background-color: rgba(171, 85, 58, 0.1);
+  color: var(--color-primary-dark);
+}
+
+.donors-badge.type-social {
+  background-color: rgba(133, 132, 129, 0.1);
+  color: var(--color-muted);
+}
+
+.donors-badge.type-partner {
+  background-color: rgba(193, 96, 58, 0.08);
+  color: var(--color-primary);
+}
 
 /* Status badges */
-.donors-badge.status-active { background-color: rgba(122, 158, 126, 0.1); color: var(--color-sage); }
-.donors-badge.status-inactive { background-color: rgba(133, 132, 129, 0.1); color: var(--color-muted); }
-.donors-badge.status-lapsed { background-color: rgba(212, 146, 122, 0.12); color: var(--color-primary-light); }
+.donors-badge.status-active {
+  background-color: rgba(122, 158, 126, 0.1);
+  color: var(--color-sage);
+}
+
+.donors-badge.status-inactive {
+  background-color: rgba(133, 132, 129, 0.1);
+  color: var(--color-muted);
+}
+
+.donors-badge.status-lapsed {
+  background-color: rgba(212, 146, 122, 0.12);
+  color: var(--color-primary-light);
+}
 
 /* ===== Action Menu ===== */
 .donors-actions {
@@ -327,6 +361,24 @@
   box-shadow: var(--shadow-sm);
   margin-top: 24px;
   overflow: hidden;
+}
+
+.donors-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(17, 17, 17, 0.42);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  padding: 16px;
+}
+
+.donors-modal-panel {
+  width: min(1100px, 100%);
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  margin-top: 0;
 }
 
 .donors-detail-header {
@@ -461,10 +513,21 @@
   transition: width var(--transition-normal);
 }
 
-.donors-alloc-fill.primary { background-color: var(--color-primary); }
-.donors-alloc-fill.sage { background-color: var(--color-sage); }
-.donors-alloc-fill.light { background-color: var(--color-primary-light); }
-.donors-alloc-fill.dark { background-color: var(--color-primary-dark); }
+.donors-alloc-fill.primary {
+  background-color: var(--color-primary);
+}
+
+.donors-alloc-fill.sage {
+  background-color: var(--color-sage);
+}
+
+.donors-alloc-fill.light {
+  background-color: var(--color-primary-light);
+}
+
+.donors-alloc-fill.dark {
+  background-color: var(--color-primary-dark);
+}
 
 /* ===== States ===== */
 .donors-state {
@@ -510,19 +573,22 @@
 .donors-skeleton-bar {
   height: 14px;
   border-radius: 4px;
-  background: linear-gradient(
-    90deg,
-    var(--color-light-gray) 25%,
-    var(--color-cream) 50%,
-    var(--color-light-gray) 75%
-  );
+  background: linear-gradient(90deg,
+      var(--color-light-gray) 25%,
+      var(--color-cream) 50%,
+      var(--color-light-gray) 75%);
   background-size: 200% 100%;
   animation: donors-shimmer 1.5s ease-in-out infinite;
 }
 
 @keyframes donors-shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 /* ===== Responsive ===== */

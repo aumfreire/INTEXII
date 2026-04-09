@@ -724,3 +724,105 @@
     gap: 8px;
   }
 }
+
+
+/* Card action buttons (edit/delete on timeline cards) */
+.rd-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.rd-card-action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 3px 5px;
+  border-radius: var(--radius-sm);
+  color: var(--color-muted);
+  transition: color var(--transition-fast), background-color var(--transition-fast);
+  display: flex;
+  align-items: center;
+}
+
+.rd-card-action-btn:hover {
+  color: var(--color-dark);
+  background-color: var(--color-cream);
+}
+
+.rd-card-action-btn.danger:hover {
+  color: #c0392b;
+  background-color: rgba(192, 57, 43, 0.08);
+}
+
+/* Confirm dialog overlay */
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.confirm-dialog {
+  background-color: var(--color-white);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  padding: 28px 32px;
+  max-width: 400px;
+  width: 90%;
+}
+
+.confirm-title {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-dark);
+  margin: 0 0 10px;
+}
+
+.confirm-text {
+  font-size: 0.875rem;
+  color: var(--color-muted);
+  margin: 0 0 20px;
+  line-height: 1.5;
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.confirm-btn {
+  padding: 8px 20px;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: background-color var(--transition-fast);
+}
+
+.confirm-btn.cancel {
+  background: none;
+  border: 1.5px solid var(--color-light-gray);
+  color: var(--color-dark);
+}
+
+.confirm-btn.cancel:hover {
+  background-color: var(--color-cream);
+}
+
+.confirm-btn.danger {
+  background-color: #c0392b;
+  border: none;
+  color: #fff;
+}
+
+.confirm-btn.danger:hover {
+  background-color: #a93226;
+}

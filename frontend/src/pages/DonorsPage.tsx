@@ -925,75 +925,77 @@ export default function DonorsPage() {
 
           {/* Contribution Detail Panel */}
           {selected && (
-            <div className="donors-detail-panel">
-              <div className="donors-detail-header">
-                <h3 className="donors-detail-title">
-                  {selected.name} — Supporter Profile
-                </h3>
-                <button
-                  className="donors-detail-close"
-                  onClick={() => setSelectedId(null)}
-                  aria-label="Close detail panel"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-              <div className="donors-detail-body">
-                <div className="donors-detail-grid">
-                  <div>
-                    <h4 className="donors-allocation-title">Profile Details</h4>
-                    <div className="donors-history-list">
-                      <div className="donors-history-item">
-                        <span className="donors-history-date">Organization</span>
-                        <span className="donors-history-desc">{selected.organization || 'N/A'}</span>
-                      </div>
-                      <div className="donors-history-item">
-                        <span className="donors-history-date">Email</span>
-                        <span className="donors-history-desc">{selected.email || 'N/A'}</span>
-                      </div>
-                      <div className="donors-history-item">
-                        <span className="donors-history-date">Phone</span>
-                        <span className="donors-history-desc">{selected.phone || 'N/A'}</span>
-                      </div>
-                      <div className="donors-history-item">
-                        <span className="donors-history-date">Location</span>
-                        <span className="donors-history-desc">{[selected.region, selected.country].filter(Boolean).join(', ') || 'N/A'}</span>
-                      </div>
-                      <div className="donors-history-item">
-                        <span className="donors-history-date">Relationship</span>
-                        <span className="donors-history-desc">{selected.relationshipType || 'N/A'}</span>
-                      </div>
-                      <div style={{ marginTop: '12px' }}>
-                        <PrimaryButton onClick={() => viewContributions(selected.id)}>
-                          <History size={14} />
-                          Open Contributions
-                        </PrimaryButton>
+            <div className="donors-modal-overlay" onClick={() => setSelectedId(null)}>
+              <div className="donors-detail-panel donors-modal-panel" onClick={(e) => e.stopPropagation()}>
+                <div className="donors-detail-header">
+                  <h3 className="donors-detail-title">
+                    {selected.name} — Supporter Profile
+                  </h3>
+                  <button
+                    className="donors-detail-close"
+                    onClick={() => setSelectedId(null)}
+                    aria-label="Close detail panel"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+                <div className="donors-detail-body">
+                  <div className="donors-detail-grid">
+                    <div>
+                      <h4 className="donors-allocation-title">Profile Details</h4>
+                      <div className="donors-history-list">
+                        <div className="donors-history-item">
+                          <span className="donors-history-date">Organization</span>
+                          <span className="donors-history-desc">{selected.organization || 'N/A'}</span>
+                        </div>
+                        <div className="donors-history-item">
+                          <span className="donors-history-date">Email</span>
+                          <span className="donors-history-desc">{selected.email || 'N/A'}</span>
+                        </div>
+                        <div className="donors-history-item">
+                          <span className="donors-history-date">Phone</span>
+                          <span className="donors-history-desc">{selected.phone || 'N/A'}</span>
+                        </div>
+                        <div className="donors-history-item">
+                          <span className="donors-history-date">Location</span>
+                          <span className="donors-history-desc">{[selected.region, selected.country].filter(Boolean).join(', ') || 'N/A'}</span>
+                        </div>
+                        <div className="donors-history-item">
+                          <span className="donors-history-date">Relationship</span>
+                          <span className="donors-history-desc">{selected.relationshipType || 'N/A'}</span>
+                        </div>
+                        <div style={{ marginTop: '12px' }}>
+                          <PrimaryButton onClick={() => viewContributions(selected.id)}>
+                            <History size={14} />
+                            Open Contributions
+                          </PrimaryButton>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div>
-                    <h4 className="donors-allocation-title">Allocation by Program</h4>
-                    {selected.allocations.length === 0 ? (
-                      <p className="donors-state-text" style={{ margin: 0 }}>
-                        No allocation profile available for this supporter yet.
-                      </p>
-                    ) : (
-                      selected.allocations.map((a, i) => (
-                        <div className="donors-alloc-item" key={i}>
-                          <div className="donors-alloc-label">
-                            <span>{a.label}</span>
-                            <span>{a.percent}%</span>
+                    <div>
+                      <h4 className="donors-allocation-title">Allocation by Program</h4>
+                      {selected.allocations.length === 0 ? (
+                        <p className="donors-state-text" style={{ margin: 0 }}>
+                          No allocation profile available for this supporter yet.
+                        </p>
+                      ) : (
+                        selected.allocations.map((a, i) => (
+                          <div className="donors-alloc-item" key={i}>
+                            <div className="donors-alloc-label">
+                              <span>{a.label}</span>
+                              <span>{a.percent}%</span>
+                            </div>
+                            <div className="donors-alloc-bar">
+                              <div
+                                className={`donors-alloc-fill ${a.color}`}
+                                style={{ width: `${a.percent}%` }}
+                              />
+                            </div>
                           </div>
-                          <div className="donors-alloc-bar">
-                            <div
-                              className={`donors-alloc-fill ${a.color}`}
-                              style={{ width: `${a.percent}%` }}
-                            />
-                          </div>
-                        </div>
-                      ))
-                    )}
+                        ))
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1001,133 +1003,139 @@ export default function DonorsPage() {
           )}
 
           {editorOpen && (
-            <div className="donors-detail-panel">
-              <div className="donors-detail-header">
-                <h3 className="donors-detail-title">
-                  {editorId ? 'Edit Supporter' : 'Add Supporter'}
-                </h3>
-                <button
-                  className="donors-detail-close"
-                  onClick={() => {
-                    setEditorOpen(false);
-                    setEditorId(null);
-                    setEditorForm(emptySupporterForm);
-                  }}
-                  aria-label="Close editor"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-              <div className="donors-detail-body">
-                <div className="donors-detail-grid">
-                  <div>
-                    <h4 className="donors-allocation-title">Identity</h4>
-                    <div className="donors-history-list">
-                      <label className="donors-filter-label" htmlFor="supporter-display-name">Display Name</label>
-                      <input
-                        id="supporter-display-name"
-                        className="donors-filter-input"
-                        value={editorForm.displayName}
-                        onChange={(e) => setEditorForm({ ...editorForm, displayName: e.target.value })}
-                        placeholder="Supporter display name"
-                      />
-                      <label className="donors-filter-label" htmlFor="supporter-org">Organization</label>
-                      <input
-                        id="supporter-org"
-                        className="donors-filter-input"
-                        value={editorForm.organization}
-                        onChange={(e) => setEditorForm({ ...editorForm, organization: e.target.value })}
-                        placeholder="Organization"
-                      />
-                      <label className="donors-filter-label" htmlFor="supporter-email">Email</label>
-                      <input
-                        id="supporter-email"
-                        className="donors-filter-input"
-                        type="email"
-                        value={editorForm.email}
-                        onChange={(e) => setEditorForm({ ...editorForm, email: e.target.value })}
-                        placeholder="email@example.org"
-                      />
-                      <label className="donors-filter-label" htmlFor="supporter-phone">Phone</label>
-                      <input
-                        id="supporter-phone"
-                        className="donors-filter-input"
-                        value={editorForm.phone}
-                        onChange={(e) => setEditorForm({ ...editorForm, phone: e.target.value })}
-                        placeholder="Phone number"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <h4 className="donors-allocation-title">Classification</h4>
-                    <div className="donors-history-list">
-                      <label className="donors-filter-label" htmlFor="supporter-type">Type</label>
-                      <select
-                        id="supporter-type"
-                        className="donors-filter-select"
-                        value={editorForm.type}
-                        onChange={(e) => setEditorForm({ ...editorForm, type: e.target.value as SupporterType })}
-                      >
-                        {Object.entries(typeLabels).map(([val, label]) => (
-                          <option key={val} value={val}>{label}</option>
-                        ))}
-                      </select>
-                      <label className="donors-filter-label" htmlFor="supporter-status">Status</label>
-                      <select
-                        id="supporter-status"
-                        className="donors-filter-select"
-                        value={editorForm.status}
-                        onChange={(e) => setEditorForm({ ...editorForm, status: e.target.value as SupporterStatus })}
-                      >
-                        {Object.entries(statusLabels).map(([val, label]) => (
-                          <option key={val} value={val}>{label}</option>
-                        ))}
-                      </select>
-                      <label className="donors-filter-label" htmlFor="supporter-channel">Channel</label>
-                      <select
-                        id="supporter-channel"
-                        className="donors-filter-select"
-                        value={editorForm.channel}
-                        onChange={(e) => setEditorForm({ ...editorForm, channel: e.target.value as AcquisitionChannel })}
-                      >
-                        {Object.entries(channelLabels).map(([val, label]) => (
-                          <option key={val} value={val}>{label}</option>
-                        ))}
-                      </select>
-                      <label className="donors-filter-label" htmlFor="supporter-region">Region</label>
-                      <input
-                        id="supporter-region"
-                        className="donors-filter-input"
-                        value={editorForm.region}
-                        onChange={(e) => setEditorForm({ ...editorForm, region: e.target.value })}
-                        placeholder="Region"
-                      />
-                      <label className="donors-filter-label" htmlFor="supporter-country">Country</label>
-                      <input
-                        id="supporter-country"
-                        className="donors-filter-input"
-                        value={editorForm.country}
-                        onChange={(e) => setEditorForm({ ...editorForm, country: e.target.value })}
-                        placeholder="Country"
-                      />
-                      <label className="donors-filter-label" htmlFor="supporter-relationship">Relationship Type</label>
-                      <input
-                        id="supporter-relationship"
-                        className="donors-filter-input"
-                        value={editorForm.relationshipType}
-                        onChange={(e) => setEditorForm({ ...editorForm, relationshipType: e.target.value })}
-                        placeholder="Relationship"
-                      />
-                    </div>
-                  </div>
+            <div className="donors-modal-overlay" onClick={() => {
+              setEditorOpen(false);
+              setEditorId(null);
+              setEditorForm(emptySupporterForm);
+            }}>
+              <div className="donors-detail-panel donors-modal-panel" onClick={(e) => e.stopPropagation()}>
+                <div className="donors-detail-header">
+                  <h3 className="donors-detail-title">
+                    {editorId ? 'Edit Supporter' : 'Add Supporter'}
+                  </h3>
+                  <button
+                    className="donors-detail-close"
+                    onClick={() => {
+                      setEditorOpen(false);
+                      setEditorId(null);
+                      setEditorForm(emptySupporterForm);
+                    }}
+                    aria-label="Close editor"
+                  >
+                    <X size={20} />
+                  </button>
                 </div>
-                <div style={{ marginTop: '16px', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-                  <SecondaryButton onClick={() => setEditorOpen(false)}>
-                    Cancel
-                  </SecondaryButton>
-                  <PrimaryButton onClick={() => { void handleSaveSupporter(); }} disabled={isSaving}>
-                    {isSaving ? 'Saving...' : 'Save Supporter'}
-                  </PrimaryButton>
+                <div className="donors-detail-body">
+                  <div className="donors-detail-grid">
+                    <div>
+                      <h4 className="donors-allocation-title">Identity</h4>
+                      <div className="donors-history-list">
+                        <label className="donors-filter-label" htmlFor="supporter-display-name">Display Name</label>
+                        <input
+                          id="supporter-display-name"
+                          className="donors-filter-input"
+                          value={editorForm.displayName}
+                          onChange={(e) => setEditorForm({ ...editorForm, displayName: e.target.value })}
+                          placeholder="Supporter display name"
+                        />
+                        <label className="donors-filter-label" htmlFor="supporter-org">Organization</label>
+                        <input
+                          id="supporter-org"
+                          className="donors-filter-input"
+                          value={editorForm.organization}
+                          onChange={(e) => setEditorForm({ ...editorForm, organization: e.target.value })}
+                          placeholder="Organization"
+                        />
+                        <label className="donors-filter-label" htmlFor="supporter-email">Email</label>
+                        <input
+                          id="supporter-email"
+                          className="donors-filter-input"
+                          type="email"
+                          value={editorForm.email}
+                          onChange={(e) => setEditorForm({ ...editorForm, email: e.target.value })}
+                          placeholder="email@example.org"
+                        />
+                        <label className="donors-filter-label" htmlFor="supporter-phone">Phone</label>
+                        <input
+                          id="supporter-phone"
+                          className="donors-filter-input"
+                          value={editorForm.phone}
+                          onChange={(e) => setEditorForm({ ...editorForm, phone: e.target.value })}
+                          placeholder="Phone number"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <h4 className="donors-allocation-title">Classification</h4>
+                      <div className="donors-history-list">
+                        <label className="donors-filter-label" htmlFor="supporter-type">Type</label>
+                        <select
+                          id="supporter-type"
+                          className="donors-filter-select"
+                          value={editorForm.type}
+                          onChange={(e) => setEditorForm({ ...editorForm, type: e.target.value as SupporterType })}
+                        >
+                          {Object.entries(typeLabels).map(([val, label]) => (
+                            <option key={val} value={val}>{label}</option>
+                          ))}
+                        </select>
+                        <label className="donors-filter-label" htmlFor="supporter-status">Status</label>
+                        <select
+                          id="supporter-status"
+                          className="donors-filter-select"
+                          value={editorForm.status}
+                          onChange={(e) => setEditorForm({ ...editorForm, status: e.target.value as SupporterStatus })}
+                        >
+                          {Object.entries(statusLabels).map(([val, label]) => (
+                            <option key={val} value={val}>{label}</option>
+                          ))}
+                        </select>
+                        <label className="donors-filter-label" htmlFor="supporter-channel">Channel</label>
+                        <select
+                          id="supporter-channel"
+                          className="donors-filter-select"
+                          value={editorForm.channel}
+                          onChange={(e) => setEditorForm({ ...editorForm, channel: e.target.value as AcquisitionChannel })}
+                        >
+                          {Object.entries(channelLabels).map(([val, label]) => (
+                            <option key={val} value={val}>{label}</option>
+                          ))}
+                        </select>
+                        <label className="donors-filter-label" htmlFor="supporter-region">Region</label>
+                        <input
+                          id="supporter-region"
+                          className="donors-filter-input"
+                          value={editorForm.region}
+                          onChange={(e) => setEditorForm({ ...editorForm, region: e.target.value })}
+                          placeholder="Region"
+                        />
+                        <label className="donors-filter-label" htmlFor="supporter-country">Country</label>
+                        <input
+                          id="supporter-country"
+                          className="donors-filter-input"
+                          value={editorForm.country}
+                          onChange={(e) => setEditorForm({ ...editorForm, country: e.target.value })}
+                          placeholder="Country"
+                        />
+                        <label className="donors-filter-label" htmlFor="supporter-relationship">Relationship Type</label>
+                        <input
+                          id="supporter-relationship"
+                          className="donors-filter-input"
+                          value={editorForm.relationshipType}
+                          onChange={(e) => setEditorForm({ ...editorForm, relationshipType: e.target.value })}
+                          placeholder="Relationship"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ marginTop: '16px', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                    <SecondaryButton onClick={() => setEditorOpen(false)}>
+                      Cancel
+                    </SecondaryButton>
+                    <PrimaryButton onClick={() => { void handleSaveSupporter(); }} disabled={isSaving}>
+                      {isSaving ? 'Saving...' : 'Save Supporter'}
+                    </PrimaryButton>
+                  </div>
                 </div>
               </div>
             </div>

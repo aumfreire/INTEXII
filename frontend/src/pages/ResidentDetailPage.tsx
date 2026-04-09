@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
   FileText,
@@ -18,11 +18,18 @@ import {
   Inbox,
   MapPin,
   ArrowRightLeft,
+  Trash2,
+  ExternalLink,
 } from 'lucide-react';
 import PrimaryButton from '../components/ui/PrimaryButton';
 import SecondaryButton from '../components/ui/SecondaryButton';
 import AlertBanner from '../components/ui/AlertBanner';
-import { getAdminResidentDetail } from '../lib/authAPI';
+import {
+  getAdminResidentDetail,
+  deleteAdminProcessRecording,
+  deleteAdminHomeVisitation,
+  deleteAdminInterventionPlan,
+} from '../lib/authAPI';
 import '../styles/pages/resident-detail.css';
 
 /* ===== Types ===== */
@@ -176,9 +183,12 @@ function normalizeRiskLevel(value: string): RiskLevel {
 /* ===== Component ===== */
 export default function ResidentDetailPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>('overview');
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<{ type: 'recording' | 'visit' | 'conference'; itemId: number } | null>(null);
+  const [actionError, setActionError] = useState('');
   const [resident, setResident] = useState(mockResident);
   const [recordings, setRecordings] = useState(mockRecordings);
   const [visits, setVisits] = useState(mockVisits);
@@ -294,6 +304,26 @@ export default function ResidentDetailPage() {
     };
   }, [id]);
 
+  async function handleDelete() {
+    if (!confirmDelete) return;
+    try {
+      if (confirmDelete.type === 'recording') {
+        await deleteAdminProcessRecording(confirmDelete.itemId);
+        setRecordings((prev) => prev.filter((r) => r.id !== String(confirmDelete.itemId)));
+      } else if (confirmDelete.type === 'visit') {
+        await deleteAdminHomeVisitation(confirmDelete.itemId);
+        setVisits((prev) => prev.filter((v) => v.id !== String(confirmDelete.itemId)));
+      } else if (confirmDelete.type === 'conference') {
+        await deleteAdminInterventionPlan(confirmDelete.itemId);
+        setConferences((prev) => prev.filter((c) => c.id !== String(confirmDelete.itemId)));
+      }
+      setConfirmDelete(null);
+    } catch {
+      setActionError('Failed to delete. Please try again.');
+      setConfirmDelete(null);
+    }
+  }
+
   const r = resident;
   const tabs: { key: Tab; label: string }[] = [
     { key: 'overview', label: 'Overview' },
@@ -330,12 +360,21 @@ export default function ResidentDetailPage() {
     );
   }
 
+  const confirmDeleteLabel =
+    confirmDelete?.type === 'recording' ? 'process recording' :
+    confirmDelete?.type === 'visit' ? 'home visit' :
+    'case conference';
+
   return (
     <div>
       {/* Back link */}
       <Link to="/admin/caseload" className="rd-back">
         <ArrowLeft size={16} /> Back to Caseload
       </Link>
+
+      {actionError && (
+        <AlertBanner type="warning" message={actionError} onClose={() => setActionError('')} />
+      )}
 
       {/* Header Card */}
       <div className="rd-header-card">
@@ -351,10 +390,10 @@ export default function ResidentDetailPage() {
             </div>
           </div>
           <div className="rd-header-actions">
-            <SecondaryButton onClick={() => { }}>
+            <SecondaryButton onClick={() => navigate(`/admin/process-recordings?residentId=${id ?? ''}`)}>
               <FileText size={15} /> Add Recording
             </SecondaryButton>
-            <PrimaryButton onClick={() => { }}>
+            <PrimaryButton onClick={() => navigate(`/admin/home-visits?residentId=${id ?? ''}`)}>
               <Home size={15} /> Log Home Visit
             </PrimaryButton>
           </div>
@@ -507,7 +546,7 @@ export default function ResidentDetailPage() {
             <div className="rd-panel">
               <div className="rd-panel-header">
                 <h3 className="rd-panel-title">Process Recordings</h3>
-                <PrimaryButton onClick={() => { }}>
+                <PrimaryButton onClick={() => navigate(`/admin/process-recordings?residentId=${id ?? ''}`)}>
                   <FileText size={15} /> Add Recording
                 </PrimaryButton>
               </div>
@@ -532,6 +571,22 @@ export default function ResidentDetailPage() {
                             <span className="rd-record-meta-item">
                               <Clock size={13} /> {rec.sessionType}
                             </span>
+                            <div className="rd-card-actions">
+                              <button
+                                className="rd-card-action-btn"
+                                title="Edit in Process Recordings"
+                                onClick={() => navigate(`/admin/process-recordings?residentId=${id ?? ''}`)}
+                              >
+                                <ExternalLink size={13} />
+                              </button>
+                              <button
+                                className="rd-card-action-btn danger"
+                                title="Delete recording"
+                                onClick={() => setConfirmDelete({ type: 'recording', itemId: Number(rec.id) })}
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
                           </div>
                         </div>
                         <div className="rd-emotion">
@@ -570,7 +625,7 @@ export default function ResidentDetailPage() {
             <div className="rd-panel">
               <div className="rd-panel-header">
                 <h3 className="rd-panel-title">Home Visits</h3>
-                <PrimaryButton onClick={() => { }}>
+                <PrimaryButton onClick={() => navigate(`/admin/home-visits?residentId=${id ?? ''}`)}>
                   <Home size={15} /> Log Home Visit
                 </PrimaryButton>
               </div>
@@ -595,6 +650,22 @@ export default function ResidentDetailPage() {
                             <span className="rd-record-meta-item">
                               <MapPin size={13} /> {v.type}
                             </span>
+                            <div className="rd-card-actions">
+                              <button
+                                className="rd-card-action-btn"
+                                title="Edit in Home Visits"
+                                onClick={() => navigate(`/admin/home-visits?residentId=${id ?? ''}`)}
+                              >
+                                <ExternalLink size={13} />
+                              </button>
+                              <button
+                                className="rd-card-action-btn danger"
+                                title="Delete visit"
+                                onClick={() => setConfirmDelete({ type: 'visit', itemId: Number(v.id) })}
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
                           </div>
                         </div>
                         <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginBottom: '8px' }}>
@@ -642,17 +713,34 @@ export default function ResidentDetailPage() {
             <>
               {/* Upcoming */}
               <div className="rd-panel">
-                <h3 className="rd-panel-title">
-                  Upcoming Conferences
-                </h3>
+                <div className="rd-panel-header">
+                  <h3 className="rd-panel-title">Upcoming Conferences</h3>
+                  <PrimaryButton onClick={() => navigate(`/admin/home-visits?residentId=${id ?? ''}`)}>
+                    <Calendar size={15} /> Schedule Conference
+                  </PrimaryButton>
+                </div>
                 <div style={{ marginTop: '16px' }}>
+                  {conferences.filter((c) => c.upcoming).length === 0 && (
+                    <div className="rd-empty" style={{ padding: '20px' }}>
+                      <p className="rd-empty-text" style={{ margin: 0 }}>No upcoming conferences scheduled.</p>
+                    </div>
+                  )}
                   {conferences.filter((c) => c.upcoming).map((c) => (
                     <div className="rd-conference-card" key={c.id}>
-                      <div className="rd-conference-date">
-                        {formatDate(c.date)}
-                        <span className="rd-upcoming-badge">
-                          <Calendar size={11} /> Upcoming
+                      <div className="rd-conference-date" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span>
+                          {formatDate(c.date)}
+                          <span className="rd-upcoming-badge" style={{ marginLeft: '8px' }}>
+                            <Calendar size={11} /> Upcoming
+                          </span>
                         </span>
+                        <button
+                          className="rd-card-action-btn danger"
+                          title="Delete conference"
+                          onClick={() => setConfirmDelete({ type: 'conference', itemId: Number(c.id) })}
+                        >
+                          <Trash2 size={13} />
+                        </button>
                       </div>
                       <div className="rd-conference-attendees">Attendees: {c.attendees}</div>
                       <p className="rd-conference-notes">{c.notes}</p>
@@ -667,7 +755,16 @@ export default function ResidentDetailPage() {
                 <div style={{ marginTop: '16px' }}>
                   {conferences.filter((c) => !c.upcoming).map((c) => (
                     <div className="rd-conference-card" key={c.id}>
-                      <div className="rd-conference-date">{formatDate(c.date)}</div>
+                      <div className="rd-conference-date" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span>{formatDate(c.date)}</span>
+                        <button
+                          className="rd-card-action-btn danger"
+                          title="Delete conference"
+                          onClick={() => setConfirmDelete({ type: 'conference', itemId: Number(c.id) })}
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
                       <div className="rd-conference-attendees">Attendees: {c.attendees}</div>
                       <p className="rd-conference-notes">{c.notes}</p>
                     </div>
@@ -800,6 +897,22 @@ export default function ResidentDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Confirm Delete Dialog */}
+      {confirmDelete && (
+        <div className="confirm-overlay" onClick={() => setConfirmDelete(null)}>
+          <div className="confirm-dialog" onClick={(e) => e.stopPropagation()}>
+            <h4 className="confirm-title">Delete {confirmDeleteLabel}?</h4>
+            <p className="confirm-text">
+              This action cannot be undone. The {confirmDeleteLabel} will be permanently removed from this resident's record.
+            </p>
+            <div className="confirm-actions">
+              <button className="confirm-btn cancel" onClick={() => setConfirmDelete(null)}>Cancel</button>
+              <button className="confirm-btn danger" onClick={() => void handleDelete()}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

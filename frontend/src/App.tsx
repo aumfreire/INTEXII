@@ -33,6 +33,13 @@ import CookiePolicyPage from './pages/CookiePolicyPage';
 import AuthCallbackPage from './pages/AuthCallbackPage';
 import ComingSoonPage from './pages/ComingSoonPage';
 import { CookieConsentProvider } from './context/CookieConsentContext';
+import ProcessRecordingsPage from './pages/ProcessRecordingsPage';
+import HomeVisitsPage from './pages/HomeVisitsPage';
+import ReportsPage from './pages/ReportsPage';
+import SettingsPage from './pages/SettingsPage';
+import ImpactPage from './pages/ImpactPage';
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
+import IncidentReportsPage from './pages/IncidentReportsPage';
 
 function ScrollToTop() {
   const { pathname, hash } = useLocation();
@@ -50,31 +57,6 @@ function ScrollToTop() {
   }, [pathname, hash]);
 
   return null;
-}
-
-/* Placeholder for admin child pages — replace with real pages later */
-function AdminPlaceholder({ title, subtitle }: { title: string; subtitle: string }) {
-  return (
-    <div>
-      <div className="admin-page-header">
-        <h1 className="admin-page-title">{title}</h1>
-        <p className="admin-page-subtitle">{subtitle}</p>
-      </div>
-      <div
-        style={{
-          backgroundColor: 'var(--color-white)',
-          borderRadius: 'var(--radius-md)',
-          padding: '48px 32px',
-          boxShadow: 'var(--shadow-sm)',
-          textAlign: 'center',
-          color: 'var(--color-muted)',
-          fontSize: '0.95rem',
-        }}
-      >
-        This page is coming soon.
-      </div>
-    </div>
-  );
 }
 
 function RequireAuth({
@@ -120,63 +102,14 @@ function App() {
               <Route path="users" element={<AdminUsersPage />} />
               <Route path="donations" element={<AdminDonationsPage />} />
               <Route path="caseload" element={<CaseloadPage />} />
-              <Route
-                path="residents"
-                element={
-                  <AdminPlaceholder
-                    title="Residents"
-                    subtitle="Current and past residents of the shelter."
-                  />
-                }
-              />
               <Route path="residents/:id" element={<ResidentDetailPage />} />
               <Route path="donors" element={<DonorsPage />} />
               <Route path="contributions" element={<AdminDonationsPage />} />
-              <Route
-                path="process-recordings"
-                element={
-                  <AdminPlaceholder
-                    title="Process Recordings"
-                    subtitle="Document and review case interactions."
-                  />
-                }
-              />
-              <Route
-                path="home-visits"
-                element={
-                  <AdminPlaceholder
-                    title="Home Visits"
-                    subtitle="Schedule and log home visit records."
-                  />
-                }
-              />
-              <Route
-                path="case-conferences"
-                element={
-                  <AdminPlaceholder
-                    title="Case Conferences"
-                    subtitle="Plan and track multi-disciplinary meetings."
-                  />
-                }
-              />
-              <Route
-                path="reports"
-                element={
-                  <AdminPlaceholder
-                    title="Reports"
-                    subtitle="Generate reports for stakeholders and compliance."
-                  />
-                }
-              />
-              <Route
-                path="settings"
-                element={
-                  <AdminPlaceholder
-                    title="Settings"
-                    subtitle="Manage account and system preferences."
-                  />
-                }
-              />
+              <Route path="process-recordings" element={<ProcessRecordingsPage />} />
+              <Route path="home-visits" element={<HomeVisitsPage />} />
+              <Route path="incidents" element={<IncidentReportsPage />} />
+              <Route path="reports" element={<ReportsPage />} />
+              <Route path="settings" element={<SettingsPage />} />
             </Route>
 
             <Route
@@ -188,6 +121,8 @@ function App() {
                     <Routes>
                       <Route path="/" element={<LandingPage />} />
                       <Route path="/donate" element={<DonationPage />} />
+                      <Route path="/impact" element={<ImpactPage />} />
+                      <Route path="/privacy" element={<PrivacyPolicyPage />} />
                       <Route path="/login" element={<LoginPage />} />
                       <Route path="/auth/callback" element={<AuthCallbackPage />} />
                       <Route path="/cookies" element={<CookiePolicyPage />} />

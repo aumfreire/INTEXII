@@ -371,6 +371,18 @@
   flex-shrink: 0;
 }
 
+.caseload-actions-menu-item.danger {
+  color: #c0392b;
+}
+
+.caseload-actions-menu-item.danger .menu-icon {
+  color: #c0392b;
+}
+
+.caseload-actions-menu-item.danger:hover {
+  background-color: #fdf0ee;
+}
+
 /* ===== Table footer / count ===== */
 .caseload-table-footer {
   padding: 14px 16px;
@@ -426,19 +438,43 @@
 .caseload-skeleton-bar {
   height: 14px;
   border-radius: 4px;
-  background: linear-gradient(
-    90deg,
-    var(--color-light-gray) 25%,
-    var(--color-cream) 50%,
-    var(--color-light-gray) 75%
-  );
+  background: linear-gradient(90deg,
+      var(--color-light-gray) 25%,
+      var(--color-cream) 50%,
+      var(--color-light-gray) 75%);
   background-size: 200% 100%;
   animation: caseload-shimmer 1.5s ease-in-out infinite;
 }
 
+/* Editor modal */
+.caseload-editor-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(17, 17, 17, 0.42);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  padding: 16px;
+}
+
+.caseload-editor-panel {
+  width: min(1200px, 100%);
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  background-color: var(--color-white);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+}
+
 @keyframes caseload-shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 /* ===== Responsive ===== */

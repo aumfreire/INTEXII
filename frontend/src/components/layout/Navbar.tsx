@@ -156,9 +156,9 @@ export default function Navbar() {
                         <Link to="/#mission" style={{ ...navLinkStyle({ isActive: false }) }}>
                             About
                         </Link>
-                        <Link to="/#impact" style={{ ...navLinkStyle({ isActive: false }) }}>
+                        <NavLink to="/impact" style={navLinkStyle}>
                             Impact
-                        </Link>
+                        </NavLink>
                         {!isLoading && !isAuthenticated ? (
                             <NavLink to="/login" style={navLinkStyle}>
                                 Login
@@ -365,13 +365,13 @@ export default function Navbar() {
                         >
                             About
                         </Link>
-                        <Link
-                            to="/#impact"
-                            style={{ ...navLinkStyle({ isActive: false }) }}
+                        <NavLink
+                            to="/impact"
+                            style={navLinkStyle}
                             onClick={closeMenus}
                         >
                             Impact
-                        </Link>
+                        </NavLink>
                         {!isLoading && !isAuthenticated ? (
                             <NavLink
                                 to="/login"

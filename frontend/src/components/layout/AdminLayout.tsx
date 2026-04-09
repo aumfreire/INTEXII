@@ -2,18 +2,18 @@ import { useState } from 'react';
 import { NavLink, Outlet, Link } from 'react-router-dom';
 import {
   LayoutDashboard,
-  Users,
+  UserCog,
   Home,
   Heart,
   DollarSign,
   FileText,
   ClipboardList,
-  Calendar,
   BarChart3,
   Settings,
   Shield,
   Menu,
   X,
+  AlertTriangle,
 } from 'lucide-react';
 import { useAuth } from '../../context/useAuth';
 import Navbar from './Navbar';
@@ -21,14 +21,14 @@ import '../../styles/pages/admin-layout.css';
 
 const navItems = [
   { to: '/admin', icon: LayoutDashboard, label: 'Dashboard', end: true },
+  { to: '/admin/users', icon: UserCog, label: 'Manage Users' },
   { to: '/admin/caseload', icon: ClipboardList, label: 'Caseload' },
-  { to: '/admin/residents', icon: Users, label: 'Residents' },
   { to: '/admin/donors', icon: Heart, label: 'Donors' },
   { to: '/admin/contributions', icon: DollarSign, label: 'Contributions' },
   { divider: true },
   { to: '/admin/process-recordings', icon: FileText, label: 'Process Recordings' },
   { to: '/admin/home-visits', icon: Home, label: 'Home Visits' },
-  { to: '/admin/case-conferences', icon: Calendar, label: 'Case Conferences' },
+  { to: '/admin/incidents', icon: AlertTriangle, label: 'Incident Reports' },
   { divider: true },
   { to: '/admin/reports', icon: BarChart3, label: 'Reports' },
   { to: '/admin/settings', icon: Settings, label: 'Settings' },

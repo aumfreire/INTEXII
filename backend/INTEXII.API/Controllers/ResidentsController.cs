@@ -155,15 +155,39 @@ public class ResidentsController : ControllerBase
     }
 
     /// <summary>
+    /// Returns a dropdown-friendly list of all residents (id + display name).
+    /// </summary>
+    [HttpGet("options")]
+    [Authorize(Policy = AuthPolicies.ManageData)]
+    public async Task<IActionResult> GetOptions()
+    {
+        var residents = await _db.Residents
+            .AsNoTracking()
+            .OrderBy(r => r.InternalCode ?? r.CaseControlNo)
+            .ToListAsync();
+
+        var options = residents.Select(r => new
+        {
+            id = r.ResidentId,
+            name = BuildResidentDisplayName(r),
+        }).ToArray();
+
+        return Ok(options);
+    }
+
+    /// <summary>
     /// Creates a new resident record. Admin only.
     /// </summary>
     [HttpPost]
     [Authorize(Policy = AuthPolicies.ManageData)]
-    public async Task<IActionResult> Create([FromBody] Resident resident)
+    public async Task<IActionResult> Create([FromBody] ResidentUpsertRequest req)
     {
+        var nextId = (await _db.Residents.MaxAsync(r => (int?)r.ResidentId) ?? 0) + 1;
+
+        var resident = ApplyUpsert(new Resident { ResidentId = nextId, CreatedAt = DateTime.UtcNow }, req);
         _db.Residents.Add(resident);
         await _db.SaveChangesAsync();
-        return CreatedAtAction(nameof(GetById), new { id = resident.ResidentId }, resident);
+        return CreatedAtAction(nameof(GetById), new { id = nextId }, MapCaseloadResident(resident));
     }
 
     /// <summary>
@@ -171,29 +195,124 @@ public class ResidentsController : ControllerBase
     /// </summary>
     [HttpPut("{id:int}")]
     [Authorize(Policy = AuthPolicies.ManageData)]
-    public async Task<IActionResult> Update(int id, [FromBody] Resident resident)
+    public async Task<IActionResult> Update(int id, [FromBody] ResidentUpsertRequest req)
     {
-        if (id != resident.ResidentId) return BadRequest();
-        _db.Entry(resident).State = EntityState.Modified;
+        var resident = await _db.Residents.Include(r => r.Safehouse).FirstOrDefaultAsync(r => r.ResidentId == id);
+        if (resident is null) return NotFound();
+        ApplyUpsert(resident, req);
         await _db.SaveChangesAsync();
         return NoContent();
     }
 
     /// <summary>
-    /// Deletes a resident record. Admin only.
+    /// Soft-closes a resident case (sets case_status = "closed"). Does NOT delete the row.
     /// Frontend must show a confirmation dialog before calling this endpoint.
-    /// VIDEO NOTE: Show the confirmation dialog in the UI before this is called.
     /// </summary>
     [HttpDelete("{id:int}")]
     [Authorize(Policy = AuthPolicies.ManageData)]
     public async Task<IActionResult> Delete(int id)
     {
         var resident = await _db.Residents.FindAsync(id);
-        if (resident == null) return NotFound();
-        _db.Residents.Remove(resident);
+        if (resident is null) return NotFound();
+        resident.CaseStatus = "closed";
+        resident.DateClosed = DateOnly.FromDateTime(DateTime.UtcNow);
         await _db.SaveChangesAsync();
         return NoContent();
     }
+
+    private static Resident ApplyUpsert(Resident resident, ResidentUpsertRequest req)
+    {
+        resident.CaseControlNo = req.CaseControlNo?.Trim();
+        resident.InternalCode = req.InternalCode?.Trim();
+        resident.SafehouseId = req.SafehouseId;
+        resident.AssignedSocialWorker = req.AssignedSocialWorker?.Trim();
+        resident.Sex = req.Sex?.Trim();
+        resident.DateOfBirth = req.DateOfBirth;
+        resident.PlaceOfBirth = req.PlaceOfBirth?.Trim();
+        resident.Religion = req.Religion?.Trim();
+        resident.BirthStatus = req.BirthStatus?.Trim();
+        resident.CaseStatus = req.CaseStatus?.Trim() ?? resident.CaseStatus ?? "intake";
+        resident.CaseCategory = req.CaseCategory?.Trim();
+        resident.InitialRiskLevel = req.InitialRiskLevel?.Trim();
+        resident.CurrentRiskLevel = req.CurrentRiskLevel?.Trim();
+        resident.ReferralSource = req.ReferralSource?.Trim();
+        resident.ReferringAgencyPerson = req.ReferringAgencyPerson?.Trim();
+        // Sub-categories
+        resident.SubCatOrphaned = req.SubCatOrphaned;
+        resident.SubCatTrafficked = req.SubCatTrafficked;
+        resident.SubCatChildLabor = req.SubCatChildLabor;
+        resident.SubCatPhysicalAbuse = req.SubCatPhysicalAbuse;
+        resident.SubCatSexualAbuse = req.SubCatSexualAbuse;
+        resident.SubCatOsaec = req.SubCatOsaec;
+        resident.SubCatCicl = req.SubCatCicl;
+        resident.SubCatAtRisk = req.SubCatAtRisk;
+        resident.SubCatStreetChild = req.SubCatStreetChild;
+        resident.SubCatChildWithHiv = req.SubCatChildWithHiv;
+        // Special needs
+        resident.IsPwd = req.IsPwd;
+        resident.PwdType = req.PwdType?.Trim();
+        resident.HasSpecialNeeds = req.HasSpecialNeeds;
+        resident.SpecialNeedsDiagnosis = req.SpecialNeedsDiagnosis?.Trim();
+        // Family profile
+        resident.FamilyIs4ps = req.FamilyIs4ps;
+        resident.FamilySoloParent = req.FamilySoloParent;
+        resident.FamilyIndigenous = req.FamilyIndigenous;
+        resident.FamilyParentPwd = req.FamilyParentPwd;
+        resident.FamilyInformalSettler = req.FamilyInformalSettler;
+        // Dates
+        resident.DateOfAdmission = req.DateOfAdmission;
+        resident.DateColbRegistered = req.DateColbRegistered;
+        resident.DateColbObtained = req.DateColbObtained;
+        resident.DateEnrolled = req.DateEnrolled;
+        resident.DateCaseStudyPrepared = req.DateCaseStudyPrepared;
+        // Reintegration
+        resident.ReintegrationType = req.ReintegrationType?.Trim();
+        resident.ReintegrationStatus = req.ReintegrationStatus?.Trim();
+        return resident;
+    }
+
+    public sealed record ResidentUpsertRequest(
+        string? CaseControlNo,
+        string? InternalCode,
+        int? SafehouseId,
+        string? AssignedSocialWorker,
+        string? Sex,
+        DateOnly? DateOfBirth,
+        string? PlaceOfBirth,
+        string? Religion,
+        string? BirthStatus,
+        string? CaseStatus,
+        string? CaseCategory,
+        string? InitialRiskLevel,
+        string? CurrentRiskLevel,
+        string? ReferralSource,
+        string? ReferringAgencyPerson,
+        bool? SubCatOrphaned,
+        bool? SubCatTrafficked,
+        bool? SubCatChildLabor,
+        bool? SubCatPhysicalAbuse,
+        bool? SubCatSexualAbuse,
+        bool? SubCatOsaec,
+        bool? SubCatCicl,
+        bool? SubCatAtRisk,
+        bool? SubCatStreetChild,
+        bool? SubCatChildWithHiv,
+        bool? IsPwd,
+        string? PwdType,
+        bool? HasSpecialNeeds,
+        string? SpecialNeedsDiagnosis,
+        bool? FamilyIs4ps,
+        bool? FamilySoloParent,
+        bool? FamilyIndigenous,
+        bool? FamilyParentPwd,
+        bool? FamilyInformalSettler,
+        DateOnly? DateOfAdmission,
+        DateOnly? DateColbRegistered,
+        DateOnly? DateColbObtained,
+        DateOnly? DateEnrolled,
+        DateOnly? DateCaseStudyPrepared,
+        string? ReintegrationType,
+        string? ReintegrationStatus);
 
     private static CaseloadResidentDto MapCaseloadResident(Resident resident)
     {

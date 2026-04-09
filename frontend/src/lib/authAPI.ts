@@ -877,3 +877,903 @@ export async function deleteAdminUser(userId: string): Promise<void> {
         throw new Error(await readApiError(response, 'Unable to delete user.'));
     }
 }
+
+// ── Residents CRUD ────────────────────────────────────────────────────────────
+
+export interface ResidentOption {
+    id: number;
+    name: string;
+}
+
+export interface ResidentUpsertRequest {
+    caseControlNo?: string | null;
+    internalCode?: string | null;
+    safehouseId?: number | null;
+    assignedSocialWorker?: string | null;
+    sex?: string | null;
+    dateOfBirth?: string | null;
+    placeOfBirth?: string | null;
+    religion?: string | null;
+    birthStatus?: string | null;
+    caseStatus?: string | null;
+    caseCategory?: string | null;
+    initialRiskLevel?: string | null;
+    currentRiskLevel?: string | null;
+    referralSource?: string | null;
+    referringAgencyPerson?: string | null;
+    subCatOrphaned?: boolean | null;
+    subCatTrafficked?: boolean | null;
+    subCatChildLabor?: boolean | null;
+    subCatPhysicalAbuse?: boolean | null;
+    subCatSexualAbuse?: boolean | null;
+    subCatOsaec?: boolean | null;
+    subCatCicl?: boolean | null;
+    subCatAtRisk?: boolean | null;
+    subCatStreetChild?: boolean | null;
+    subCatChildWithHiv?: boolean | null;
+    isPwd?: boolean | null;
+    pwdType?: string | null;
+    hasSpecialNeeds?: boolean | null;
+    specialNeedsDiagnosis?: string | null;
+    familyIs4ps?: boolean | null;
+    familySoloParent?: boolean | null;
+    familyIndigenous?: boolean | null;
+    familyParentPwd?: boolean | null;
+    familyInformalSettler?: boolean | null;
+    dateOfAdmission?: string | null;
+    dateColbRegistered?: string | null;
+    dateColbObtained?: string | null;
+    dateEnrolled?: string | null;
+    dateCaseStudyPrepared?: string | null;
+    reintegrationType?: string | null;
+    reintegrationStatus?: string | null;
+}
+
+export async function getAdminResidentOptions(): Promise<ResidentOption[]> {
+    const response = await apiFetch('/api/residents/options');
+    if (!response.ok) throw new Error(await readApiError(response, 'Unable to load resident options.'));
+    return response.json();
+}
+
+export async function createAdminResident(payload: ResidentUpsertRequest): Promise<AdminCaseloadResident> {
+    const response = await apiFetch('/api/residents', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+    });
+    if (!response.ok) throw new Error(await readApiError(response, 'Unable to create resident.'));
+    return response.json();
+}
+
+export async function updateAdminResident(id: number, payload: ResidentUpsertRequest): Promise<void> {
+    const response = await apiFetch(`/api/residents/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+    });
+    if (!response.ok) throw new Error(await readApiError(response, 'Unable to update resident.'));
+}
+
+export async function closeAdminResident(id: number): Promise<void> {
+    const response = await apiFetch(`/api/residents/${id}`, { method: 'DELETE' });
+    if (!response.ok) throw new Error(await readApiError(response, 'Unable to close resident case.'));
+}
+
+// ── Process Recordings ────────────────────────────────────────────────────────
+
+export interface ProcessRecordingListItem {
+    id: number;
+    residentId: number | null;
+    residentName: string;
+    sessionDate: string | null;
+    socialWorker: string | null;
+    sessionType: string | null;
+    progressNoted: boolean;
+    concernsFlagged: boolean;
+    referralMade: boolean;
+}
+
+export interface ProcessRecordingDetail extends ProcessRecordingListItem {
+    sessionDurationMinutes: number | null;
+    emotionalStateObserved: string | null;
+    emotionalStateEnd: string | null;
+    sessionNarrative: string | null;
+    interventionsApplied: string | null;
+    followUpActions: string | null;
+}
+
+export interface ProcessRecordingUpsertRequest {
+    residentId?: number | null;
+    sessionDate?: string | null;
+    socialWorker?: string | null;
+    sessionType?: string | null;
+    sessionDurationMinutes?: number | null;
+    emotionalStateObserved?: string | null;
+    emotionalStateEnd?: string | null;
+    sessionNarrative?: string | null;
+    interventionsApplied?: string | null;
+    followUpActions?: string | null;
+    progressNoted?: boolean | null;
+    concernsFlagged?: boolean | null;
+    referralMade?: boolean | null;
+}
+
+export interface PagedResponse<T> {
+    total: number;
+    page: number;
+    pageSize: number;
+    items: T[];
+}
+
+export async function getAdminProcessRecordings(options: {
+    residentId?: number;
+    search?: string;
+    sessionType?: string;
+    page?: number;
+    pageSize?: number;
+} = {}): Promise<PagedResponse<ProcessRecordingListItem>> {
+    const q = new URLSearchParams();
+    if (options.residentId) q.set('residentId', String(options.residentId));
+    if (options.search?.trim()) q.set('search', options.search.trim());
+    if (options.sessionType?.trim()) q.set('sessionType', options.sessionType.trim());
+    if (options.page) q.set('page', String(options.page));
+    if (options.pageSize) q.set('pageSize', String(options.pageSize));
+    const response = await apiFetch(`/api/process-recordings${q.toString() ? `?${q}` : ''}`);
+    if (!response.ok) throw new Error(await readApiError(response, 'Unable to load process recordings.'));
+    return response.json();
+}
+
+export async function createAdminProcessRecording(payload: ProcessRecordingUpsertRequest): Promise<ProcessRecordingDetail> {
+    const response = await apiFetch('/api/process-recordings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+    });
+    if (!response.ok) throw new Error(await readApiError(response, 'Unable to create process recording.'));
+    return response.json();
+}
+
+export async function updateAdminProcessRecording(id: number, payload: ProcessRecordingUpsertRequest): Promise<void> {
+    const response = await apiFetch(`/api/process-recordings/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+    });
+    if (!response.ok) throw new Error(await readApiError(response, 'Unable to update process recording.'));
+}
+
+export async function deleteAdminProcessRecording(id: number): Promise<void> {
+    const response = await apiFetch(`/api/process-recordings/${id}`, { method: 'DELETE' });
+    if (!response.ok) throw new Error(await readApiError(response, 'Unable to delete process recording.'));
+}
+
+// ── Home Visitations ──────────────────────────────────────────────────────────
+
+export interface HomeVisitationListItem {
+    id: number;
+    residentId: number | null;
+    residentName: string;
+    visitDate: string | null;
+    socialWorker: string | null;
+    visitType: string | null;
+    safetyConcernsNoted: boolean;
+    followUpNeeded: boolean;
+    visitOutcome: string | null;
+}
+
+export interface HomeVisitationDetail extends HomeVisitationListItem {
+    locationVisited: string | null;
+    purpose: string | null;
+    observations: string | null;
+    familyCooperationLevel: string | null;
+    followUpNotes: string | null;
+}
+
+export interface HomeVisitationUpsertRequest {
+    residentId?: number | null;
+    visitDate?: string | null;
+    socialWorker?: string | null;
+    visitType?: string | null;
+    locationVisited?: string | null;
+    purpose?: string | null;
+    observations?: string | null;
+    familyCooperationLevel?: string | null;
+    safetyConcernsNoted?: boolean | null;
+    followUpNeeded?: boolean | null;
+    followUpNotes?: string | null;
+    visitOutcome?: string | null;
+}
+
+export async function getAdminHomeVisitations(options: {
+    residentId?: number;
+    visitType?: string;
+    safetyConcern?: boolean;
+    search?: string;
+    page?: number;
+    pageSize?: number;
+} = {}): Promise<PagedResponse<HomeVisitationListItem>> {
+    const q = new URLSearchParams();
+    if (options.residentId) q.set('residentId', String(options.residentId));
+    if (options.visitType?.trim()) q.set('visitType', options.visitType.trim());
+    if (options.safetyConcern !== undefined) q.set('safetyConcern', String(options.safetyConcern));
+    if (options.search?.trim()) q.set('search', options.search.trim());
+    if (options.page) q.set('page', String(options.page));
+    if (options.pageSize) q.set('pageSize', String(options.pageSize));
+    const response = await apiFetch(`/api/home-visitations${q.toString() ? `?${q}` : ''}`);
+    if (!response.ok) throw new Error(await readApiError(response, 'Unable to load home visitations.'));
+    return response.json();
+}
+
+export async function createAdminHomeVisitation(payload: HomeVisitationUpsertRequest): Promise<HomeVisitationDetail> {
+    const response = await apiFetch('/api/home-visitations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+    });
+    if (!response.ok) throw new Error(await readApiError(response, 'Unable to create home visitation.'));
+    return response.json();
+}
+
+export async function updateAdminHomeVisitation(id: number, payload: HomeVisitationUpsertRequest): Promise<void> {
+    const response = await apiFetch(`/api/home-visitations/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+    });
+    if (!response.ok) throw new Error(await readApiError(response, 'Unable to update home visitation.'));
+}
+
+export async function deleteAdminHomeVisitation(id: number): Promise<void> {
+    const response = await apiFetch(`/api/home-visitations/${id}`, { method: 'DELETE' });
+    if (!response.ok) throw new Error(await readApiError(response, 'Unable to delete home visitation.'));
+}
+
+// ── Intervention Plans ────────────────────────────────────────────────────────
+
+export interface InterventionPlanItem {
+    id: number;
+    residentId: number | null;
+    residentName: string | null;
+    planCategory: string | null;
+    planDescription: string | null;
+    servicesProvided: string | null;
+    targetDate: string | null;
+    caseConferenceDate: string | null;
+    status: string | null;
+    createdAt: string | null;
+    updatedAt: string | null;
+}
+
+export interface InterventionPlanUpsertRequest {
+    residentId?: number | null;
+    planCategory?: string | null;
+    planDescription?: string | null;
+    servicesProvided?: string | null;
+    targetDate?: string | null;
+    caseConferenceDate?: string | null;
+    status?: string | null;
+}
+
+export async function getAdminInterventionPlans(options: {
+    residentId?: number;
+    status?: string;
+    hasConference?: boolean;
+} = {}): Promise<InterventionPlanItem[]> {
+    const q = new URLSearchParams();
+    if (options.residentId) q.set('residentId', String(options.residentId));
+    if (options.status?.trim()) q.set('status', options.status.trim());
+    if (options.hasConference !== undefined) q.set('hasConference', String(options.hasConference));
+    const response = await apiFetch(`/api/intervention-plans${q.toString() ? `?${q}` : ''}`);
+    if (!response.ok) throw new Error(await readApiError(response, 'Unable to load intervention plans.'));
+    return response.json();
+}
+
+export async function createAdminInterventionPlan(payload: InterventionPlanUpsertRequest): Promise<InterventionPlanItem> {
+    const response = await apiFetch('/api/intervention-plans', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+    });
+    if (!response.ok) throw new Error(await readApiError(response, 'Unable to create intervention plan.'));
+    return response.json();
+}
+
+export async function updateAdminInterventionPlan(id: number, payload: InterventionPlanUpsertRequest): Promise<void> {
+    const response = await apiFetch(`/api/intervention-plans/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+    });
+    if (!response.ok) throw new Error(await readApiError(response, 'Unable to update intervention plan.'));
+}
+
+export async function deleteAdminInterventionPlan(id: number): Promise<void> {
+    const response = await apiFetch(`/api/intervention-plans/${id}`, { method: 'DELETE' });
+    if (!response.ok) throw new Error(await readApiError(response, 'Unable to delete intervention plan.'));
+}
+
+// ── Partners ──────────────────────────────────────────────────────────────────
+
+export interface PartnerItem {
+    id: number;
+    partnerName: string | null;
+    partnerType: string | null;
+    roleType: string | null;
+    contactName: string | null;
+    email: string | null;
+    phone: string | null;
+    region: string | null;
+    status: string;
+    startDate: string | null;
+    endDate: string | null;
+    notes: string | null;
+    assignmentCount: number;
+}
+
+export interface PartnerUpsertRequest {
+    partnerName?: string | null;
+    partnerType?: string | null;
+    roleType?: string | null;
+    contactName?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    region?: string | null;
+    status?: string | null;
+    startDate?: string | null;
+    endDate?: string | null;
+    notes?: string | null;
+}
+
+export async function getAdminPartners(search = ''): Promise<PartnerItem[]> {
+    const q = new URLSearchParams();
+    if (search.trim()) q.set('search', search.trim());
+    const response = await apiFetch(`/api/partners${q.toString() ? `?${q}` : ''}`);
+    if (!response.ok) throw new Error(await readApiError(response, 'Unable to load partners.'));
+    return response.json();
+}
+
+export async function createAdminPartner(payload: PartnerUpsertRequest): Promise<PartnerItem> {
+    const response = await apiFetch('/api/partners', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+    });
+    if (!response.ok) throw new Error(await readApiError(response, 'Unable to create partner.'));
+    return response.json();
+}
+
+export async function updateAdminPartner(id: number, payload: PartnerUpsertRequest): Promise<void> {
+    const response = await apiFetch(`/api/partners/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+    });
+    if (!response.ok) throw new Error(await readApiError(response, 'Unable to update partner.'));
+}
+
+export async function deleteAdminPartner(id: number): Promise<void> {
+    const response = await apiFetch(`/api/partners/${id}`, { method: 'DELETE' });
+    if (!response.ok) throw new Error(await readApiError(response, 'Unable to delete partner.'));
+}
+
+// ── Safehouses ────────────────────────────────────────────────────────────────
+
+export interface SafehouseItem {
+    safehouseId: number;
+    safehouseCode: string | null;
+    name: string | null;
+    region: string | null;
+    city: string | null;
+    province: string | null;
+    country: string | null;
+    openDate: string | null;
+    status: string | null;
+    capacityGirls: number | null;
+    capacityStaff: number | null;
+    currentOccupancy: number | null;
+    notes: string | null;
+}
+
+export interface SafehouseUpsertRequest {
+    safehouseCode?: string | null;
+    name?: string | null;
+    region?: string | null;
+    city?: string | null;
+    province?: string | null;
+    country?: string | null;
+    openDate?: string | null;
+    status?: string | null;
+    capacityGirls?: number | null;
+    capacityStaff?: number | null;
+    currentOccupancy?: number | null;
+    notes?: string | null;
+}
+
+export async function getAdminSafehouses(): Promise<SafehouseItem[]> {
+    const response = await apiFetch('/api/safehouses');
+    if (!response.ok) throw new Error(await readApiError(response, 'Unable to load safehouses.'));
+    return response.json();
+}
+
+export async function createAdminSafehouse(payload: SafehouseUpsertRequest): Promise<SafehouseItem> {
+    const response = await apiFetch('/api/safehouses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+    });
+    if (!response.ok) throw new Error(await readApiError(response, 'Unable to create safehouse.'));
+    return response.json();
+}
+
+export async function updateAdminSafehouse(id: number, payload: SafehouseUpsertRequest): Promise<void> {
+    const response = await apiFetch(`/api/safehouses/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+    });
+    if (!response.ok) throw new Error(await readApiError(response, 'Unable to update safehouse.'));
+}
+
+export async function deleteAdminSafehouse(id: number): Promise<void> {
+    const response = await apiFetch(`/api/safehouses/${id}`, { method: 'DELETE' });
+    if (!response.ok) throw new Error(await readApiError(response, 'Unable to delete safehouse.'));
+}
+
+// ── Reports ───────────────────────────────────────────────────────────────────
+
+export interface ReportSummary {
+    activeResidents: number;
+    intakeCount: number;
+    reintegrationCount: number;
+    highRiskCount: number;
+    activeSafehouses: number;
+    recentDonationsLast30Days: number;
+    totalResidents: number;
+    totalDonors: number;
+}
+
+export interface DonationTrendItem {
+    month: string;
+    total: number;
+    count: number;
+}
+
+export interface ResidentOutcomeStats {
+    statusCounts: { status: string; count: number }[];
+    riskCounts: { risk: string; count: number }[];
+    categoryCounts: { category: string; count: number }[];
+}
+
+export interface SafehouseMetric {
+    id: number;
+    name: string;
+    status: string;
+    residentCount: number;
+    capacity: number;
+    highRiskCount: number;
+}
+
+export interface ReintegrationStats {
+    total: number;
+    reintegrated: number;
+    inProgress: number;
+    ready: number;
+    notStarted: number;
+    successRate: number;
+    reintegrationTypeCounts: { type: string; count: number }[];
+}
+
+export async function getReportsSummary(): Promise<ReportSummary> {
+    const response = await apiFetch('/api/reports/summary');
+    if (!response.ok) throw new Error(await readApiError(response, 'Unable to load report summary.'));
+    return response.json();
+}
+
+export async function getReportsDonationTrends(): Promise<DonationTrendItem[]> {
+    const response = await apiFetch('/api/reports/donation-trends');
+    if (!response.ok) throw new Error(await readApiError(response, 'Unable to load donation trends.'));
+    return response.json();
+}
+
+export async function getReportsResidentOutcomes(): Promise<ResidentOutcomeStats> {
+    const response = await apiFetch('/api/reports/resident-outcomes');
+    if (!response.ok) throw new Error(await readApiError(response, 'Unable to load resident outcomes.'));
+    return response.json();
+}
+
+export async function getReportsSafehouseMetrics(): Promise<SafehouseMetric[]> {
+    const response = await apiFetch('/api/reports/safehouse-metrics');
+    if (!response.ok) throw new Error(await readApiError(response, 'Unable to load safehouse metrics.'));
+    return response.json();
+}
+
+export async function getReportsReintegrationRates(): Promise<ReintegrationStats> {
+    const response = await apiFetch('/api/reports/reintegration-rates');
+    if (!response.ok) throw new Error(await readApiError(response, 'Unable to load reintegration rates.'));
+    return response.json();
+}
+
+// ── Public Impact ─────────────────────────────────────────────────────────────
+
+export interface PublicImpactStats {
+    totalServed: number;
+    activeResidents: number;
+    reintegrated: number;
+    activeSafehouses: number;
+    totalDonations: number;
+    totalDonors: number;
+    programStats: { label: string; count: number }[];
+}
+
+export async function getPublicImpactStats(): Promise<PublicImpactStats> {
+    const response = await apiFetch('/api/public/stats');
+    if (!response.ok) throw new Error(await readApiError(response, 'Unable to load impact stats.'));
+    return response.json();
+}
+
+// ── Incident Reports ─────────────────────────────────────────────────────────
+
+export interface IncidentReportListItem {
+    id: number;
+    residentId: number | null;
+    residentName: string;
+    safehouseId: number | null;
+    safehouseName: string | null;
+    incidentDate: string | null;
+    incidentType: string | null;
+    severity: string | null;
+    resolved: boolean;
+    followUpRequired: boolean;
+    reportedBy: string | null;
+}
+
+export interface IncidentReportDetail extends IncidentReportListItem {
+    description: string | null;
+    responseTaken: string | null;
+    resolutionDate: string | null;
+}
+
+export interface IncidentReportUpsertRequest {
+    residentId?: number | null;
+    safehouseId?: number | null;
+    incidentDate?: string | null;
+    incidentType?: string | null;
+    severity?: string | null;
+    description?: string | null;
+    responseTaken?: string | null;
+    resolved?: boolean | null;
+    resolutionDate?: string | null;
+    reportedBy?: string | null;
+    followUpRequired?: boolean | null;
+}
+
+export async function getAdminIncidentReports(options: {
+    residentId?: number;
+    safehouseId?: number;
+    resolved?: boolean;
+    severity?: string;
+    search?: string;
+    page?: number;
+    pageSize?: number;
+} = {}): Promise<PagedResponse<IncidentReportListItem>> {
+    const q = new URLSearchParams();
+    if (options.residentId) q.set('residentId', String(options.residentId));
+    if (options.safehouseId) q.set('safehouseId', String(options.safehouseId));
+    if (options.resolved !== undefined) q.set('resolved', String(options.resolved));
+    if (options.severity?.trim()) q.set('severity', options.severity.trim());
+    if (options.search?.trim()) q.set('search', options.search.trim());
+    if (options.page) q.set('page', String(options.page));
+    if (options.pageSize) q.set('pageSize', String(options.pageSize));
+
+    const response = await apiFetch(`/api/incident-reports${q.toString() ? `?${q}` : ''}`);
+    if (!response.ok) throw new Error(await readApiError(response, 'Unable to load incident reports.'));
+    return response.json();
+}
+
+export async function getAdminIncidentReport(id: number): Promise<IncidentReportDetail> {
+    const response = await apiFetch(`/api/incident-reports/${id}`);
+    if (!response.ok) throw new Error(await readApiError(response, 'Unable to load incident report.'));
+    return response.json();
+}
+
+export async function createAdminIncidentReport(payload: IncidentReportUpsertRequest): Promise<IncidentReportDetail> {
+    const response = await apiFetch('/api/incident-reports', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+    });
+    if (!response.ok) throw new Error(await readApiError(response, 'Unable to create incident report.'));
+    return response.json();
+}
+
+export async function updateAdminIncidentReport(id: number, payload: IncidentReportUpsertRequest): Promise<void> {
+    const response = await apiFetch(`/api/incident-reports/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+    });
+    if (!response.ok) throw new Error(await readApiError(response, 'Unable to update incident report.'));
+}
+
+export async function closeAdminIncidentReport(id: number): Promise<void> {
+    const response = await apiFetch(`/api/incident-reports/${id}`, { method: 'DELETE' });
+    if (!response.ok) throw new Error(await readApiError(response, 'Unable to close incident report.'));
+}
+
+// ── Education Records ───────────────────────────────────────────────────────
+
+export interface EducationRecordItem {
+    id: number;
+    residentId: number | null;
+    residentName: string;
+    recordDate: string | null;
+    educationLevel: string | null;
+    schoolName: string | null;
+    enrollmentStatus: string | null;
+    attendanceRate: number | null;
+    progressPercent: number | null;
+    completionStatus: string | null;
+    notes: string | null;
+}
+
+export interface EducationRecordUpsertRequest {
+    residentId?: number | null;
+    recordDate?: string | null;
+    educationLevel?: string | null;
+    schoolName?: string | null;
+    enrollmentStatus?: string | null;
+    attendanceRate?: number | null;
+    progressPercent?: number | null;
+    completionStatus?: string | null;
+    notes?: string | null;
+}
+
+export async function getAdminEducationRecords(options: {
+    residentId?: number;
+    enrollmentStatus?: string;
+    completionStatus?: string;
+    page?: number;
+    pageSize?: number;
+} = {}): Promise<PagedResponse<EducationRecordItem>> {
+    const q = new URLSearchParams();
+    if (options.residentId) q.set('residentId', String(options.residentId));
+    if (options.enrollmentStatus?.trim()) q.set('enrollmentStatus', options.enrollmentStatus.trim());
+    if (options.completionStatus?.trim()) q.set('completionStatus', options.completionStatus.trim());
+    if (options.page) q.set('page', String(options.page));
+    if (options.pageSize) q.set('pageSize', String(options.pageSize));
+
+    const response = await apiFetch(`/api/education-records${q.toString() ? `?${q}` : ''}`);
+    if (!response.ok) throw new Error(await readApiError(response, 'Unable to load education records.'));
+    return response.json();
+}
+
+export async function createAdminEducationRecord(payload: EducationRecordUpsertRequest): Promise<EducationRecordItem> {
+    const response = await apiFetch('/api/education-records', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+    });
+    if (!response.ok) throw new Error(await readApiError(response, 'Unable to create education record.'));
+    return response.json();
+}
+
+export async function updateAdminEducationRecord(id: number, payload: EducationRecordUpsertRequest): Promise<void> {
+    const response = await apiFetch(`/api/education-records/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+    });
+    if (!response.ok) throw new Error(await readApiError(response, 'Unable to update education record.'));
+}
+
+export async function deleteAdminEducationRecord(id: number): Promise<void> {
+    const response = await apiFetch(`/api/education-records/${id}`, { method: 'DELETE' });
+    if (!response.ok) throw new Error(await readApiError(response, 'Unable to delete education record.'));
+}
+
+// ── Health & Wellbeing Records ──────────────────────────────────────────────
+
+export interface HealthWellbeingRecordItem {
+    id: number;
+    residentId: number | null;
+    residentName: string;
+    recordDate: string | null;
+    generalHealthScore: number | null;
+    nutritionScore: number | null;
+    sleepQualityScore: number | null;
+    energyLevelScore: number | null;
+    heightCm: number | null;
+    weightKg: number | null;
+    bmi: number | null;
+    medicalCheckupDone: boolean;
+    dentalCheckupDone: boolean;
+    psychologicalCheckupDone: boolean;
+    notes: string | null;
+}
+
+export interface HealthWellbeingRecordUpsertRequest {
+    residentId?: number | null;
+    recordDate?: string | null;
+    generalHealthScore?: number | null;
+    nutritionScore?: number | null;
+    sleepQualityScore?: number | null;
+    energyLevelScore?: number | null;
+    heightCm?: number | null;
+    weightKg?: number | null;
+    bmi?: number | null;
+    medicalCheckupDone?: boolean | null;
+    dentalCheckupDone?: boolean | null;
+    psychologicalCheckupDone?: boolean | null;
+    notes?: string | null;
+}
+
+export async function getAdminHealthWellbeingRecords(options: {
+    residentId?: number;
+    medicalCheckupDone?: boolean;
+    page?: number;
+    pageSize?: number;
+} = {}): Promise<PagedResponse<HealthWellbeingRecordItem>> {
+    const q = new URLSearchParams();
+    if (options.residentId) q.set('residentId', String(options.residentId));
+    if (options.medicalCheckupDone !== undefined) q.set('medicalCheckupDone', String(options.medicalCheckupDone));
+    if (options.page) q.set('page', String(options.page));
+    if (options.pageSize) q.set('pageSize', String(options.pageSize));
+
+    const response = await apiFetch(`/api/health-wellbeing-records${q.toString() ? `?${q}` : ''}`);
+    if (!response.ok) throw new Error(await readApiError(response, 'Unable to load health and wellbeing records.'));
+    return response.json();
+}
+
+export async function createAdminHealthWellbeingRecord(payload: HealthWellbeingRecordUpsertRequest): Promise<HealthWellbeingRecordItem> {
+    const response = await apiFetch('/api/health-wellbeing-records', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+    });
+    if (!response.ok) throw new Error(await readApiError(response, 'Unable to create health and wellbeing record.'));
+    return response.json();
+}
+
+export async function updateAdminHealthWellbeingRecord(id: number, payload: HealthWellbeingRecordUpsertRequest): Promise<void> {
+    const response = await apiFetch(`/api/health-wellbeing-records/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+    });
+    if (!response.ok) throw new Error(await readApiError(response, 'Unable to update health and wellbeing record.'));
+}
+
+export async function deleteAdminHealthWellbeingRecord(id: number): Promise<void> {
+    const response = await apiFetch(`/api/health-wellbeing-records/${id}`, { method: 'DELETE' });
+    if (!response.ok) throw new Error(await readApiError(response, 'Unable to delete health and wellbeing record.'));
+}
+
+// ── Social Media Posts ──────────────────────────────────────────────────────
+
+export interface SocialMediaPostItem {
+    id: number;
+    platform: string | null;
+    platformPostId: string | null;
+    postUrl: string | null;
+    createdAt: string | null;
+    dayOfWeek: string | null;
+    postHour: number | null;
+    postType: string | null;
+    mediaType: string | null;
+    caption: string | null;
+    hashtags: string | null;
+    numHashtags: number | null;
+    mentionsCount: number | null;
+    hasCallToAction: boolean;
+    callToActionType: string | null;
+    contentTopic: string | null;
+    sentimentTone: string | null;
+    captionLength: number | null;
+    featuresResidentStory: boolean;
+    campaignName: string | null;
+    isBoosted: boolean;
+    boostBudgetPhp: number | null;
+    impressions: number | null;
+    reach: number | null;
+    likes: number | null;
+    comments: number | null;
+    shares: number | null;
+    saves: number | null;
+    clickThroughs: number | null;
+    videoViews: number | null;
+    engagementRate: number | null;
+    profileVisits: number | null;
+    donationReferrals: number | null;
+    estimatedDonationValuePhp: number | null;
+    followerCountAtPost: number | null;
+    watchTimeSeconds: number | null;
+    avgViewDurationSeconds: number | null;
+    subscriberCountAtPost: number | null;
+    forwards: number | null;
+}
+
+export interface SocialMediaPostUpsertRequest {
+    platform?: string | null;
+    platformPostId?: string | null;
+    postUrl?: string | null;
+    createdAt?: string | null;
+    dayOfWeek?: string | null;
+    postHour?: number | null;
+    postType?: string | null;
+    mediaType?: string | null;
+    caption?: string | null;
+    hashtags?: string | null;
+    numHashtags?: number | null;
+    mentionsCount?: number | null;
+    hasCallToAction?: boolean | null;
+    callToActionType?: string | null;
+    contentTopic?: string | null;
+    sentimentTone?: string | null;
+    captionLength?: number | null;
+    featuresResidentStory?: boolean | null;
+    campaignName?: string | null;
+    isBoosted?: boolean | null;
+    boostBudgetPhp?: number | null;
+    impressions?: number | null;
+    reach?: number | null;
+    likes?: number | null;
+    comments?: number | null;
+    shares?: number | null;
+    saves?: number | null;
+    clickThroughs?: number | null;
+    videoViews?: number | null;
+    engagementRate?: number | null;
+    profileVisits?: number | null;
+    donationReferrals?: number | null;
+    estimatedDonationValuePhp?: number | null;
+    followerCountAtPost?: number | null;
+    watchTimeSeconds?: number | null;
+    avgViewDurationSeconds?: number | null;
+    subscriberCountAtPost?: number | null;
+    forwards?: number | null;
+}
+
+export async function getAdminSocialMediaPosts(options: {
+    platform?: string;
+    campaign?: string;
+    postType?: string;
+    search?: string;
+    page?: number;
+    pageSize?: number;
+} = {}): Promise<PagedResponse<SocialMediaPostItem>> {
+    const q = new URLSearchParams();
+    if (options.platform?.trim()) q.set('platform', options.platform.trim());
+    if (options.campaign?.trim()) q.set('campaign', options.campaign.trim());
+    if (options.postType?.trim()) q.set('postType', options.postType.trim());
+    if (options.search?.trim()) q.set('search', options.search.trim());
+    if (options.page) q.set('page', String(options.page));
+    if (options.pageSize) q.set('pageSize', String(options.pageSize));
+
+    const response = await apiFetch(`/api/social-media-posts${q.toString() ? `?${q}` : ''}`);
+    if (!response.ok) throw new Error(await readApiError(response, 'Unable to load social media posts.'));
+    return response.json();
+}
+
+export async function createAdminSocialMediaPost(payload: SocialMediaPostUpsertRequest): Promise<SocialMediaPostItem> {
+    const response = await apiFetch('/api/social-media-posts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+    });
+    if (!response.ok) throw new Error(await readApiError(response, 'Unable to create social media post.'));
+    return response.json();
+}
+
+export async function updateAdminSocialMediaPost(id: number, payload: SocialMediaPostUpsertRequest): Promise<void> {
+    const response = await apiFetch(`/api/social-media-posts/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+    });
+    if (!response.ok) throw new Error(await readApiError(response, 'Unable to update social media post.'));
+}
+
+export async function deleteAdminSocialMediaPost(id: number): Promise<void> {
+    const response = await apiFetch(`/api/social-media-posts/${id}`, { method: 'DELETE' });
+    if (!response.ok) throw new Error(await readApiError(response, 'Unable to delete social media post.'));
+}

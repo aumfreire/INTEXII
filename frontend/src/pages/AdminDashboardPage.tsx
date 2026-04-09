@@ -4,7 +4,6 @@ import {
     Users,
     AlertTriangle,
     DollarSign,
-    Calendar,
     TrendingUp,
     TrendingDown,
     Minus,
@@ -14,12 +13,11 @@ import {
     HandCoins,
 } from 'lucide-react';
 import AlertBanner from '../components/ui/AlertBanner';
-import { getAdminCaseload, getAdminSupporters } from '../lib/authAPI';
+import { getAdminCaseload, getAdminSupporters, getReportsSummary, getAdminSafehouses } from '../lib/authAPI';
 import '../styles/pages/admin-dashboard.css';
 
 /* ===== Types ===== */
 type RiskLevel = 'critical' | 'high' | 'moderate';
-type EventType = 'conference' | 'visit' | 'followup';
 type ActivityType = 'monetary' | 'inkind' | 'volunteer';
 type CaseStatus = 'active' | 'intake' | 'reintegration' | 'closed';
 
@@ -28,14 +26,6 @@ interface AttentionItem {
     name: string;
     reason: string;
     risk: RiskLevel;
-}
-
-interface UpcomingItem {
-    id: string;
-    title: string;
-    meta: string;
-    date: string;
-    type: EventType;
 }
 
 interface ActivityItem {
@@ -60,14 +50,6 @@ const mockAttentionItems: AttentionItem[] = [
     { id: '2', name: 'Grace M.', reason: 'Missed counseling session (2nd consecutive)', risk: 'high' },
     { id: '3', name: 'Mercy T.', reason: 'Emotional distress flagged by house mother', risk: 'high' },
     { id: '4', name: 'Faith K.', reason: 'Reintegration home visit report pending', risk: 'moderate' },
-];
-
-const mockUpcomingItems: UpcomingItem[] = [
-    { id: '1', title: 'Case Conference: Grace M.', meta: 'Multi-disciplinary review — Maria, Sarah, Dr. Adewale', date: '2026-04-09', type: 'conference' },
-    { id: '2', title: 'Home Visit: Hope N.', meta: 'Pre-reintegration family assessment', date: '2026-04-10', type: 'visit' },
-    { id: '3', title: 'Follow-up: Mercy T.', meta: 'Post-counseling check-in with house mother', date: '2026-04-10', type: 'followup' },
-    { id: '4', title: 'Case Conference: Blessing O.', meta: 'Quarterly progress review', date: '2026-04-11', type: 'conference' },
-    { id: '5', title: 'Home Visit: Faith K.', meta: 'Family readiness evaluation — 2nd visit', date: '2026-04-12', type: 'visit' },
 ];
 
 const mockActivityItems: ActivityItem[] = [
@@ -104,12 +86,6 @@ const riskLabels: Record<RiskLevel, string> = {
     moderate: 'Moderate',
 };
 
-const typeLabels: Record<EventType, string> = {
-    conference: 'Conference',
-    visit: 'Home Visit',
-    followup: 'Follow-up',
-};
-
 function formatEventDate(iso: string): { day: string; month: string } {
     const d = new Date(iso + 'T00:00:00');
     return {
@@ -139,19 +115,40 @@ export default function AdminDashboardPage() {
             setHasError(false);
 
             try {
-                const [caseload, supporters] = await Promise.all([
+                const [caseload, supporters, summary, safehouses] = await Promise.all([
                     getAdminCaseload(),
                     getAdminSupporters(),
+                    getReportsSummary().catch(() => null),
+                    getAdminSafehouses().catch(() => []),
                 ]);
 
                 if (!isMounted) return;
 
-                setActiveResidents(caseload.length);
-                setHighRiskCount(caseload.filter((item) => item.riskLevel === 'high' || item.riskLevel === 'critical').length);
+                setActiveResidents(summary?.activeResidents ?? caseload.length);
+                setHighRiskCount(summary?.highRiskCount ?? caseload.filter((item) => item.riskLevel === 'high' || item.riskLevel === 'critical').length);
 
-                const monthlyTotal = supporters
-                    .reduce((sum, item) => sum + item.lifetimeValue, 0) / 12;
+                const monthlyTotal = summary?.recentDonationsLast30Days
+                    ?? supporters.reduce((sum, item) => sum + item.lifetimeValue, 0) / 12;
                 setDonationsThisMonth(monthlyTotal);
+
+                /* Real safehouse capacity from API */
+                if (safehouses.length > 0) {
+                    const shData = safehouses.map((sh) => ({
+                        name: sh.name ?? 'Unknown',
+                        residents: caseload.filter((r) => r.safehouse === sh.name).length,
+                        capacity: sh.capacityGirls ?? 6,
+                        highRisk: caseload.filter((r) => r.safehouse === sh.name && (r.riskLevel === 'high' || r.riskLevel === 'critical')).length,
+                    }));
+                    setSafehouseRows(shData);
+                    setOccupancyDataRows(
+                        shData.map((house, index) => ({
+                            label: house.name.length > 16 ? house.name.slice(0, 16) + '…' : house.name,
+                            value: house.residents,
+                            max: house.capacity,
+                            color: index % 3 === 0 ? 'primary' : index % 3 === 1 ? 'sage' : 'light',
+                        }))
+                    );
+                }
 
                 const mappedAttention = caseload
                     .filter((item) => item.riskLevel === 'high' || item.riskLevel === 'critical')
@@ -189,31 +186,28 @@ export default function AdminDashboardPage() {
                     }))
                 );
 
-                const groupedSafehouses = caseload.reduce<Record<string, SafehouseData>>((acc, item) => {
-                    const key = item.safehouse || 'Unassigned';
-                    if (!acc[key]) {
-                        acc[key] = { name: key, residents: 0, capacity: 6, highRisk: 0 };
+                /* Safehouse data is loaded above from the safehouses API;
+                   only fall back to caseload grouping if safehouses API returned nothing */
+                if (safehouses.length === 0) {
+                    const grouped = caseload.reduce<Record<string, SafehouseData>>((acc, item) => {
+                        const key = item.safehouse || 'Unassigned';
+                        if (!acc[key]) acc[key] = { name: key, residents: 0, capacity: 6, highRisk: 0 };
+                        acc[key].residents += 1;
+                        if (item.riskLevel === 'high' || item.riskLevel === 'critical') acc[key].highRisk += 1;
+                        return acc;
+                    }, {});
+                    const fallback = Object.values(grouped);
+                    if (fallback.length > 0) {
+                        setSafehouseRows(fallback);
+                        setOccupancyDataRows(
+                            fallback.map((house, index) => ({
+                                label: house.name,
+                                value: house.residents,
+                                max: house.capacity,
+                                color: index % 3 === 0 ? 'primary' : index % 3 === 1 ? 'sage' : 'light',
+                            }))
+                        );
                     }
-
-                    acc[key].residents += 1;
-                    if (item.riskLevel === 'high' || item.riskLevel === 'critical') {
-                        acc[key].highRisk += 1;
-                    }
-
-                    return acc;
-                }, {});
-
-                const safehouses = Object.values(groupedSafehouses);
-                if (safehouses.length > 0) {
-                    setSafehouseRows(safehouses);
-                    setOccupancyDataRows(
-                        safehouses.map((house, index) => ({
-                            label: house.name,
-                            value: house.residents,
-                            max: house.capacity,
-                            color: index % 3 === 0 ? 'primary' : index % 3 === 1 ? 'sage' : 'light',
-                        }))
-                    );
                 }
             } catch {
                 if (!isMounted) return;
@@ -339,22 +333,22 @@ export default function AdminDashboardPage() {
                         </div>
                         <div className="dash-kpi">
                             <div className="dash-kpi-icon conferences">
-                                <Calendar size={20} />
+                                <AlertTriangle size={20} />
                             </div>
                             <div>
-                                <div className="dash-kpi-value">5</div>
-                                <div className="dash-kpi-label">Upcoming This Week</div>
+                                <div className="dash-kpi-value">{attentionItems.length}</div>
+                                <div className="dash-kpi-label">Needs Attention</div>
                                 <div className="dash-kpi-trend neutral">
-                                    <Minus size={12} /> 2 conferences, 2 visits
+                                    <Minus size={12} /> Active monitoring queue
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* Action Panels — Needs Attention + Upcoming */}
+                    {/* Action Panel — Needs Attention */}
                     <div className="dash-panels">
                         {/* Needs Attention */}
-                        <div className="dash-panel">
+                        <div className="dash-panel full-width">
                             <div className="dash-panel-header">
                                 <h3 className="dash-panel-title">
                                     Needs Attention
@@ -382,39 +376,6 @@ export default function AdminDashboardPage() {
                                         </span>
                                     </Link>
                                 ))}
-                            </div>
-                        </div>
-
-                        {/* Upcoming This Week */}
-                        <div className="dash-panel">
-                            <div className="dash-panel-header">
-                                <h3 className="dash-panel-title">
-                                    Upcoming This Week
-                                    <span className="dash-panel-count upcoming">{mockUpcomingItems.length}</span>
-                                </h3>
-                                <Link to="/admin/case-conferences" className="dash-panel-link">
-                                    View All <ArrowRight size={13} style={{ marginLeft: '2px' }} />
-                                </Link>
-                            </div>
-                            <div className="dash-panel-body">
-                                {mockUpcomingItems.map((item) => {
-                                    const d = formatEventDate(item.date);
-                                    return (
-                                        <div className="dash-upcoming-item" key={item.id}>
-                                            <div className="dash-upcoming-date-box">
-                                                <span className="dash-upcoming-day">{d.day}</span>
-                                                <span className="dash-upcoming-month">{d.month}</span>
-                                            </div>
-                                            <div className="dash-upcoming-info">
-                                                <div className="dash-upcoming-title">{item.title}</div>
-                                                <div className="dash-upcoming-meta">{item.meta}</div>
-                                            </div>
-                                            <span className={`dash-upcoming-type ${item.type}`}>
-                                                {typeLabels[item.type]}
-                                            </span>
-                                        </div>
-                                    );
-                                })}
                             </div>
                         </div>
                     </div>
