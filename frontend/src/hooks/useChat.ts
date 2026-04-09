@@ -94,17 +94,6 @@ export function useChat(adminMode: boolean) {
     }
   }, [adminMode, conversationId, files, history, input, runStream]);
 
-  const retryLast = useCallback(async () => {
-    const lastUser = [...messages].reverse().find((message) => message.role === 'user');
-    if (!lastUser || isStreaming) {
-      return;
-    }
-    setInput(lastUser.content);
-    window.setTimeout(() => {
-      void send();
-    }, 0);
-  }, [isStreaming, messages, send]);
-
   const canSend = useMemo(() => input.trim().length > 0 || files.attachments.length > 0, [files.attachments.length, input]);
 
   return {
@@ -119,7 +108,6 @@ export function useChat(adminMode: boolean) {
     history,
     files,
     send,
-    retryLast,
     startNewChat,
     loadConversation,
   };

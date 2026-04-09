@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Maximize2, Minimize2, Moon, PanelLeft, RotateCcw, Sun } from 'lucide-react';
+import { Maximize2, Minimize2, Moon, PanelLeft, Sun } from 'lucide-react';
 import { useAuth } from '../../context/useAuth';
 import { useChat } from '../../hooks/useChat';
 import ChatEmptyState from './ChatEmptyState';
@@ -34,7 +34,6 @@ export default function ChatPage({
     history,
     files,
     send,
-    retryLast,
     startNewChat,
     loadConversation,
   } = useChat(adminMode);
@@ -92,10 +91,6 @@ export default function ChatPage({
                   {isFullscreen ? 'Downsize' : 'Fullscreen'}
                 </button>
               ) : null}
-              <button type="button" className="chat-topbar-btn" onClick={() => void retryLast()}>
-                <RotateCcw size={15} />
-                Retry
-              </button>
             </div>
           </div>
           {!adminMode || canUseAdmin ? (

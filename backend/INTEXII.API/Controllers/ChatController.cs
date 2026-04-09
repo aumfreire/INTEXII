@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using INTEXII.API.Data;
 using INTEXII.API.Data.Models;
 using INTEXII.API.Services;
@@ -16,6 +17,7 @@ namespace INTEXII.API.Controllers;
 public class ChatController : ControllerBase
 {
     private static readonly SemaphoreSlim SchemaLock = new(1, 1);
+    private static readonly object RateLimitSync = new();
     private static bool _schemaReady;
 
     private readonly IntexDbContext _db;
@@ -367,21 +369,27 @@ public class ChatController : ControllerBase
 
     private bool PassesRateLimit()
     {
-        var key = $"chat-rate:{GetUserId() ?? HttpContext.Connection.RemoteIpAddress?.ToString() ?? "anon"}";
-        var maxPerMinute = int.TryParse(_configuration["CHAT_RATE_LIMIT_PER_MINUTE"], out var configured) ? configured : 30;
-        var current = _cache.GetOrCreate<int>(key, entry =>
+        lock (RateLimitSync)
         {
-            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(1);
-            return 0;
-        });
+            var key = $"chat-rate:{GetUserId() ?? HttpContext.Connection.RemoteIpAddress?.ToString() ?? "anon"}";
+            var maxPerMinute = int.TryParse(_configuration["CHAT_RATE_LIMIT_PER_MINUTE"], out var configured) ? configured : 30;
+            var current = _cache.GetOrCreate(key, entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(1);
+                return 0;
+            });
 
-        if (current >= maxPerMinute)
-        {
-            return false;
+            if (current >= maxPerMinute)
+            {
+                return false;
+            }
+
+            _cache.Set(key, current + 1, new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(1),
+            });
+            return true;
         }
-
-        _cache.Set(key, current + 1, TimeSpan.FromMinutes(1));
-        return true;
     }
 
     private async Task<ChatConversation?> ResolveConversationAsync(int? requestedId, bool isAdmin, CancellationToken cancellationToken)
@@ -581,6 +589,11 @@ CREATE TABLE dbo.chat_audit_logs (
 );
 """, cancellationToken);
             }
+            else
+            {
+                throw new InvalidOperationException(
+                    $"Chat schema bootstrap is only implemented for SQLite and SQL Server. Current provider: {_db.Database.ProviderName ?? "unknown"}.");
+            }
 
             _schemaReady = true;
         }
@@ -591,10 +604,10 @@ CREATE TABLE dbo.chat_audit_logs (
     }
 
     public sealed record ChatMessageRequest(
-        int? ConversationId,
-        string Message,
-        string? ExternalContext,
-        IReadOnlyList<int>? AttachmentUploadIds);
+        [property: JsonPropertyName("conversationId")] int? ConversationId,
+        [property: JsonPropertyName("message")] string Message,
+        [property: JsonPropertyName("externalContext")] string? ExternalContext,
+        [property: JsonPropertyName("attachmentUploadIds")] IReadOnlyList<int>? AttachmentUploadIds);
 
     public sealed record CreateConversationRequest(string? Title);
     public sealed record RenameConversationRequest(string Title);
