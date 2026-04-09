@@ -247,20 +247,57 @@ public class AdminUsersController(UserManager<ApplicationUser> userManager, Inte
             return NotFound(new { message = "User not found." });
         }
 
-        var normalizedEmail = NormalizeEmail(user.Email);
-        if (string.IsNullOrWhiteSpace(normalizedEmail))
+        var currentNormalizedEmail = NormalizeEmail(user.Email);
+        if (string.IsNullOrWhiteSpace(currentNormalizedEmail))
         {
             return BadRequest(new { message = "User does not have a valid email for supporter sync." });
         }
 
+        var targetNormalizedEmail = string.IsNullOrWhiteSpace(request.Email)
+            ? currentNormalizedEmail
+            : NormalizeEmail(request.Email);
+
+        if (string.IsNullOrWhiteSpace(targetNormalizedEmail))
+        {
+            return BadRequest(new { message = "A valid email is required." });
+        }
+
+        var isEmailChanging = !string.Equals(currentNormalizedEmail, targetNormalizedEmail, StringComparison.OrdinalIgnoreCase);
+        if (isEmailChanging)
+        {
+            var hasLocalPassword = await userManager.HasPasswordAsync(user);
+            var loginProviders = await GetExternalLoginProvidersAsync(user);
+            var hasGoogleLogin = loginProviders.Any(provider => string.Equals(provider, "Google", StringComparison.OrdinalIgnoreCase));
+
+            if (!hasLocalPassword || hasGoogleLogin)
+            {
+                return BadRequest(new { message = "Email can only be changed for local accounts without Google sign-in." });
+            }
+
+            var existingByEmail = await userManager.FindByEmailAsync(targetNormalizedEmail);
+            if (existingByEmail is not null && !string.Equals(existingByEmail.Id, user.Id, StringComparison.Ordinal))
+            {
+                return BadRequest(new { message = "An account with this email already exists." });
+            }
+
+            user.Email = targetNormalizedEmail;
+            user.UserName = targetNormalizedEmail;
+
+            var updateIdentityResult = await userManager.UpdateAsync(user);
+            if (!updateIdentityResult.Succeeded)
+            {
+                return ValidationProblem(new ValidationProblemDetails(ToValidationErrors(updateIdentityResult)));
+            }
+        }
+
         var supporter = await intexDb.Supporters
-            .FirstOrDefaultAsync(s => s.Email != null && s.Email.ToLower() == normalizedEmail);
+            .FirstOrDefaultAsync(s => s.Email != null && s.Email.ToLower() == currentNormalizedEmail);
 
         if (supporter is null)
         {
             supporter = new Supporter
             {
-                Email = normalizedEmail,
+                Email = targetNormalizedEmail,
                 SupporterType = "Individual",
                 Status = "Active",
                 CreatedAt = DateTime.UtcNow
@@ -268,10 +305,34 @@ public class AdminUsersController(UserManager<ApplicationUser> userManager, Inte
 
             intexDb.Supporters.Add(supporter);
         }
+        else
+        {
+            var existingSupporterWithTargetEmail = await intexDb.Supporters
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.Email != null && s.Email.ToLower() == targetNormalizedEmail && s.SupporterId != supporter.SupporterId);
 
-        supporter.FirstName = NormalizeNullable(request.FirstName);
-        supporter.LastName = NormalizeNullable(request.LastName);
-        supporter.DisplayName = NormalizeNullable(request.DisplayName);
+            if (existingSupporterWithTargetEmail is not null)
+            {
+                return BadRequest(new { message = "Another supporter already uses this email." });
+            }
+
+            supporter.Email = targetNormalizedEmail;
+        }
+
+        if (request.FirstName is not null)
+        {
+            supporter.FirstName = NormalizeNullable(request.FirstName);
+        }
+
+        if (request.LastName is not null)
+        {
+            supporter.LastName = NormalizeNullable(request.LastName);
+        }
+
+        if (request.DisplayName is not null)
+        {
+            supporter.DisplayName = NormalizeNullable(request.DisplayName);
+        }
 
         if (string.IsNullOrWhiteSpace(supporter.DisplayName))
         {
@@ -778,7 +839,8 @@ public class AdminUsersController(UserManager<ApplicationUser> userManager, Inte
     public sealed record AdminUpdateProfileRequest(
         string? FirstName,
         string? LastName,
-        string? DisplayName);
+        string? DisplayName,
+        string? Email);
 
     public sealed record AdminProfileUpdateResponseDto(
         string? FirstName,

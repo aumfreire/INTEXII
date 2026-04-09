@@ -1,4 +1,5 @@
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
     AlertTriangle,
     BadgeDollarSign,
@@ -58,11 +59,13 @@ export default function AdminUsersPage() {
     const [profileFirstName, setProfileFirstName] = useState('');
     const [profileLastName, setProfileLastName] = useState('');
     const [profileDisplayName, setProfileDisplayName] = useState('');
+    const [profileEmail, setProfileEmail] = useState('');
     const [selectedRoleTemplate, setSelectedRoleTemplate] = useState<RoleTemplate>('donor');
 
     const [showResetPasswordForm, setShowResetPasswordForm] = useState(false);
     const [showDeletePrompt, setShowDeletePrompt] = useState(false);
     const [showMfaConfirm, setShowMfaConfirm] = useState(false);
+    const [showEmailUpdateForm, setShowEmailUpdateForm] = useState(false);
     const [newPassword, setNewPassword] = useState('');
     const [deleteConfirmation, setDeleteConfirmation] = useState('');
 
@@ -114,13 +117,16 @@ export default function AdminUsersPage() {
             setProfileFirstName('');
             setProfileLastName('');
             setProfileDisplayName('');
+            setProfileEmail('');
             return;
         }
 
         setProfileFirstName(selectedUser.supporter?.firstName ?? '');
         setProfileLastName(selectedUser.supporter?.lastName ?? '');
         setProfileDisplayName(selectedUser.supporter?.displayName ?? selectedUser.preferredDisplayName);
+        setProfileEmail(selectedUser.email ?? '');
         setSelectedRoleTemplate(selectedUser.roles.includes('Admin') ? 'admin' : 'donor');
+        setShowEmailUpdateForm(false);
         setShowResetPasswordForm(false);
         setShowDeletePrompt(false);
         setShowMfaConfirm(false);
@@ -159,6 +165,11 @@ export default function AdminUsersPage() {
     const selectedUserIsExternalOnly = selectedUser?.isExternalOnly ?? false;
     const selectedUserHasGoogleLogin =
         selectedUser?.externalLoginProviders.some((provider) => provider.toLowerCase() === 'google') ?? false;
+    const selectedUserCanEditEmail =
+        Boolean(selectedUser?.hasLocalPassword) && !selectedUserHasGoogleLogin;
+    const selectedUserDonationsRoute = selectedUser?.supporter?.supporterId
+        ? `/admin/contributions?supporterId=${selectedUser.supporter.supporterId}&supporterName=${encodeURIComponent(selectedUser.preferredDisplayName)}`
+        : '/admin/contributions';
 
     async function handleCreateUser() {
         if (!createEmail.trim() || !createPassword.trim()) {
@@ -215,6 +226,38 @@ export default function AdminUsersPage() {
             setSuccessMessage('Profile details updated.');
         } catch (error) {
             setErrorMessage(error instanceof Error ? error.message : 'Unable to update profile details.');
+        } finally {
+            setIsWorking(false);
+        }
+    }
+
+    async function handleEmailUpdate() {
+        if (!selectedUser) return;
+
+        if (!selectedUserCanEditEmail) {
+            setErrorMessage('Email can only be changed for local accounts without Google sign-in.');
+            return;
+        }
+
+        if (!profileEmail.trim()) {
+            setErrorMessage('Email is required.');
+            return;
+        }
+
+        setIsWorking(true);
+        setErrorMessage('');
+        setSuccessMessage('');
+
+        try {
+            await adminUpdateUserProfile(selectedUser.id, {
+                email: profileEmail,
+            });
+
+            await loadSelectedUser(selectedUser.id);
+            await loadUsers();
+            setSuccessMessage('Email updated successfully.');
+        } catch (error) {
+            setErrorMessage(error instanceof Error ? error.message : 'Unable to update email.');
         } finally {
             setIsWorking(false);
         }
@@ -323,6 +366,7 @@ export default function AdminUsersPage() {
     function closeUserModal() {
         setSelectedUser(null);
         setSelectedUserId(null);
+        setShowEmailUpdateForm(false);
         setShowResetPasswordForm(false);
         setShowDeletePrompt(false);
         setShowMfaConfirm(false);
@@ -586,7 +630,12 @@ export default function AdminUsersPage() {
                             </div>
 
                             <div className="au-section">
-                                <h4>Recent Donations</h4>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', marginBottom: '10px', flexWrap: 'wrap' }}>
+                                    <h4 style={{ marginBottom: 0 }}>Recent Donations</h4>
+                                    <Link to={selectedUserDonationsRoute} className="dash-panel-link">
+                                        Go to Donations
+                                    </Link>
+                                </div>
                                 {selectedUser.recentDonations.length === 0 ? (
                                     <div className="au-muted">No donation history linked to this supporter.</div>
                                 ) : (
@@ -624,7 +673,19 @@ export default function AdminUsersPage() {
                                     <div className="au-warning">Password and MFA reset are disabled because this user authenticates via an external provider.</div>
                                 )}
 
+                                {!selectedUserCanEditEmail && (
+                                    <div className="au-warning">Email editing is disabled for Google-authenticated users.</div>
+                                )}
+
                                 <div className="au-inline-actions wrap">
+                                    <button
+                                        type="button"
+                                        className="au-danger-btn"
+                                        onClick={() => setShowEmailUpdateForm((prev) => !prev)}
+                                        disabled={!selectedUserCanEditEmail}
+                                    >
+                                        {showEmailUpdateForm ? 'Hide Email Update' : 'Reveal Email Update'}
+                                    </button>
                                     <button
                                         type="button"
                                         className="au-danger-btn"
@@ -649,6 +710,29 @@ export default function AdminUsersPage() {
                                         {showDeletePrompt ? 'Cancel Delete' : 'Reveal Delete Account'}
                                     </button>
                                 </div>
+
+                                {showEmailUpdateForm && selectedUserCanEditEmail && (
+                                    <div className="au-danger-panel">
+                                        <label>
+                                            Email (local accounts only)
+                                            <input
+                                                className="au-filter-input"
+                                                type="email"
+                                                value={profileEmail}
+                                                onChange={(event) => setProfileEmail(event.target.value)}
+                                                disabled={isWorking}
+                                            />
+                                        </label>
+                                        <button
+                                            type="button"
+                                            className="au-danger-btn solid"
+                                            onClick={() => void handleEmailUpdate()}
+                                            disabled={isWorking}
+                                        >
+                                            Save Email
+                                        </button>
+                                    </div>
+                                )}
 
                                 {showResetPasswordForm && !selectedUserIsExternalOnly && (
                                     <div className="au-danger-panel">
