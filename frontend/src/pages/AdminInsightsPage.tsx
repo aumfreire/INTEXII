@@ -434,7 +434,7 @@ export default function AdminInsightsPage() {
             <div className="admin-page-header">
                 <h1 className="admin-page-title" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <BrainCircuit size={28} style={{ color: 'var(--color-primary)' }} />
-                    ML Insights
+                    Action Insights
                 </h1>
                 <p className="admin-page-subtitle">
                     Predictive analytics for donors, residents, safehouses, and social media engagement.

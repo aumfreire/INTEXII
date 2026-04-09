@@ -24,6 +24,6 @@ public class MlResidentRiskPrediction
     [Column("incidents_last_30d")]     public int?    IncidentsLast30d     { get; set; }
     [Column("incidents_last_90d")]     public int?    IncidentsLast90d     { get; set; }
     [Column("active_plan_status")]     public string? ActivePlanStatus     { get; set; }
-    [Column("plan_target_date")]       public string? PlanTargetDate       { get; set; }
-    [Column("run_date")]               public string? RunDate              { get; set; }
+    [Column("plan_target_date")]       public DateTime? PlanTargetDate     { get; set; }
+    [Column("run_date")]               public DateTime? RunDate            { get; set; }
 }

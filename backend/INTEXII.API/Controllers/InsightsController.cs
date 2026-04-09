@@ -67,7 +67,7 @@ public class InsightsController : ControllerBase
 
         return Ok(new
         {
-            runDate = predictions.FirstOrDefault()?.RunDate,
+            runDate = predictions.FirstOrDefault()?.RunDate?.ToString("yyyy-MM-dd"),
             data
         });
     }
@@ -107,7 +107,7 @@ public class InsightsController : ControllerBase
 
         return Ok(new
         {
-            runDate = predictions.FirstOrDefault()?.RunDate,
+            runDate = predictions.FirstOrDefault()?.RunDate?.ToString("yyyy-MM-dd"),
             data
         });
     }
@@ -158,7 +158,7 @@ public class InsightsController : ControllerBase
 
         return Ok(new
         {
-            runDate = predictions.FirstOrDefault()?.RunDate,
+            runDate = predictions.FirstOrDefault()?.RunDate?.ToString("yyyy-MM-dd"),
             data
         });
     }
@@ -213,7 +213,7 @@ public class InsightsController : ControllerBase
 
         return Ok(new
         {
-            runDate = predictions.FirstOrDefault()?.RunDate,
+            runDate = predictions.FirstOrDefault()?.RunDate?.ToString("yyyy-MM-dd"),
             data
         });
     }
