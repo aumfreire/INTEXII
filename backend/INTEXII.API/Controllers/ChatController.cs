@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using System.Text;
+using System.Threading;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using INTEXII.API.Data;
@@ -17,8 +18,13 @@ namespace INTEXII.API.Controllers;
 public class ChatController : ControllerBase
 {
     private static readonly SemaphoreSlim SchemaLock = new(1, 1);
-    private static readonly object RateLimitSync = new();
     private static bool _schemaReady;
+
+    /// <summary>Mutable counter stored in <see cref="IMemoryCache"/> so increments are atomic across threads.</summary>
+    private sealed class RateLimitCounter
+    {
+        public int Count;
+    }
 
     private readonly IntexDbContext _db;
     private readonly ClaudeService _claudeService;
@@ -303,6 +309,11 @@ public class ChatController : ControllerBase
             return NotFound(new { message = "Conversation not found." });
         }
 
+        if (file is null || file.Length == 0)
+        {
+            return BadRequest(new { message = "No file uploaded." });
+        }
+
         if (!_fileService.IsAllowedFileType(file.FileName))
         {
             return BadRequest(new { message = "Unsupported file type." });
@@ -369,26 +380,28 @@ public class ChatController : ControllerBase
 
     private bool PassesRateLimit()
     {
-        lock (RateLimitSync)
-        {
-            var key = $"chat-rate:{GetUserId() ?? HttpContext.Connection.RemoteIpAddress?.ToString() ?? "anon"}";
-            var maxPerMinute = int.TryParse(_configuration["CHAT_RATE_LIMIT_PER_MINUTE"], out var configured) ? configured : 30;
-            var current = _cache.GetOrCreate(key, entry =>
-            {
-                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(1);
-                return 0;
-            });
+        var key = $"chat-rate:{GetUserId() ?? HttpContext.Connection.RemoteIpAddress?.ToString() ?? "anon"}";
+        var maxPerMinute = int.TryParse(_configuration["CHAT_RATE_LIMIT_PER_MINUTE"], out var configured) ? configured : 30;
 
-            if (current >= maxPerMinute)
+        var counter = _cache.GetOrCreate(key, entry =>
+        {
+            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(1);
+            return new RateLimitCounter();
+        }) ?? throw new InvalidOperationException("Rate limit counter missing from cache.");
+
+        // Compare-and-swap loop: atomic increment without read-modify-write races on the cache value.
+        while (true)
+        {
+            var observed = Volatile.Read(ref counter.Count);
+            if (observed >= maxPerMinute)
             {
                 return false;
             }
 
-            _cache.Set(key, current + 1, new MemoryCacheEntryOptions
+            if (Interlocked.CompareExchange(ref counter.Count, observed + 1, observed) == observed)
             {
-                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(1),
-            });
-            return true;
+                return true;
+            }
         }
     }
 
