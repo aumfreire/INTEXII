@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using INTEXII.API.Data;
 using INTEXII.API.Data.Models;
 using INTEXII.API.Infrastructure;
+using INTEXII.API.Services;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -62,6 +63,11 @@ var jwtAudience = builder.Configuration["Authentication:Jwt:Audience"] ?? "INTEX
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddHttpClient();
+builder.Services.AddMemoryCache();
+builder.Services.AddScoped<ClaudeService>();
+builder.Services.AddScoped<ChatContextService>();
+builder.Services.AddScoped<ChatFileService>();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new() { Title = "INTEXII API", Version = "v1" });
