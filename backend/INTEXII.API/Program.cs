@@ -253,6 +253,8 @@ using (var scope = app.Services.CreateScope())
             "20260408023150_InitialIntexSchema",
             "20260408031855_SyncIntexSqlServerModel"
         ]);
+
+    await EnsureMlPredictionTablesAsync(intexDb);
 }
 
 // Seed identity: create roles (Admin, Donor) and default admin user
@@ -366,6 +368,38 @@ app.Use(async (context, next) =>
     {
         logger.LogError(ex, "Failed to synchronize supporter record after registration for {Email}", normalizedEmail);
     }
+});
+
+// Defensive CORS handling for Action Insights endpoints.
+// This ensures cross-origin admin dashboard calls always receive CORS headers
+// before authentication middleware can short-circuit with 401/403.
+app.Use(async (context, next) =>
+{
+    if (!context.Request.Path.StartsWithSegments("/api/insights", StringComparison.OrdinalIgnoreCase))
+    {
+        await next();
+        return;
+    }
+
+    var requestOrigin = context.Request.Headers.Origin.ToString();
+    if (IsAllowedFrontendOrigin(requestOrigin, allowedFrontendOrigins))
+    {
+        context.Response.Headers["Access-Control-Allow-Origin"] = NormalizeOrigin(requestOrigin);
+        context.Response.Headers["Vary"] = "Origin";
+        context.Response.Headers["Access-Control-Allow-Credentials"] = "true";
+    }
+
+    if (HttpMethods.IsOptions(context.Request.Method))
+    {
+        var requestHeaders = context.Request.Headers["Access-Control-Request-Headers"].ToString();
+        context.Response.Headers["Access-Control-Allow-Methods"] = "GET, OPTIONS";
+        context.Response.Headers["Access-Control-Allow-Headers"] =
+            string.IsNullOrWhiteSpace(requestHeaders) ? "authorization, content-type" : requestHeaders;
+        context.Response.StatusCode = StatusCodes.Status204NoContent;
+        return;
+    }
+
+    await next();
 });
 
 app.UseCors(FrontendCorsPolicy);
@@ -550,6 +584,226 @@ static async Task EnsureMigrationHistoryBaselineAsync(
         await db.Database.ExecuteSqlAsync(
             $"IF NOT EXISTS (SELECT 1 FROM [dbo].[__EFMigrationsHistory] WHERE [MigrationId] = {migrationId}) BEGIN INSERT INTO [dbo].[__EFMigrationsHistory] ([MigrationId], [ProductVersion]) VALUES ({migrationId}, {productVersion}); END;");
     }
+}
+
+static async Task EnsureMlPredictionTablesAsync(DbContext db)
+{
+    if (!db.Database.IsSqlServer() && !db.Database.IsSqlite())
+    {
+        return;
+    }
+
+    if (db.Database.IsSqlServer())
+    {
+        const string sqlServerDdl = @"
+IF OBJECT_ID(N'dbo.ml_donor_lapse_predictions', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.ml_donor_lapse_predictions (
+        supporter_id BIGINT NULL,
+        display_name NVARCHAR(255) NULL,
+        email NVARCHAR(255) NULL,
+        supporter_type NVARCHAR(100) NULL,
+        relationship_type NVARCHAR(100) NULL,
+        region NVARCHAR(100) NULL,
+        country NVARCHAR(100) NULL,
+        snapshot_date DATETIME2 NULL,
+        lapse_risk_score FLOAT NULL,
+        risk_tier NVARCHAR(50) NULL,
+        recency_days FLOAT NULL,
+        frequency BIGINT NULL,
+        value_sum FLOAT NULL,
+        top_channel_source NVARCHAR(255) NULL,
+        top_donation_type NVARCHAR(255) NULL,
+        run_date DATETIME2 NULL
+    );
+END;
+
+IF OBJECT_ID(N'dbo.ml_donor_lapse_predictions', N'U') IS NOT NULL
+BEGIN
+    ALTER TABLE dbo.ml_donor_lapse_predictions ALTER COLUMN supporter_id BIGINT NULL;
+    ALTER TABLE dbo.ml_donor_lapse_predictions ALTER COLUMN recency_days FLOAT NULL;
+    ALTER TABLE dbo.ml_donor_lapse_predictions ALTER COLUMN frequency BIGINT NULL;
+    ALTER TABLE dbo.ml_donor_lapse_predictions ALTER COLUMN value_sum FLOAT NULL;
+END;
+
+IF OBJECT_ID(N'dbo.ml_safehouse_health_predictions', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.ml_safehouse_health_predictions (
+        safehouse_id BIGINT NULL,
+        safehouse_code NVARCHAR(100) NULL,
+        name NVARCHAR(255) NULL,
+        region NVARCHAR(100) NULL,
+        month_start DATETIME2 NULL,
+        pred_avg_education_progress FLOAT NULL,
+        pred_avg_health_score FLOAT NULL,
+        pred_incident_count FLOAT NULL,
+        alert_tier NVARCHAR(50) NULL,
+        run_date DATETIME2 NULL
+    );
+END;
+
+IF OBJECT_ID(N'dbo.ml_safehouse_health_predictions', N'U') IS NOT NULL
+BEGIN
+    ALTER TABLE dbo.ml_safehouse_health_predictions ALTER COLUMN safehouse_id BIGINT NULL;
+    ALTER TABLE dbo.ml_safehouse_health_predictions ALTER COLUMN pred_avg_education_progress FLOAT NULL;
+    ALTER TABLE dbo.ml_safehouse_health_predictions ALTER COLUMN pred_avg_health_score FLOAT NULL;
+    ALTER TABLE dbo.ml_safehouse_health_predictions ALTER COLUMN pred_incident_count FLOAT NULL;
+END;
+
+IF OBJECT_ID(N'dbo.ml_resident_risk_predictions', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.ml_resident_risk_predictions (
+        resident_id BIGINT NULL,
+        case_control_no NVARCHAR(100) NULL,
+        internal_code NVARCHAR(100) NULL,
+        safehouse_id BIGINT NULL,
+        case_category NVARCHAR(100) NULL,
+        current_risk_level NVARCHAR(100) NULL,
+        health_risk NVARCHAR(50) NULL,
+        health_risk_reason NVARCHAR(MAX) NULL,
+        education_risk NVARCHAR(50) NULL,
+        education_risk_reason NVARCHAR(MAX) NULL,
+        incident_risk NVARCHAR(50) NULL,
+        incident_risk_reason NVARCHAR(MAX) NULL,
+        overall_risk NVARCHAR(50) NULL,
+        last_health_score FLOAT NULL,
+        last_attendance_rate FLOAT NULL,
+        last_progress_percent FLOAT NULL,
+        incidents_last_30d BIGINT NULL,
+        incidents_last_90d BIGINT NULL,
+        active_plan_status NVARCHAR(100) NULL,
+        plan_target_date DATETIME2 NULL,
+        run_date DATETIME2 NULL
+    );
+END;
+
+IF OBJECT_ID(N'dbo.ml_resident_risk_predictions', N'U') IS NOT NULL
+BEGIN
+    ALTER TABLE dbo.ml_resident_risk_predictions ALTER COLUMN resident_id BIGINT NULL;
+    ALTER TABLE dbo.ml_resident_risk_predictions ALTER COLUMN safehouse_id BIGINT NULL;
+    ALTER TABLE dbo.ml_resident_risk_predictions ALTER COLUMN incidents_last_30d BIGINT NULL;
+    ALTER TABLE dbo.ml_resident_risk_predictions ALTER COLUMN incidents_last_90d BIGINT NULL;
+    ALTER TABLE dbo.ml_resident_risk_predictions ALTER COLUMN last_health_score FLOAT NULL;
+    ALTER TABLE dbo.ml_resident_risk_predictions ALTER COLUMN last_attendance_rate FLOAT NULL;
+    ALTER TABLE dbo.ml_resident_risk_predictions ALTER COLUMN last_progress_percent FLOAT NULL;
+END;
+
+IF OBJECT_ID(N'dbo.ml_social_engagement_predictions', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.ml_social_engagement_predictions (
+        supporter_id BIGINT NULL,
+        display_name NVARCHAR(255) NULL,
+        email NVARCHAR(255) NULL,
+        engagement_tier NVARCHAR(50) NULL,
+        engagement_probability FLOAT NULL,
+        suggested_action NVARCHAR(MAX) NULL,
+        recency_days FLOAT NULL,
+        donation_frequency BIGINT NULL,
+        donation_value_sum FLOAT NULL,
+        referral_linked_donations BIGINT NULL,
+        preferred_platform NVARCHAR(100) NULL,
+        preferred_topic NVARCHAR(100) NULL,
+        acquisition_channel NVARCHAR(100) NULL,
+        supporter_type NVARCHAR(100) NULL,
+        region NVARCHAR(100) NULL,
+        country NVARCHAR(100) NULL,
+        run_date DATETIME2 NULL
+    );
+END;
+
+IF OBJECT_ID(N'dbo.ml_social_engagement_predictions', N'U') IS NOT NULL
+BEGIN
+    ALTER TABLE dbo.ml_social_engagement_predictions ALTER COLUMN supporter_id BIGINT NULL;
+    ALTER TABLE dbo.ml_social_engagement_predictions ALTER COLUMN recency_days FLOAT NULL;
+    ALTER TABLE dbo.ml_social_engagement_predictions ALTER COLUMN donation_frequency BIGINT NULL;
+    ALTER TABLE dbo.ml_social_engagement_predictions ALTER COLUMN donation_value_sum FLOAT NULL;
+    ALTER TABLE dbo.ml_social_engagement_predictions ALTER COLUMN referral_linked_donations BIGINT NULL;
+END;
+";
+
+        await db.Database.ExecuteSqlRawAsync(sqlServerDdl);
+        return;
+    }
+
+    const string sqliteDdl = @"
+CREATE TABLE IF NOT EXISTS ml_donor_lapse_predictions (
+    supporter_id INTEGER NULL,
+    display_name TEXT NULL,
+    email TEXT NULL,
+    supporter_type TEXT NULL,
+    relationship_type TEXT NULL,
+    region TEXT NULL,
+    country TEXT NULL,
+    snapshot_date TEXT NULL,
+    lapse_risk_score REAL NULL,
+    risk_tier TEXT NULL,
+    recency_days REAL NULL,
+    frequency REAL NULL,
+    value_sum REAL NULL,
+    top_channel_source TEXT NULL,
+    top_donation_type TEXT NULL,
+    run_date TEXT NULL
+);
+
+CREATE TABLE IF NOT EXISTS ml_safehouse_health_predictions (
+    safehouse_id INTEGER NULL,
+    safehouse_code TEXT NULL,
+    name TEXT NULL,
+    region TEXT NULL,
+    month_start TEXT NULL,
+    pred_avg_education_progress REAL NULL,
+    pred_avg_health_score REAL NULL,
+    pred_incident_count REAL NULL,
+    alert_tier TEXT NULL,
+    run_date TEXT NULL
+);
+
+CREATE TABLE IF NOT EXISTS ml_resident_risk_predictions (
+    resident_id INTEGER NULL,
+    case_control_no TEXT NULL,
+    internal_code TEXT NULL,
+    safehouse_id INTEGER NULL,
+    case_category TEXT NULL,
+    current_risk_level TEXT NULL,
+    health_risk TEXT NULL,
+    health_risk_reason TEXT NULL,
+    education_risk TEXT NULL,
+    education_risk_reason TEXT NULL,
+    incident_risk TEXT NULL,
+    incident_risk_reason TEXT NULL,
+    overall_risk TEXT NULL,
+    last_health_score REAL NULL,
+    last_attendance_rate REAL NULL,
+    last_progress_percent REAL NULL,
+    incidents_last_30d INTEGER NULL,
+    incidents_last_90d INTEGER NULL,
+    active_plan_status TEXT NULL,
+    plan_target_date TEXT NULL,
+    run_date TEXT NULL
+);
+
+CREATE TABLE IF NOT EXISTS ml_social_engagement_predictions (
+    supporter_id INTEGER NULL,
+    display_name TEXT NULL,
+    email TEXT NULL,
+    engagement_tier TEXT NULL,
+    engagement_probability REAL NULL,
+    suggested_action TEXT NULL,
+    recency_days REAL NULL,
+    donation_frequency REAL NULL,
+    donation_value_sum REAL NULL,
+    referral_linked_donations REAL NULL,
+    preferred_platform TEXT NULL,
+    preferred_topic TEXT NULL,
+    acquisition_channel TEXT NULL,
+    supporter_type TEXT NULL,
+    region TEXT NULL,
+    country TEXT NULL,
+    run_date TEXT NULL
+);
+";
+
+    await db.Database.ExecuteSqlRawAsync(sqliteDdl);
 }
 
 static async Task EnsureSqliteMigrationHistoryBaselineAsync(

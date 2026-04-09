@@ -38,7 +38,12 @@ public class InsightsController : ControllerBase
             return Ok(new { runDate = (string?)null, data = Array.Empty<object>() });
 
         // Join phone numbers from the supporters table
-        var supporterIds = predictions.Select(p => p.SupporterId).Distinct().ToList();
+        var supporterIds = predictions
+            .Select(p => p.SupporterId)
+            .Where(id => id >= int.MinValue && id <= int.MaxValue)
+            .Select(id => (int)id)
+            .Distinct()
+            .ToList();
         var phones = await _db.Supporters
             .Where(s => supporterIds.Contains(s.SupporterId))
             .Select(s => new { s.SupporterId, s.Phone })
@@ -56,7 +61,9 @@ public class InsightsController : ControllerBase
                 p.SupporterId,
                 p.DisplayName,
                 p.Email,
-                Phone = phones.GetValueOrDefault(p.SupporterId),
+                Phone = (p.SupporterId >= int.MinValue && p.SupporterId <= int.MaxValue)
+                    ? phones.GetValueOrDefault((int)p.SupporterId)
+                    : null,
                 p.SupporterType,
                 p.RelationshipType,
                 p.Region,
@@ -183,7 +190,12 @@ public class InsightsController : ControllerBase
             return Ok(new { runDate = (string?)null, data = Array.Empty<object>() });
 
         // Join phone numbers from the supporters table
-        var supporterIds = predictions.Select(p => p.SupporterId).Distinct().ToList();
+        var supporterIds = predictions
+            .Select(p => p.SupporterId)
+            .Where(id => id >= int.MinValue && id <= int.MaxValue)
+            .Select(id => (int)id)
+            .Distinct()
+            .ToList();
         var phones = await _db.Supporters
             .Where(s => supporterIds.Contains(s.SupporterId))
             .Select(s => new { s.SupporterId, s.Phone })
@@ -201,7 +213,9 @@ public class InsightsController : ControllerBase
                 p.SupporterId,
                 p.DisplayName,
                 p.Email,
-                Phone = phones.GetValueOrDefault(p.SupporterId),
+                Phone = (p.SupporterId >= int.MinValue && p.SupporterId <= int.MaxValue)
+                    ? phones.GetValueOrDefault((int)p.SupporterId)
+                    : null,
                 p.EngagementTier,
                 p.EngagementProbability,
                 p.SuggestedAction,
