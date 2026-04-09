@@ -61,6 +61,7 @@ var jwtAudience = builder.Configuration["Authentication:Jwt:Audience"] ?? "INTEX
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddHttpClient();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new() { Title = "INTEXII API", Version = "v1" });

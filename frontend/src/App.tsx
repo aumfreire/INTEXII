@@ -29,6 +29,7 @@ import CookiePolicyPage from './pages/CookiePolicyPage';
 import AuthCallbackPage from './pages/AuthCallbackPage';
 import ComingSoonPage from './pages/ComingSoonPage';
 import { CookieConsentProvider } from './context/CookieConsentContext';
+import ChatWidget from './components/ChatWidget';
 
 function ScrollToTop() {
   const { pathname, hash } = useLocation();
@@ -150,6 +151,7 @@ function App() {
               </Routes>
             </main>
             <Footer />
+            <ChatWidget />
             <CookieConsentBanner />
           </div>
         </Router>
