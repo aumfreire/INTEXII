@@ -358,6 +358,9 @@ function HomeVisitsTab({ residents, prefilledResidentId }: { residents: Resident
               <button className="hv-modal-close" onClick={() => { setEditorOpen(false); setEditorId(null); setEditorForm(emptyVisitForm); }} aria-label="Close"><X size={20} /></button>
             </div>
             <div className="hv-modal-body">
+              {errorMessage ? (
+                <AlertBanner type="warning" message={errorMessage} onClose={() => setErrorMessage('')} />
+              ) : null}
               <div className="hv-editor-grid">
                 <div className="hv-editor-column">
                   <label className="hv-filter-label">Resident</label>
@@ -605,6 +608,9 @@ function CaseConferencesTab({ residents }: { residents: ResidentOption[] }) {
               <button className="hv-modal-close" onClick={() => { setEditorOpen(false); setEditorId(null); }} aria-label="Close"><X size={20} /></button>
             </div>
             <div className="hv-modal-body">
+              {errorMessage ? (
+                <AlertBanner type="warning" message={errorMessage} onClose={() => setErrorMessage('')} />
+              ) : null}
               <div className="hv-editor-grid">
                 <div className="hv-editor-column">
                   <label className="hv-filter-label">Resident</label>

@@ -1026,6 +1026,9 @@ export default function DonorsPage() {
                   </button>
                 </div>
                 <div className="donors-detail-body">
+                  {errorMessage ? (
+                    <AlertBanner type="warning" message={errorMessage} onClose={() => setErrorMessage('')} />
+                  ) : null}
                   <div className="donors-detail-grid">
                     <div>
                       <h4 className="donors-allocation-title">Identity</h4>

@@ -717,6 +717,9 @@ export default function CaseloadPage() {
                   </button>
                 </div>
                 <div className="donors-detail-body">
+                  {errorMessage ? (
+                    <AlertBanner type="warning" message={errorMessage} onClose={() => setErrorMessage('')} />
+                  ) : null}
                   <div className="donors-detail-grid">
                     {/* Left column */}
                     <div>

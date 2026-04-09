@@ -456,6 +456,9 @@ export default function AdminSafehousesPage() {
                             </button>
                         </div>
                         <div className="au-modal-body">
+                            {errorMessage ? (
+                                <AlertBanner type="warning" message={errorMessage} onClose={() => setErrorMessage('')} />
+                            ) : null}
                             <div className="donors-detail-grid">
                                 <div>
                                     <div className="donors-history-list">
@@ -521,6 +524,9 @@ export default function AdminSafehousesPage() {
                             </button>
                         </div>
                         <div className="au-modal-body">
+                            {errorMessage ? (
+                                <AlertBanner type="warning" message={errorMessage} onClose={() => setErrorMessage('')} />
+                            ) : null}
                             {deleteBlocked
                                 ? 'This safehouse cannot be deleted because occupancy is above 0. Move all residents out first.'
                                 : 'Are you sure you want to delete this safehouse? This action cannot be undone.'}

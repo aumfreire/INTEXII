@@ -444,7 +444,12 @@ export default function AdminDonationsPage() {
             </div>
 
             {showEditor ? (
-                <ModalShell title={editingDonation ? `Edit Donation #${editingDonation.donationId}` : 'Create Donation'} onClose={closeEditor}>
+                <ModalShell
+                    title={editingDonation ? `Edit Donation #${editingDonation.donationId}` : 'Create Donation'}
+                    onClose={closeEditor}
+                    alertMessage={errorMessage}
+                    onCloseAlert={() => setErrorMessage('')}
+                >
                     <div className="donors-detail-grid">
                         <div>
                             <h4 className="donors-allocation-title">Supporter</h4>
@@ -514,7 +519,12 @@ export default function AdminDonationsPage() {
             ) : null}
 
             {showDeleteConfirm && deleteTarget ? (
-                <ModalShell title={`Delete Donation #${deleteTarget.donationId}`} onClose={closeDeleteConfirm}>
+                <ModalShell
+                    title={`Delete Donation #${deleteTarget.donationId}`}
+                    onClose={closeDeleteConfirm}
+                    alertMessage={errorMessage}
+                    onCloseAlert={() => setErrorMessage('')}
+                >
                     <p className="mb-3">This will permanently remove the donation for <strong>{deleteTarget.supporterDisplayName || deleteTarget.supporterEmail || 'this supporter'}</strong>.</p>
                     <div className="d-flex justify-content-end gap-2">
                         <button type="button" className="donors-actions-menu-item" onClick={closeDeleteConfirm} disabled={isSaving}>Cancel</button>
@@ -526,7 +536,19 @@ export default function AdminDonationsPage() {
     );
 }
 
-function ModalShell({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
+function ModalShell({
+    title,
+    onClose,
+    children,
+    alertMessage,
+    onCloseAlert,
+}: {
+    title: string;
+    onClose: () => void;
+    children: React.ReactNode;
+    alertMessage?: string;
+    onCloseAlert?: () => void;
+}) {
     return (
         <div className="position-fixed top-0 start-0 w-100 h-100" style={{ backgroundColor: 'rgba(15, 23, 42, 0.58)', zIndex: 1050, padding: '12px' }} role="presentation" onClick={onClose}>
             <div className="bg-white rounded-4 shadow-lg mx-auto p-4" style={{ maxWidth: 'min(980px, calc(100vw - 24px))', maxHeight: 'calc(100vh - 24px)', marginTop: '0', overflowY: 'auto' }} role="dialog" aria-modal="true" aria-labelledby="adminDonationModalTitle" onClick={(event) => event.stopPropagation()}>
@@ -534,6 +556,9 @@ function ModalShell({ title, onClose, children }: { title: string; onClose: () =
                     <h4 id="adminDonationModalTitle" className="mb-0">{title}</h4>
                     <button type="button" className="btn btn-outline-secondary btn-sm" onClick={onClose}>Close</button>
                 </div>
+                {alertMessage ? (
+                    <AlertBanner type="warning" message={alertMessage} onClose={onCloseAlert} />
+                ) : null}
                 {children}
                 <datalist id="currency-options">
                     {currencyOptions.map((option) => <option key={option} value={option} />)}

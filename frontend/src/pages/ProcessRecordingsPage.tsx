@@ -383,6 +383,9 @@ export default function ProcessRecordingsPage() {
               </button>
             </div>
             <div className="pr-modal-body">
+              {errorMessage ? (
+                <AlertBanner type="warning" message={errorMessage} onClose={() => setErrorMessage('')} />
+              ) : null}
               <div className="pr-editor-grid">
                 {/* Left */}
                 <div className="pr-editor-column">

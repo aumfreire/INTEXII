@@ -5,11 +5,11 @@ import {
   UserCog,
   Home,
   Heart,
+  Users,
   DollarSign,
   FileText,
   ClipboardList,
   BarChart3,
-  Settings,
   Shield,
   Menu,
   X,
@@ -23,17 +23,17 @@ import '../../styles/pages/admin-layout.css';
 const navItems = [
   { to: '/admin', icon: LayoutDashboard, label: 'Dashboard', end: true },
   { to: '/admin/users', icon: UserCog, label: 'Manage Users' },
-  { to: '/admin/caseload', icon: ClipboardList, label: 'Caseload' },
-  { to: '/admin/safehouses', icon: Building2, label: 'Safehouses' },
   { to: '/admin/donors', icon: Heart, label: 'Donors' },
+  { to: '/admin/partners', icon: Users, label: 'Partners' },
   { to: '/admin/contributions', icon: DollarSign, label: 'Contributions' },
   { divider: true },
+  { to: '/admin/caseload', icon: ClipboardList, label: 'Caseload' },
+  { to: '/admin/safehouses', icon: Building2, label: 'Safehouses' },
   { to: '/admin/process-recordings', icon: FileText, label: 'Process Recordings' },
   { to: '/admin/home-visits', icon: Home, label: 'Home Visits' },
   { to: '/admin/incidents', icon: AlertTriangle, label: 'Incident Reports' },
   { divider: true },
   { to: '/admin/reports', icon: BarChart3, label: 'Reports' },
-  { to: '/admin/settings', icon: Settings, label: 'Settings' },
 ] as const;
 
 function getInitials(name: string): string {

@@ -37,7 +37,7 @@ import { CookieConsentProvider } from './context/CookieConsentContext';
 import ProcessRecordingsPage from './pages/ProcessRecordingsPage';
 import HomeVisitsPage from './pages/HomeVisitsPage';
 import ReportsPage from './pages/ReportsPage';
-import SettingsPage from './pages/SettingsPage';
+import PartnersPage from './pages/PartnersPage';
 import ImpactPage from './pages/ImpactPage';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import IncidentReportsPage from './pages/IncidentReportsPage';
@@ -106,12 +106,12 @@ function App() {
               <Route path="safehouses" element={<AdminSafehousesPage />} />
               <Route path="residents/:id" element={<ResidentDetailPage />} />
               <Route path="donors" element={<DonorsPage />} />
+              <Route path="partners" element={<PartnersPage />} />
               <Route path="contributions" element={<AdminDonationsPage />} />
               <Route path="process-recordings" element={<ProcessRecordingsPage />} />
               <Route path="home-visits" element={<HomeVisitsPage />} />
               <Route path="incidents" element={<IncidentReportsPage />} />
               <Route path="reports" element={<ReportsPage />} />
-              <Route path="settings" element={<SettingsPage />} />
             </Route>
 
             <Route

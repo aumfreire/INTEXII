@@ -282,6 +282,7 @@ export default function IncidentReportsPage() {
                         </div>
 
                         <div className="ir-panel-body">
+                            {error ? <AlertBanner type="warning" message={error} onClose={() => setError('')} /> : null}
                             <div className="ir-grid">
                                 <label>
                                     Incident Date *

@@ -528,6 +528,9 @@ export default function AdminUsersPage() {
                             </button>
                         </div>
                         <div className="au-modal-body">
+                            {errorMessage ? (
+                                <AlertBanner type="warning" message={errorMessage} onClose={() => setErrorMessage('')} />
+                            ) : null}
                             <div className="au-grid-2">
                                 <label>
                                     Email *
@@ -578,6 +581,9 @@ export default function AdminUsersPage() {
                             </button>
                         </div>
                         <div className="au-modal-body">
+                            {errorMessage ? (
+                                <AlertBanner type="warning" message={errorMessage} onClose={() => setErrorMessage('')} />
+                            ) : null}
                             <div className="au-user-meta">
                                 <div>{selectedUser.email ?? 'No email'}</div>
                                 <div className="au-meta-badges">
