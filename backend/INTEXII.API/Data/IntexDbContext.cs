@@ -30,9 +30,21 @@ public class IntexDbContext : DbContext
     public DbSet<ChatUpload> ChatUploads => Set<ChatUpload>();
     public DbSet<ChatAuditLog> ChatAuditLogs => Set<ChatAuditLog>();
 
+    // ML prediction tables (keyless — written by GitHub Actions pipelines)
+    public DbSet<MlDonorLapsePrediction>      MlDonorLapsePredictions      => Set<MlDonorLapsePrediction>();
+    public DbSet<MlSafehouseHealthPrediction>  MlSafehouseHealthPredictions  => Set<MlSafehouseHealthPrediction>();
+    public DbSet<MlResidentRiskPrediction>     MlResidentRiskPredictions     => Set<MlResidentRiskPrediction>();
+    public DbSet<MlSocialEngagementPrediction> MlSocialEngagementPredictions => Set<MlSocialEngagementPrediction>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        // ML prediction tables have no primary key — managed entirely by Python pipelines
+        modelBuilder.Entity<MlDonorLapsePrediction>().HasNoKey();
+        modelBuilder.Entity<MlSafehouseHealthPrediction>().HasNoKey();
+        modelBuilder.Entity<MlResidentRiskPrediction>().HasNoKey();
+        modelBuilder.Entity<MlSocialEngagementPrediction>().HasNoKey();
 
         // FK relationships
         modelBuilder.Entity<Resident>()

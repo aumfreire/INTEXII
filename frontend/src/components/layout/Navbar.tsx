@@ -6,11 +6,8 @@ import {
     Heart,
     ChevronDown,
     LayoutDashboard,
-    Settings,
     ShieldCheck,
-    HandCoins,
     LogOut,
-    MessagesSquare,
 } from 'lucide-react';
 import { useAuth } from '../../context/useAuth';
 
@@ -158,11 +155,8 @@ export default function Navbar() {
                         <Link to="/#mission" style={{ ...navLinkStyle({ isActive: false }) }}>
                             About
                         </Link>
-                        <Link to="/#impact" style={{ ...navLinkStyle({ isActive: false }) }}>
+                        <NavLink to="/impact" style={navLinkStyle}>
                             Impact
-                        </Link>
-                        <NavLink to="/assistant" style={navLinkStyle}>
-                            Assistant
                         </NavLink>
                         {!isLoading && !isAuthenticated ? (
                             <NavLink to="/login" style={navLinkStyle}>
@@ -244,7 +238,6 @@ export default function Navbar() {
 
                                         <div style={{ display: 'grid', gap: '4px' }}>
                                             <MenuLink to="/dashboard" icon={LayoutDashboard} label="My Dashboard" description="Overview and quick actions" onClick={closeMenus} />
-                                            <MenuLink to="/profile" icon={Settings} label="Edit Profile" description="Update personal details" onClick={closeMenus} />
                                         </div>
 
                                         {isAdmin ? (
@@ -255,8 +248,6 @@ export default function Navbar() {
                                                 </div>
                                                 <div style={{ display: 'grid', gap: '4px' }}>
                                                     <MenuLink to="/admin" icon={ShieldCheck} label="Admin Dashboard" description="User management and metrics" onClick={closeMenus} />
-                                                    <MenuLink to="/admin/donations" icon={HandCoins} label="Manage Donations" description="Review and edit donation records" onClick={closeMenus} />
-                                                    <MenuLink to="/admin/chat" icon={MessagesSquare} label="Admin Assistant" description="Chat with internal analytics context" onClick={closeMenus} />
                                                 </div>
                                             </>
                                         ) : null}
@@ -372,13 +363,13 @@ export default function Navbar() {
                         >
                             About
                         </Link>
-                        <Link
-                            to="/#impact"
-                            style={{ ...navLinkStyle({ isActive: false }) }}
+                        <NavLink
+                            to="/impact"
+                            style={navLinkStyle}
                             onClick={closeMenus}
                         >
                             Impact
-                        </Link>
+                        </NavLink>
                         {!isLoading && !isAuthenticated ? (
                             <NavLink
                                 to="/login"
@@ -402,13 +393,10 @@ export default function Navbar() {
                                 </div>
                                 <MobileMenuSection title="Account">
                                     <MobileMenuLink to="/dashboard" icon={LayoutDashboard} label="My Dashboard" description="Overview and quick actions" onClick={closeMenus} />
-                                    <MobileMenuLink to="/profile" icon={Settings} label="Edit Profile" description="Update personal details" onClick={closeMenus} />
                                 </MobileMenuSection>
                                 {isAdmin ? (
                                     <MobileMenuSection title="Admin Tools">
                                         <MobileMenuLink to="/admin" icon={ShieldCheck} label="Admin Dashboard" description="User management and metrics" onClick={closeMenus} />
-                                        <MobileMenuLink to="/admin/donations" icon={HandCoins} label="Manage Donations" description="Review and edit donation records" onClick={closeMenus} />
-                                        <MobileMenuLink to="/admin/chat" icon={MessagesSquare} label="Admin Assistant" description="Chat with internal analytics context" onClick={closeMenus} />
                                     </MobileMenuSection>
                                 ) : null}
                                 <Link

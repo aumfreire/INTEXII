@@ -93,4 +93,5 @@ export interface AdminUpdateProfileRequest {
     firstName?: string;
     lastName?: string;
     displayName?: string;
+    email?: string;
 }

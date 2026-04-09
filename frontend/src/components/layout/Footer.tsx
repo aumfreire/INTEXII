@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Heart, Mail, Phone, MapPin } from 'lucide-react';
+import { Heart, Globe, MessageCircle, Camera, Play, Mail, Phone, MapPin } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -48,6 +48,45 @@ export default function Footer() {
               Protecting, supporting, healing, and empowering vulnerable girls
               — because every girl deserves to be safe, seen, and free.
             </p>
+            <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
+              {[
+                { Icon: Globe, to: '/coming-soon?topic=website' },
+                { Icon: MessageCircle, to: '/coming-soon?topic=community-chat' },
+                { Icon: Camera, to: '/coming-soon?topic=instagram' },
+                { Icon: Play, to: '/coming-soon?topic=video-channel' },
+              ].map(({ Icon, to }) => (
+                <Link
+                  key={to}
+                  to={to}
+                  aria-label="Social link"
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '50%',
+                    backgroundColor: 'rgba(255,255,255,0.1)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'rgba(255,255,255,0.7)',
+                    transition:
+                      'background-color var(--transition-fast), color var(--transition-fast)',
+                    textDecoration: 'none',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor =
+                      'var(--color-primary)';
+                    e.currentTarget.style.color = 'var(--color-white)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor =
+                      'rgba(255,255,255,0.1)';
+                    e.currentTarget.style.color = 'rgba(255,255,255,0.7)';
+                  }}
+                >
+                  <Icon size={16} />
+                </Link>
+              ))}
+            </div>
           </div>
 
           {/* Organization */}
@@ -75,8 +114,10 @@ export default function Footer() {
             >
               {[
                 { label: 'About Us', to: '/#mission' },
-                { label: 'Impact', to: '/#impact' },
-                { label: 'Donate', to: '/donate' },
+                { label: 'Our Team', to: '/coming-soon?topic=our-team' },
+                { label: 'Careers', to: '/coming-soon?topic=careers' },
+                { label: 'Financials', to: '/coming-soon?topic=financials' },
+                { label: 'Annual Report', to: '/coming-soon?topic=annual-report' },
               ].map(({ label, to }) => (
                   <li key={label}>
                     <Link
@@ -127,8 +168,10 @@ export default function Footer() {
             >
               {[
                 { to: '/donate', label: 'Donate' },
-                { to: '/login', label: 'Log In' },
-                { to: '/signup', label: 'Create Account' },
+                { to: '/coming-soon?topic=volunteer', label: 'Volunteer' },
+                { to: '/coming-soon?topic=fundraising', label: 'Fundraise for Us' },
+                { to: '/coming-soon?topic=corporate-partners', label: 'Corporate Partners' },
+                { to: '/coming-soon?topic=share-our-story', label: 'Share Our Story' },
               ].map(({ to, label }) => (
                 <li key={label}>
                   <Link
@@ -246,7 +289,7 @@ export default function Footer() {
           reserved. A registered 501(c)(3) nonprofit organization.
           <span style={{ margin: '0 12px' }}>|</span>
           <Link
-            to="/cookies"
+            to="/privacy"
             style={{
               color: 'rgba(255,255,255,0.5)',
               textDecoration: 'none',
@@ -255,7 +298,25 @@ export default function Footer() {
             Privacy Policy
           </Link>
           <span style={{ margin: '0 8px' }}>|</span>
-          <span>Terms of Use</span>
+          <Link
+            to="/cookies"
+            style={{
+              color: 'rgba(255,255,255,0.5)',
+              textDecoration: 'none',
+            }}
+          >
+            Cookie Policy
+          </Link>
+          <span style={{ margin: '0 8px' }}>|</span>
+          <Link
+            to="/coming-soon?topic=terms-of-use"
+            style={{
+              color: 'rgba(255,255,255,0.5)',
+              textDecoration: 'none',
+            }}
+          >
+            Terms of Use
+          </Link>
         </div>
       </div>
     </footer>

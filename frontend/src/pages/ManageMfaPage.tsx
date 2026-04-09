@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
+import { Link } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
+import { ChevronLeft, KeyRound, ShieldCheck, Smartphone } from 'lucide-react';
 import AlertBanner from '../components/ui/AlertBanner';
 import PrimaryButton from '../components/ui/PrimaryButton';
 import {
@@ -11,6 +13,8 @@ import {
 } from '../lib/authAPI';
 import type { TwoFactorStatus } from '../types/TwoFactorStatus';
 import { useAuth } from '../context/useAuth';
+import '../styles/pages/admin-dashboard.css';
+import '../styles/pages/admin-users.css';
 
 export default function ManageMfaPage() {
     const { authSession } = useAuth();
@@ -109,57 +113,93 @@ export default function ManageMfaPage() {
     }
 
     const qrValue = status?.authenticatorUri ?? buildFallbackAuthenticatorUri();
+    const recoveryCodesLeft = status?.recoveryCodesLeft ?? 0;
 
     return (
-        <div className="container" style={{ padding: '48px 24px' }}>
-            <div className="login-card" style={{ maxWidth: '760px' }}>
-                <h2>Authenticator MFA</h2>
-                <p className="login-subtitle">
-                    Configure optional multi-factor authentication for {authSession.email ?? 'your account'}.
+        <div className="container" style={{ maxWidth: '1240px', padding: '40px 24px' }}>
+            <div className="admin-page-header" style={{ marginBottom: '20px' }}>
+                <h1 className="admin-page-title">Manage MFA</h1>
+                <p className="admin-page-subtitle">
+                    Configure multi-factor authentication for {authSession.email ?? 'your account'}.
                 </p>
+                <div style={{ marginTop: '10px' }}>
+                    <Link to="/dashboard" className="dash-panel-link" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                        <ChevronLeft size={14} />
+                        Back to Dashboard
+                    </Link>
+                </div>
+            </div>
 
-                {isExternalOnlyAccount ? (
-                    <AlertBanner
-                        type="warning"
-                        message={`This account uses external sign-in (${providerList || 'provider-managed'}). MFA is managed by that provider.`}
-                    />
-                ) : null}
+            {status ? (
+                <div className="au-summary" style={{ marginBottom: '20px' }}>
+                    <div className="au-chip">
+                        <div className="au-chip-icon mfa"><ShieldCheck size={20} /></div>
+                        <div>
+                            <div className="au-chip-value">{status.isTwoFactorEnabled ? 'Enabled' : 'Disabled'}</div>
+                            <div className="au-chip-label">MFA Status</div>
+                        </div>
+                    </div>
+                    <div className="au-chip">
+                        <div className="au-chip-icon default"><KeyRound size={20} /></div>
+                        <div>
+                            <div className="au-chip-value">{recoveryCodesLeft}</div>
+                            <div className="au-chip-label">Recovery Codes Left</div>
+                        </div>
+                    </div>
+                    <div className="au-chip">
+                        <div className="au-chip-icon admin"><Smartphone size={20} /></div>
+                        <div>
+                            <div className="au-chip-value">Authenticator</div>
+                            <div className="au-chip-label">Security Method</div>
+                        </div>
+                    </div>
+                </div>
+            ) : null}
 
-                {errorMessage ? (
-                    <AlertBanner
-                        message={errorMessage}
-                        type="warning"
-                        onClose={() => setErrorMessage('')}
-                    />
-                ) : null}
+            {isExternalOnlyAccount ? (
+                <AlertBanner
+                    type="warning"
+                    message={`This account uses external sign-in (${providerList || 'provider-managed'}). MFA is managed by that provider.`}
+                />
+            ) : null}
 
-                {successMessage ? (
-                    <AlertBanner
-                        message={successMessage}
-                        type="success"
-                        onClose={() => setSuccessMessage('')}
-                    />
-                ) : null}
+            {errorMessage ? (
+                <AlertBanner
+                    message={errorMessage}
+                    type="warning"
+                    onClose={() => setErrorMessage('')}
+                />
+            ) : null}
 
-                {status ? (
-                    <>
-                        <p>
-                            MFA status:{' '}
-                            <strong>
-                                {status.isTwoFactorEnabled ? 'Enabled' : 'Not enabled'}
-                            </strong>
+            {successMessage ? (
+                <AlertBanner
+                    message={successMessage}
+                    type="success"
+                    onClose={() => setSuccessMessage('')}
+                />
+            ) : null}
+
+            {status ? (
+                <>
+                    <div className="au-table-wrap" style={{ padding: '22px', marginBottom: '18px' }}>
+                        <h3 style={{ margin: 0, fontFamily: 'var(--font-heading)', fontSize: '1.05rem', color: 'var(--color-dark)' }}>
+                            Setup Authenticator App
+                        </h3>
+                        <p className="au-muted" style={{ margin: '8px 0 16px', maxWidth: '760px' }}>
+                            Scan the QR code with your authenticator app, or use the manual key if scanning is unavailable.
                         </p>
+
                         {!isExternalOnlyAccount && status.sharedKey ? (
-                            <div className="alert alert-light border" style={{ marginBottom: '16px' }}>
-                                <div style={{ fontWeight: 600, marginBottom: '6px' }}>
-                                    Step 1: Scan QR code in your authenticator app
+                            <div className="au-section" style={{ marginBottom: 0 }}>
+                                <div className="au-chip-label" style={{ marginBottom: '8px' }}>
+                                    Step 1: Scan QR code
                                 </div>
                                 {qrValue ? (
                                     <div
                                         style={{
                                             display: 'flex',
                                             justifyContent: 'center',
-                                            marginBottom: '12px',
+                                            marginBottom: '14px',
                                         }}
                                     >
                                         <QRCodeSVG
@@ -169,22 +209,27 @@ export default function ManageMfaPage() {
                                         />
                                     </div>
                                 ) : null}
-                                <div style={{ fontWeight: 600, marginBottom: '6px' }}>
-                                    Step 2: Or enter this setup key manually
+                                <div className="au-chip-label" style={{ marginBottom: '6px' }}>
+                                    Step 2: Enter setup key manually
                                 </div>
-                                <code>{status.sharedKey}</code>
+                                <code style={{ fontSize: '0.86rem' }}>{status.sharedKey}</code>
                             </div>
                         ) : null}
+                    </div>
 
-                        {!isExternalOnlyAccount && !status.isTwoFactorEnabled ? (
-                            <form onSubmit={handleEnable}>
-                                <label htmlFor="authCode" style={{ display: 'block', marginBottom: '8px' }}>
-                                    Step 3: Enter the 6-digit code from your authenticator app
+                    {!isExternalOnlyAccount && !status.isTwoFactorEnabled ? (
+                        <div className="au-table-wrap" style={{ padding: '22px', marginBottom: '18px' }}>
+                            <h3 style={{ margin: 0, fontFamily: 'var(--font-heading)', fontSize: '1.05rem', color: 'var(--color-dark)' }}>
+                                Verify and Enable
+                            </h3>
+                            <form onSubmit={handleEnable} style={{ marginTop: '14px' }}>
+                                <label htmlFor="authCode" className="au-filter-label">
+                                    Step 3: Enter the 6-digit code
                                 </label>
                                 <input
                                     id="authCode"
                                     type="text"
-                                    className="form-control"
+                                    className="au-filter-input"
                                     value={authenticatorCode}
                                     onChange={(event) => setAuthenticatorCode(event.target.value)}
                                     required
@@ -195,7 +240,15 @@ export default function ManageMfaPage() {
                                     </PrimaryButton>
                                 </div>
                             </form>
-                        ) : !isExternalOnlyAccount ? (
+                        </div>
+                    ) : !isExternalOnlyAccount ? (
+                        <div className="au-table-wrap" style={{ padding: '22px', marginBottom: '18px' }}>
+                            <h3 style={{ margin: 0, fontFamily: 'var(--font-heading)', fontSize: '1.05rem', color: 'var(--color-dark)' }}>
+                                Security Actions
+                            </h3>
+                            <p className="au-muted" style={{ margin: '8px 0 14px' }}>
+                                Keep your account secure by refreshing recovery codes or disabling MFA if needed.
+                            </p>
                             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                                 <button
                                     type="button"
@@ -214,33 +267,37 @@ export default function ManageMfaPage() {
                                     Disable MFA
                                 </button>
                             </div>
-                        ) : (
+                        </div>
+                    ) : (
+                        <div className="au-table-wrap" style={{ padding: '20px', marginBottom: '18px' }}>
                             <p className="text-muted mb-0">No local MFA actions are available for external-only accounts.</p>
-                        )}
+                        </div>
+                    )}
 
-                        {!isExternalOnlyAccount && status.recoveryCodes && status.recoveryCodes.length > 0 ? (
-                            <div className="alert alert-warning" style={{ marginTop: '20px' }}>
-                                <div style={{ fontWeight: 600, marginBottom: '8px' }}>
-                                    Recovery Codes
-                                </div>
-                                <ul style={{ marginBottom: 0 }}>
-                                    {status.recoveryCodes.map((code) => (
-                                        <li key={code}>
-                                            <code>{code}</code>
-                                        </li>
-                                    ))}
-                                </ul>
+                    {!isExternalOnlyAccount && status.recoveryCodes && status.recoveryCodes.length > 0 ? (
+                        <div className="au-table-wrap" style={{ padding: '22px', backgroundColor: 'rgba(212, 146, 122, 0.07)' }}>
+                            <div style={{ fontWeight: 600, marginBottom: '8px', color: 'var(--color-dark)' }}>
+                                Recovery Codes (save these now)
                             </div>
-                        ) : !isExternalOnlyAccount ? (
-                            <p style={{ marginTop: '16px' }}>
-                                Recovery codes left: {status.recoveryCodesLeft}
-                            </p>
-                        ) : null}
-                    </>
-                ) : (
-                    <p>Loading MFA status...</p>
-                )}
-            </div>
+                            <ul style={{ marginBottom: 0, columns: 2, gap: '24px' }}>
+                                {status.recoveryCodes.map((code) => (
+                                    <li key={code}>
+                                        <code>{code}</code>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    ) : !isExternalOnlyAccount ? (
+                        <div className="au-table-wrap" style={{ padding: '16px 20px' }}>
+                            <p style={{ margin: 0 }}>Recovery codes left: {status.recoveryCodesLeft}</p>
+                        </div>
+                    ) : null}
+                </>
+            ) : (
+                <div className="au-table-wrap" style={{ padding: '20px' }}>
+                    <p className="mb-0">Loading MFA status...</p>
+                </div>
+            )}
         </div>
     );
 }

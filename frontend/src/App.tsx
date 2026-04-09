@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import type { ReactElement } from 'react';
 import {
   BrowserRouter as Router,
@@ -7,21 +7,26 @@ import {
   useLocation,
   Navigate,
 } from 'react-router-dom';
-import { Maximize2, MessageCircle, Minimize2, X } from 'lucide-react';
 import './App.css';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
+import AdminLayout from './components/layout/AdminLayout';
 import LandingPage from './pages/LandingPage';
 import DonationPage from './pages/DonationPage';
 import LoginPage from './pages/LoginPage';
 import SignUpPage from './pages/SignUpPage';
+import CaseloadPage from './pages/CaseloadPage';
+import ResidentDetailPage from './pages/ResidentDetailPage';
+import AdminSafehousesPage from './pages/AdminSafehousesPage';
+import DonorsPage from './pages/DonorsPage';
+import AdminDashboardPage from './pages/AdminDashboardPage';
+import AdminInsightsPage from './pages/AdminInsightsPage';
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './context/useAuth';
 import LogoutPage from './pages/LogoutPage';
 import ManageMfaPage from './pages/ManageMfaPage';
 import DashboardPage from './pages/DashboardPage';
 import DonationsPage from './pages/DonationsPage';
-import AdminDashboardPage from './pages/AdminDashboardPage';
 import EditProfilePage from './pages/EditProfilePage';
 import AdminUsersPage from './pages/AdminUsersPage';
 import AdminDonationsPage from './pages/AdminDonationsPage';
@@ -30,9 +35,13 @@ import CookiePolicyPage from './pages/CookiePolicyPage';
 import AuthCallbackPage from './pages/AuthCallbackPage';
 import ComingSoonPage from './pages/ComingSoonPage';
 import { CookieConsentProvider } from './context/CookieConsentContext';
-import AssistantPage from './pages/AssistantPage';
-import AdminChatPage from './pages/AdminChatPage';
-import ChatPage from './components/chat/ChatPage';
+import ProcessRecordingsPage from './pages/ProcessRecordingsPage';
+import HomeVisitsPage from './pages/HomeVisitsPage';
+import ReportsPage from './pages/ReportsPage';
+import PartnersPage from './pages/PartnersPage';
+import ImpactPage from './pages/ImpactPage';
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
+import IncidentReportsPage from './pages/IncidentReportsPage';
 
 function ScrollToTop() {
   const { pathname, hash } = useLocation();
@@ -77,143 +86,94 @@ function RequireAuth({
 }
 
 function App() {
-  function ChatLauncher() {
-    const { pathname } = useLocation();
-    const { isAuthenticated, authSession } = useAuth();
-    const [isOpen, setIsOpen] = useState(false);
-    const [isExpanded, setIsExpanded] = useState(false);
-    if (pathname === '/assistant' || pathname === '/admin/chat') {
-      return null;
-    }
-
-    const adminMode = isAuthenticated && authSession.roles.includes('Admin');
-
-    return (
-      <>
-        <button
-          type="button"
-          className="chat-launcher-btn"
-          onClick={() => setIsOpen(true)}
-          aria-label="Open assistant"
-        >
-          <MessageCircle size={16} />
-          Assistant
-        </button>
-        {isOpen ? (
-          <section className={`chat-popup-shell ${isExpanded ? 'expanded' : ''}`} aria-label="Assistant popup">
-            <header className="chat-popup-header">
-              <div>Assistant</div>
-              <div className="chat-popup-header-actions">
-                <button
-                  type="button"
-                  onClick={() => setIsExpanded((prev) => !prev)}
-                  aria-label={isExpanded ? 'Downsize chat window' : 'Expand chat window'}
-                >
-                  {isExpanded ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
-                </button>
-                <button type="button" onClick={() => setIsOpen(false)} aria-label="Close chat popup">
-                  <X size={15} />
-                </button>
-              </div>
-            </header>
-            <div className="chat-popup-body">
-              <ChatPage adminMode={adminMode} popupMode showFullscreenToggle={false} />
-            </div>
-          </section>
-        ) : null}
-      </>
-    );
-  }
-
   return (
     <CookieConsentProvider>
       <AuthProvider>
         <Router>
           <ScrollToTop />
-          <div className="page-wrapper">
-            <Navbar />
-            <main className="page-content">
-              <Routes>
-                <Route path="/" element={<LandingPage />} />
-                <Route path="/donate" element={<DonationPage />} />
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/auth/callback" element={<AuthCallbackPage />} />
-                <Route path="/cookies" element={<CookiePolicyPage />} />
-                <Route path="/coming-soon" element={<ComingSoonPage />} />
-                <Route path="/assistant" element={<AssistantPage />} />
-                <Route path="/signup" element={<SignUpPage />} />
-                <Route path="/register" element={<SignUpPage />} />
-                <Route path="/logout" element={<LogoutPage />} />
-                <Route
-                  path="/donations"
-                  element={
-                    <RequireAuth>
-                      <DonationsPage />
-                    </RequireAuth>
-                  }
-                />
-                <Route
-                  path="/dashboard"
-                  element={
-                    <RequireAuth>
-                      <DashboardPage />
-                    </RequireAuth>
-                  }
-                />
-                <Route
-                  path="/profile"
-                  element={
-                    <RequireAuth>
-                      <EditProfilePage />
-                    </RequireAuth>
-                  }
-                />
-                <Route
-                  path="/mfa"
-                  element={
-                    <RequireAuth>
-                      <ManageMfaPage />
-                    </RequireAuth>
-                  }
-                />
-                <Route
-                  path="/admin"
-                  element={
-                    <RequireAuth adminOnly>
-                      <AdminDashboardPage />
-                    </RequireAuth>
-                  }
-                />
-                <Route
-                  path="/admin/users"
-                  element={
-                    <RequireAuth adminOnly>
-                      <AdminUsersPage />
-                    </RequireAuth>
-                  }
-                />
-                <Route
-                  path="/admin/donations"
-                  element={
-                    <RequireAuth adminOnly>
-                      <AdminDonationsPage />
-                    </RequireAuth>
-                  }
-                />
-                <Route
-                  path="/admin/chat"
-                  element={
-                    <RequireAuth adminOnly>
-                      <AdminChatPage />
-                    </RequireAuth>
-                  }
-                />
-              </Routes>
-            </main>
-            <Footer />
-            <ChatLauncher />
-            <CookieConsentBanner />
-          </div>
+          <Routes>
+            <Route
+              path="/admin"
+              element={
+                <RequireAuth adminOnly>
+                  <AdminLayout />
+                </RequireAuth>
+              }
+            >
+              <Route index element={<AdminDashboardPage />} />
+              <Route path="users" element={<AdminUsersPage />} />
+              <Route path="donations" element={<AdminDonationsPage />} />
+              <Route path="caseload" element={<CaseloadPage />} />
+              <Route path="safehouses" element={<AdminSafehousesPage />} />
+              <Route path="residents/:id" element={<ResidentDetailPage />} />
+              <Route path="donors" element={<DonorsPage />} />
+              <Route path="partners" element={<PartnersPage />} />
+              <Route path="contributions" element={<AdminDonationsPage />} />
+              <Route path="process-recordings" element={<ProcessRecordingsPage />} />
+              <Route path="home-visits" element={<HomeVisitsPage />} />
+              <Route path="incidents" element={<IncidentReportsPage />} />
+              <Route path="reports" element={<ReportsPage />} />
+              <Route path="insights" element={<AdminInsightsPage />} />
+            </Route>
+
+            <Route
+              path="*"
+              element={
+                <div className="page-wrapper">
+                  <Navbar />
+                  <main className="page-content">
+                    <Routes>
+                      <Route path="/" element={<LandingPage />} />
+                      <Route path="/donate" element={<DonationPage />} />
+                      <Route path="/impact" element={<ImpactPage />} />
+                      <Route path="/privacy" element={<PrivacyPolicyPage />} />
+                      <Route path="/login" element={<LoginPage />} />
+                      <Route path="/auth/callback" element={<AuthCallbackPage />} />
+                      <Route path="/cookies" element={<CookiePolicyPage />} />
+                      <Route path="/coming-soon" element={<ComingSoonPage />} />
+                      <Route path="/signup" element={<SignUpPage />} />
+                      <Route path="/register" element={<SignUpPage />} />
+                      <Route path="/logout" element={<LogoutPage />} />
+                      <Route
+                        path="/donations"
+                        element={
+                          <RequireAuth>
+                            <DonationsPage />
+                          </RequireAuth>
+                        }
+                      />
+                      <Route
+                        path="/dashboard"
+                        element={
+                          <RequireAuth>
+                            <DashboardPage />
+                          </RequireAuth>
+                        }
+                      />
+                      <Route
+                        path="/profile"
+                        element={
+                          <RequireAuth>
+                            <EditProfilePage />
+                          </RequireAuth>
+                        }
+                      />
+                      <Route
+                        path="/mfa"
+                        element={
+                          <RequireAuth>
+                            <ManageMfaPage />
+                          </RequireAuth>
+                        }
+                      />
+                    </Routes>
+                  </main>
+                  <Footer />
+                  <CookieConsentBanner />
+                </div>
+              }
+            />
+          </Routes>
         </Router>
       </AuthProvider>
     </CookieConsentProvider>

@@ -1,0 +1,528 @@
+/* ===== Caseload Inventory Page ===== */
+
+/* Page header row */
+.caseload-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.caseload-header .admin-page-header {
+  margin-bottom: 0;
+}
+
+/* ===== Summary Chips ===== */
+.caseload-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.caseload-chip {
+  background-color: var(--color-white);
+  border-radius: var(--radius-md);
+  padding: 18px 20px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.caseload-chip-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.caseload-chip-icon.active {
+  background-color: rgba(193, 96, 58, 0.08);
+  color: var(--color-primary);
+}
+
+.caseload-chip-icon.risk {
+  background-color: rgba(193, 96, 58, 0.12);
+  color: var(--color-primary-dark);
+}
+
+.caseload-chip-icon.reintegration {
+  background-color: rgba(122, 158, 126, 0.1);
+  color: var(--color-sage);
+}
+
+.caseload-chip-icon.new {
+  background-color: rgba(212, 146, 122, 0.12);
+  color: var(--color-primary-light);
+}
+
+.caseload-chip-value {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-dark);
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+.caseload-chip-label {
+  font-size: 0.82rem;
+  color: var(--color-muted);
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+/* ===== Filter Bar ===== */
+.caseload-filters {
+  background-color: var(--color-white);
+  border-radius: var(--radius-md);
+  padding: 20px 24px;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 24px;
+}
+
+.caseload-filters-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+  gap: 12px;
+  align-items: end;
+}
+
+.caseload-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.caseload-filter-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.caseload-filter-input,
+.caseload-filter-select {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1.5px solid var(--color-light-gray);
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  font-family: var(--font-body);
+  color: var(--color-dark);
+  background-color: var(--color-white);
+  outline: none;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  appearance: auto;
+}
+
+.caseload-filter-input:focus,
+.caseload-filter-select:focus {
+  border-color: var(--color-primary-light);
+  box-shadow: 0 0 0 3px rgba(193, 96, 58, 0.1);
+}
+
+.caseload-filter-input::placeholder {
+  color: var(--color-muted);
+  opacity: 0.7;
+}
+
+/* ===== Table Container ===== */
+.caseload-table-wrap {
+  background-color: var(--color-white);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.caseload-table-scroll {
+  overflow-x: auto;
+}
+
+.caseload-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 900px;
+}
+
+.caseload-table th {
+  text-align: left;
+  padding: 14px 16px;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--color-light-gray);
+  background-color: var(--color-cream);
+  white-space: nowrap;
+}
+
+.caseload-table td {
+  padding: 14px 16px;
+  font-size: 0.9rem;
+  color: var(--color-dark);
+  border-bottom: 1px solid var(--color-light-gray);
+  vertical-align: middle;
+}
+
+.caseload-table tbody tr {
+  transition: background-color var(--transition-fast);
+}
+
+.caseload-table tbody tr:hover {
+  background-color: var(--color-cream);
+}
+
+.caseload-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Resident cell */
+.caseload-resident-name {
+  font-weight: 600;
+  color: var(--color-dark);
+  font-size: 0.9rem;
+  margin-bottom: 1px;
+}
+
+.caseload-resident-code {
+  font-size: 0.8rem;
+  color: var(--color-muted);
+  font-weight: 400;
+}
+
+/* Worker cell */
+.caseload-worker {
+  font-size: 0.85rem;
+  color: var(--color-dark);
+}
+
+/* Last update */
+.caseload-date {
+  font-size: 0.85rem;
+  color: var(--color-muted);
+  white-space: nowrap;
+}
+
+/* ===== Badges ===== */
+.caseload-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+/* Risk badges */
+.caseload-badge.risk-low {
+  background-color: rgba(122, 158, 126, 0.1);
+  color: var(--color-sage);
+}
+
+.caseload-badge.risk-moderate {
+  background-color: rgba(212, 146, 122, 0.12);
+  color: var(--color-primary-light);
+}
+
+.caseload-badge.risk-high {
+  background-color: rgba(193, 96, 58, 0.1);
+  color: var(--color-primary);
+}
+
+.caseload-badge.risk-critical {
+  background-color: rgba(171, 85, 58, 0.12);
+  color: var(--color-primary-dark);
+}
+
+/* Status badges */
+.caseload-badge.status-active {
+  background-color: rgba(122, 158, 126, 0.1);
+  color: var(--color-sage);
+}
+
+.caseload-badge.status-intake {
+  background-color: rgba(212, 146, 122, 0.12);
+  color: var(--color-primary-light);
+}
+
+.caseload-badge.status-reintegration {
+  background-color: rgba(193, 96, 58, 0.08);
+  color: var(--color-primary);
+}
+
+.caseload-badge.status-closed {
+  background-color: rgba(133, 132, 129, 0.1);
+  color: var(--color-muted);
+}
+
+/* Reintegration status badges */
+.caseload-badge.reint-not-started {
+  background-color: rgba(133, 132, 129, 0.08);
+  color: var(--color-muted);
+}
+
+.caseload-badge.reint-in-progress {
+  background-color: rgba(193, 96, 58, 0.08);
+  color: var(--color-primary);
+}
+
+.caseload-badge.reint-ready {
+  background-color: rgba(122, 158, 126, 0.1);
+  color: var(--color-sage);
+}
+
+/* Risk dot indicator */
+.caseload-risk-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.caseload-risk-dot.low {
+  background-color: var(--color-sage);
+}
+
+.caseload-risk-dot.moderate {
+  background-color: var(--color-primary-light);
+}
+
+.caseload-risk-dot.high {
+  background-color: var(--color-primary);
+}
+
+.caseload-risk-dot.critical {
+  background-color: var(--color-primary-dark);
+}
+
+/* ===== Action Menu ===== */
+.caseload-actions {
+  position: relative;
+}
+
+.caseload-actions-btn {
+  background: none;
+  border: 1.5px solid var(--color-light-gray);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  padding: 6px 10px;
+  color: var(--color-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color var(--transition-fast), color var(--transition-fast);
+}
+
+.caseload-actions-btn:hover {
+  border-color: var(--color-primary-light);
+  color: var(--color-dark);
+}
+
+.caseload-actions-menu {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  margin-top: 4px;
+  background-color: var(--color-white);
+  border: 1px solid var(--color-light-gray);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  z-index: 50;
+  min-width: 190px;
+  padding: 6px 0;
+}
+
+.caseload-actions-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 16px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--color-dark);
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: background-color var(--transition-fast);
+}
+
+.caseload-actions-menu-item:hover {
+  background-color: var(--color-cream);
+}
+
+.caseload-actions-menu-item .menu-icon {
+  color: var(--color-muted);
+  flex-shrink: 0;
+}
+
+.caseload-actions-menu-item.danger {
+  color: #c0392b;
+}
+
+.caseload-actions-menu-item.danger .menu-icon {
+  color: #c0392b;
+}
+
+.caseload-actions-menu-item.danger:hover {
+  background-color: #fdf0ee;
+}
+
+/* ===== Table footer / count ===== */
+.caseload-table-footer {
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--color-light-gray);
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
+/* ===== States ===== */
+.caseload-state {
+  background-color: var(--color-white);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: 60px 32px;
+  text-align: center;
+}
+
+.caseload-state-icon {
+  margin-bottom: 16px;
+  color: var(--color-muted);
+}
+
+.caseload-state-title {
+  font-family: var(--font-heading);
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--color-dark);
+  margin: 0 0 8px;
+}
+
+.caseload-state-text {
+  font-size: 0.9rem;
+  color: var(--color-muted);
+  margin: 0 0 20px;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.6;
+}
+
+/* Loading skeleton rows */
+.caseload-skeleton-row {
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  border-bottom: 1px solid var(--color-light-gray);
+  align-items: center;
+}
+
+.caseload-skeleton-bar {
+  height: 14px;
+  border-radius: 4px;
+  background: linear-gradient(90deg,
+      var(--color-light-gray) 25%,
+      var(--color-cream) 50%,
+      var(--color-light-gray) 75%);
+  background-size: 200% 100%;
+  animation: caseload-shimmer 1.5s ease-in-out infinite;
+}
+
+/* Editor modal */
+.caseload-editor-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(17, 17, 17, 0.42);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  padding: 16px;
+}
+
+.caseload-editor-panel {
+  width: min(1200px, 100%);
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  background-color: var(--color-white);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+}
+
+@keyframes caseload-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 991px) {
+  .caseload-summary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .caseload-filters-row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .caseload-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .caseload-summary {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .caseload-chip {
+    padding: 14px 16px;
+    gap: 10px;
+  }
+
+  .caseload-chip-value {
+    font-size: 1.25rem;
+  }
+
+  .caseload-chip-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .caseload-filters {
+    padding: 16px;
+  }
+
+  .caseload-filters-row {
+    grid-template-columns: 1fr;
+  }
+
+  .caseload-state {
+    padding: 40px 20px;
+  }
+}
