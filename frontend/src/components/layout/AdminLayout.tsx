@@ -35,7 +35,7 @@ const navItems = [
   { to: '/admin/incidents', icon: AlertTriangle, label: 'Incident Reports' },
   { divider: true },
   { to: '/admin/reports', icon: BarChart3, label: 'Reports' },
-  { to: '/admin/insights', icon: BrainCircuit, label: 'ML Insights' },
+  { to: '/admin/insights', icon: BrainCircuit, label: 'Action Insights' },
 ] as const;
 
 function getInitials(name: string): string {

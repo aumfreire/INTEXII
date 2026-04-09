@@ -21,5 +21,5 @@ public class MlSocialEngagementPrediction
     [Column("supporter_type")]  public string? SupporterType  { get; set; }
     [Column("region")]          public string? Region         { get; set; }
     [Column("country")]         public string? Country        { get; set; }
-    [Column("run_date")]        public string? RunDate        { get; set; }
+    [Column("run_date")]        public DateTime? RunDate      { get; set; }
 }
