@@ -1,10 +1,12 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ChevronLeft, ChevronRight, Filter, Search, RefreshCw } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, DollarSign, Filter, Gift, RefreshCw, Search, Users } from 'lucide-react';
 import AlertBanner from '../components/ui/AlertBanner';
-import { formatCurrency } from '../lib/formatters';
+import PrimaryButton from '../components/ui/PrimaryButton';
+import { formatMoney } from '../lib/formatters';
 import { getMyDonations } from '../lib/authAPI';
 import type { DonationRecord, RepeatDonationState } from '../types/DonationTypes';
+import '../styles/pages/donors.css';
 
 export default function DonationsPage() {
     const navigate = useNavigate();
@@ -52,6 +54,21 @@ export default function DonationsPage() {
     const visibleDonations = donations;
     const startIndex = currentPage === 0 ? 0 : (currentPage - 1) * pageSize;
 
+    const summary = useMemo(() => {
+        const monetaryTotal = donations.reduce((sum, donation) => sum + (donation.amount ?? 0), 0);
+        const recurringCount = donations.filter((donation) => donation.isRecurring).length;
+        const latestDonation = donations
+            .map((donation) => donation.donationDate)
+            .filter((value): value is string => Boolean(value))
+            .sort((a, b) => b.localeCompare(a))[0] ?? null;
+
+        return {
+            monetaryTotal,
+            recurringCount,
+            latestDonation,
+        };
+    }, [donations]);
+
     const handleRepeatDonation = (donation: DonationRecord) => {
         const repeatState: RepeatDonationState = {
             donationType: donation.isRecurring ? 'monthly' : 'one-time',
@@ -65,125 +82,161 @@ export default function DonationsPage() {
     };
 
     return (
-        <div className="container py-5">
-            <div className="login-card" style={{ maxWidth: '1200px' }}>
-                <div className="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-3 mb-4">
-                    <div>
-                        <h2 className="mb-2">My Donations</h2>
-                        <p className="login-subtitle mb-0">
-                            Review your giving history, search donations, and repeat a previous gift.
-                        </p>
-                    </div>
-                    <div className="d-flex gap-2 flex-wrap">
-                        <Link to="/dashboard" className="btn btn-outline-secondary">
-                            <ArrowLeft size={16} className="me-1" />
+        <div className="container py-5" style={{ maxWidth: '1240px' }}>
+            <div className="donors-header">
+                <div className="admin-page-header">
+                    <h1 className="admin-page-title">My Donations</h1>
+                    <p className="admin-page-subtitle">Review your giving history, search donations, and repeat a previous gift.</p>
+                    <div style={{ marginTop: '10px' }}>
+                        <Link to="/dashboard" className="dash-panel-link" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                            <ChevronLeft size={14} />
                             Back to Dashboard
-                        </Link>
-                        <Link to="/donate" className="btn btn-primary">
-                            Make Donation
                         </Link>
                     </div>
                 </div>
+                <div className="donors-header-actions">
+                    <PrimaryButton onClick={() => navigate('/donate')}>
+                        <Gift size={16} />
+                        Make Donation
+                    </PrimaryButton>
+                </div>
+            </div>
 
-                {errorMessage ? (
-                    <AlertBanner message={errorMessage} type="warning" onClose={() => setErrorMessage('')} />
-                ) : null}
+            {errorMessage ? (
+                <AlertBanner message={errorMessage} type="warning" onClose={() => setErrorMessage('')} />
+            ) : null}
 
-                <div className="d-flex flex-column flex-md-row gap-3 align-items-md-center justify-content-between mb-3">
-                    <div className="position-relative flex-grow-1" style={{ maxWidth: '520px' }}>
-                        <Search size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-muted)' }} />
-                        <input
-                            className="form-control"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            placeholder="Search by notes, campaign, channel, or type"
-                            style={{ paddingLeft: '42px' }}
-                        />
+            <div className="donors-summary">
+                <div className="donors-chip">
+                    <div className="donors-chip-icon supporters"><Users size={20} /></div>
+                    <div>
+                        <div className="donors-chip-value">{totalCount.toLocaleString()}</div>
+                        <div className="donors-chip-label">Total Donations</div>
                     </div>
-                    <div className="d-flex align-items-center gap-2">
-                        <Filter size={16} className="text-muted" />
-                        <label className="small text-muted mb-0" htmlFor="pageSize">
+                </div>
+                <div className="donors-chip">
+                    <div className="donors-chip-icon monthly"><DollarSign size={20} /></div>
+                    <div>
+                        <div className="donors-chip-value">{formatMoney(summary.monetaryTotal)}</div>
+                        <div className="donors-chip-label">Visible Total</div>
+                    </div>
+                </div>
+                <div className="donors-chip">
+                    <div className="donors-chip-icon recurring"><RefreshCw size={20} /></div>
+                    <div>
+                        <div className="donors-chip-value">{summary.recurringCount}</div>
+                        <div className="donors-chip-label">Recurring (Visible)</div>
+                    </div>
+                </div>
+                <div className="donors-chip">
+                    <div className="donors-chip-icon inkind"><ArrowLeft size={20} style={{ transform: 'rotate(180deg)' }} /></div>
+                    <div>
+                        <div className="donors-chip-value" style={{ fontSize: '1.05rem' }}>{summary.latestDonation ?? '-'}</div>
+                        <div className="donors-chip-label">Latest Donation (Visible)</div>
+                    </div>
+                </div>
+            </div>
+
+            <div className="donors-filters">
+                <div className="donors-filters-row" style={{ gridTemplateColumns: '2fr 1fr' }}>
+                    <div className="donors-filter-group">
+                        <label className="donors-filter-label" htmlFor="donor-donation-search">Search</label>
+                        <div style={{ position: 'relative' }}>
+                            <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-muted)', pointerEvents: 'none' }} />
+                            <input
+                                id="donor-donation-search"
+                                className="donors-filter-input"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                placeholder="Type, campaign, channel, notes..."
+                                style={{ paddingLeft: '36px' }}
+                            />
+                        </div>
+                    </div>
+                    <div className="donors-filter-group">
+                        <label className="donors-filter-label" htmlFor="donor-donation-page-size">
+                            <Filter size={14} style={{ verticalAlign: 'text-bottom', marginRight: '6px' }} />
                             Display
                         </label>
                         <select
-                            id="pageSize"
-                            className="form-select"
+                            id="donor-donation-page-size"
+                            className="donors-filter-select"
                             value={pageSize}
                             onChange={(e) => setPageSize(Number(e.target.value))}
-                            style={{ width: '110px' }}
                         >
                             {[5, 10, 15, 25, 50].map((size) => (
-                                <option key={size} value={size}>
-                                    {size}
-                                </option>
+                                <option key={size} value={size}>{size}</option>
                             ))}
                         </select>
                     </div>
                 </div>
+            </div>
 
-                <div className="border rounded-3 bg-white shadow-sm overflow-hidden">
-                    <div className="table-responsive">
-                        <table className="table align-middle mb-0">
-                            <thead className="table-light">
+            <div className="donors-table-wrap">
+                <div className="donors-table-scroll">
+                    <table className="donors-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Amount</th>
+                                <th>Type</th>
+                                <th>Campaign</th>
+                                <th>Channel</th>
+                                <th>Notes</th>
+                                <th style={{ width: '220px' }}>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {isLoading ? (
                                 <tr>
-                                    <th>Date</th>
-                                    <th>Amount</th>
-                                    <th>Type</th>
-                                    <th>Notes</th>
-                                    <th style={{ width: '220px' }}>Actions</th>
+                                    <td colSpan={7} className="text-center py-5 text-muted">Loading your donations...</td>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                {isLoading ? (
-                                    <tr>
-                                        <td colSpan={5} className="text-center py-5 text-muted">
-                                            Loading your donations...
-                                        </td>
-                                    </tr>
-                                ) : visibleDonations.length > 0 ? (
-                                    visibleDonations.map((donation) => (
-                                        <tr key={donation.donationId}>
-                                            <td>{donation.donationDate ?? 'Unknown date'}</td>
-                                            <td>
-                                                <strong>{formatCurrency(donation.amount ?? 0)}</strong>
-                                            </td>
-                                            <td>
+                            ) : visibleDonations.length > 0 ? (
+                                visibleDonations.map((donation) => (
+                                    <tr key={donation.donationId}>
+                                        <td className="donors-date">{donation.donationDate ?? 'Unknown date'}</td>
+                                        <td><span className="donors-value">{formatMoney(donation.amount ?? 0, donation.currencyCode ?? 'USD')}</span></td>
+                                        <td>
+                                            <span className={`donors-badge type-${donation.isRecurring ? 'partner' : 'monetary'}`}>
                                                 {donation.donationType ?? 'Donation'}
-                                                {donation.isRecurring ? (
-                                                    <span className="badge text-bg-light ms-2">Recurring</span>
-                                                ) : null}
-                                            </td>
-                                            <td style={{ maxWidth: '320px' }}>
-                                                <div className="text-truncate" title={donation.notes ?? ''}>
-                                                    {donation.notes || 'No notes provided'}
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <button
-                                                    type="button"
-                                                    className="btn btn-sm btn-outline-primary me-2"
-                                                    onClick={() => handleRepeatDonation(donation)}
-                                                >
-                                                    <RefreshCw size={14} className="me-1" />
-                                                    Repeat this donation
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))
-                                ) : (
-                                    <tr>
-                                        <td colSpan={5} className="text-center py-5 text-muted">
-                                            No donations found.
+                                            </span>
+                                            {donation.isRecurring ? (
+                                                <span className="donors-badge status-active" style={{ marginLeft: '8px' }}>
+                                                    Recurring
+                                                </span>
+                                            ) : null}
+                                        </td>
+                                        <td>{donation.campaignName || '-'}</td>
+                                        <td>{donation.channelSource || '-'}</td>
+                                        <td style={{ maxWidth: '300px' }}>
+                                            <div className="donors-supporter-org text-truncate" title={donation.notes ?? ''}>
+                                                {donation.notes || 'No notes provided'}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <button
+                                                type="button"
+                                                className="donors-actions-menu-item"
+                                                style={{ display: 'inline-flex' }}
+                                                onClick={() => handleRepeatDonation(donation)}
+                                            >
+                                                <RefreshCw size={15} className="donors-menu-icon" />
+                                                Repeat this donation
+                                            </button>
                                         </td>
                                     </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan={7} className="text-center py-5 text-muted">No donations found.</td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
                 </div>
 
-                <div className="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mt-3">
-                    <div className="text-muted small">
+                <div className="donors-table-footer">
+                    <div>
                         Showing {totalCount === 0 ? 0 : startIndex + 1} to{' '}
                         {Math.min(startIndex + pageSize, totalCount)} of {totalCount}
                     </div>
