@@ -22,6 +22,7 @@ const PRIMARY = '#C1603A';
 const SAGE = '#7A9E7E';
 const ORANGE = '#e67e22';
 const MUTED_BLUE = '#5b7fa6';
+const CAPACITY_BAR = '#6b655c';
 
 const STATUS_COLORS: Record<string, string> = {
   active: SAGE,
@@ -116,7 +117,7 @@ export default function ReportsPage() {
     : [];
 
   const safehouseChartData = safehouses.map((s) => ({
-    name: s.name.length > 18 ? s.name.slice(0, 18) + '…' : s.name,
+    name: s.name,
     residents: s.residentCount,
     capacity: s.capacity,
     highRisk: s.highRiskCount,
@@ -139,6 +140,16 @@ export default function ReportsPage() {
   function formatCurrencyTooltip(value: unknown): [string, string] {
     const numeric = typeof value === 'number' ? value : Number(value ?? 0);
     return [formatCurrency(Number.isFinite(numeric) ? numeric : 0), 'Total'];
+  }
+
+  function formatSafehouseTooltip(value: unknown, name?: unknown): [string | number, string] {
+    const seriesName = String(name ?? '');
+    const seriesLabel =
+      seriesName === 'capacity' ? 'Capacity'
+        : seriesName === 'residents' ? 'Residents'
+          : seriesName === 'highRisk' ? 'High Risk'
+            : seriesName;
+    return [typeof value === 'number' ? value : Number(value ?? 0), seriesLabel];
   }
 
   return (
@@ -181,7 +192,6 @@ export default function ReportsPage() {
                 <Tooltip formatter={formatCurrencyTooltip} />
                 <Legend />
                 <Line type="monotone" dataKey="total" name="Donations" stroke={PRIMARY} strokeWidth={2.5} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                <Line type="monotone" dataKey="count" name="# Donors" stroke={SAGE} strokeWidth={2} dot={false} yAxisId={0} />
               </LineChart>
             </ResponsiveContainer>
           )}
@@ -266,10 +276,21 @@ export default function ReportsPage() {
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0ede8" horizontal={false} />
                 <XAxis type="number" tick={{ fontSize: 12 }} />
-                <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 12 }} />
-                <Tooltip />
+                <YAxis type="category" dataKey="name" width={220} tick={{ fontSize: 11 }} />
+                <Tooltip
+                  formatter={formatSafehouseTooltip}
+                  contentStyle={{
+                    backgroundColor: '#ffffff',
+                    border: '1px solid #cfc7bc',
+                    borderRadius: '8px',
+                    color: '#1f1b16',
+                    boxShadow: '0 8px 18px rgba(0, 0, 0, 0.16)',
+                  }}
+                  labelStyle={{ color: '#1f1b16', fontWeight: 700 }}
+                  itemStyle={{ color: '#1f1b16', fontWeight: 600 }}
+                />
                 <Legend />
-                <Bar dataKey="capacity" name="Capacity" fill="#f0ede8" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="capacity" name="Capacity" fill={CAPACITY_BAR} radius={[0, 4, 4, 0]} />
                 <Bar dataKey="residents" name="Residents" fill={SAGE} radius={[0, 4, 4, 0]} />
                 <Bar dataKey="highRisk" name="High Risk" fill={ORANGE} radius={[0, 4, 4, 0]} />
               </BarChart>
