@@ -11,6 +11,7 @@ import {
     Gift,
     UserCheck,
     ArrowRight,
+    HandCoins,
 } from 'lucide-react';
 import AlertBanner from '../components/ui/AlertBanner';
 import { getAdminCaseload, getAdminSupporters } from '../lib/authAPI';
@@ -239,6 +240,12 @@ export default function AdminDashboardPage() {
                 <p className="dash-welcome-sub">
                     Here's what needs your attention today — April 8, 2026
                 </p>
+                <div style={{ marginTop: '10px' }}>
+                    <Link to="/admin/contributions" className="dash-panel-link" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                        <HandCoins size={14} />
+                        Manage Donations
+                    </Link>
+                </div>
             </div>
 
             {/* Error State */}

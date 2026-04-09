@@ -1,4 +1,5 @@
 using INTEXII.API.Data;
+using INTEXII.API.Data.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -76,6 +77,11 @@ public class SupportersController : ControllerBase
                 s.SupporterId,
                 s.DisplayName ?? BuildDisplayName(s.FirstName, s.LastName, s.OrganizationName, s.Email, s.SupporterId),
                 s.OrganizationName,
+                s.Email,
+                s.Phone,
+                s.Region,
+                s.Country,
+                s.RelationshipType,
                 NormalizeSupporterType(s.SupporterType),
                 NormalizeStatus(s.Status),
                 NormalizeChannel(s.AcquisitionChannel),
@@ -135,6 +141,11 @@ public class SupportersController : ControllerBase
             supporter.SupporterId,
             supporter.DisplayName ?? BuildDisplayName(supporter.FirstName, supporter.LastName, supporter.OrganizationName, supporter.Email, supporter.SupporterId),
             supporter.OrganizationName,
+            supporter.Email,
+            supporter.Phone,
+            supporter.Region,
+            supporter.Country,
+            supporter.RelationshipType,
             NormalizeSupporterType(supporter.SupporterType),
             NormalizeStatus(supporter.Status),
             NormalizeChannel(supporter.AcquisitionChannel),
@@ -143,6 +154,131 @@ public class SupportersController : ControllerBase
             allocations);
 
         return Ok(detail);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Create([FromBody] SupporterUpsertRequest request)
+    {
+        if (!IsValidSupporterRequest(request))
+        {
+            return BadRequest("Supporter name, display name, or email is required.");
+        }
+
+        var supporter = new Supporter
+        {
+            SupporterType = request.Type,
+            DisplayName = request.DisplayName,
+            OrganizationName = request.Organization,
+            FirstName = request.FirstName,
+            LastName = request.LastName,
+            RelationshipType = request.RelationshipType,
+            Region = request.Region,
+            Country = request.Country,
+            Email = request.Email,
+            Phone = request.Phone,
+            Status = request.Status,
+            AcquisitionChannel = request.Channel,
+            FirstDonationDate = request.FirstDonation,
+            CreatedAt = DateTime.UtcNow,
+        };
+
+        _db.Supporters.Add(supporter);
+        await _db.SaveChangesAsync();
+
+        return CreatedAtAction(nameof(GetById), new { id = supporter.SupporterId }, new SupporterAdminDto(
+            supporter.SupporterId,
+            supporter.DisplayName,
+            supporter.OrganizationName,
+            supporter.FirstName,
+            supporter.LastName,
+            supporter.RelationshipType,
+            supporter.Region,
+            supporter.Country,
+            supporter.Email,
+            supporter.Phone,
+            supporter.SupporterType,
+            supporter.Status,
+            supporter.AcquisitionChannel,
+            supporter.FirstDonationDate));
+    }
+
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> Update(int id, [FromBody] SupporterUpsertRequest request)
+    {
+        if (!IsValidSupporterRequest(request))
+        {
+            return BadRequest("Supporter name, display name, or email is required.");
+        }
+
+        var supporter = await _db.Supporters.FirstOrDefaultAsync(s => s.SupporterId == id);
+        if (supporter is null)
+        {
+            return NotFound();
+        }
+
+        supporter.SupporterType = request.Type;
+        supporter.DisplayName = request.DisplayName;
+        supporter.OrganizationName = request.Organization;
+        supporter.FirstName = request.FirstName;
+        supporter.LastName = request.LastName;
+        supporter.RelationshipType = request.RelationshipType;
+        supporter.Region = request.Region;
+        supporter.Country = request.Country;
+        supporter.Email = request.Email;
+        supporter.Phone = request.Phone;
+        supporter.Status = request.Status;
+        supporter.AcquisitionChannel = request.Channel;
+        supporter.FirstDonationDate = request.FirstDonation;
+
+        await _db.SaveChangesAsync();
+
+        return Ok(new SupporterAdminDto(
+            supporter.SupporterId,
+            supporter.DisplayName,
+            supporter.OrganizationName,
+            supporter.FirstName,
+            supporter.LastName,
+            supporter.RelationshipType,
+            supporter.Region,
+            supporter.Country,
+            supporter.Email,
+            supporter.Phone,
+            supporter.SupporterType,
+            supporter.Status,
+            supporter.AcquisitionChannel,
+            supporter.FirstDonationDate));
+    }
+
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var supporter = await _db.Supporters
+            .Include(s => s.Donations)
+            .FirstOrDefaultAsync(s => s.SupporterId == id);
+
+        if (supporter is null)
+        {
+            return NotFound();
+        }
+
+        if (supporter.Donations.Count > 0)
+        {
+            return Conflict("Cannot delete a supporter that has contribution history.");
+        }
+
+        _db.Supporters.Remove(supporter);
+        await _db.SaveChangesAsync();
+        return NoContent();
+    }
+
+    private static bool IsValidSupporterRequest(SupporterUpsertRequest request)
+    {
+        var hasName = !string.IsNullOrWhiteSpace(request.DisplayName)
+            || !string.IsNullOrWhiteSpace(request.Organization)
+            || !string.IsNullOrWhiteSpace(request.FirstName)
+            || !string.IsNullOrWhiteSpace(request.LastName);
+
+        return hasName || !string.IsNullOrWhiteSpace(request.Email);
     }
 
     private static bool ContainsIgnoreCase(string? value, string term)
@@ -231,6 +367,11 @@ public class SupportersController : ControllerBase
         int Id,
         string Name,
         string? Organization,
+        string? Email,
+        string? Phone,
+        string? Region,
+        string? Country,
+        string? RelationshipType,
         string Type,
         string Status,
         string Channel,
@@ -252,10 +393,46 @@ public class SupportersController : ControllerBase
         int Id,
         string Name,
         string? Organization,
+        string? Email,
+        string? Phone,
+        string? Region,
+        string? Country,
+        string? RelationshipType,
         string Type,
         string Status,
         string Channel,
         DateOnly? FirstDonation,
         IReadOnlyList<SupporterContributionDto> Contributions,
         IReadOnlyList<SupporterAllocationDto> Allocations);
+
+    private sealed record SupporterAdminDto(
+        int Id,
+        string? DisplayName,
+        string? Organization,
+        string? FirstName,
+        string? LastName,
+        string? RelationshipType,
+        string? Region,
+        string? Country,
+        string? Email,
+        string? Phone,
+        string? Type,
+        string? Status,
+        string? Channel,
+        DateOnly? FirstDonation);
+
+    public sealed record SupporterUpsertRequest(
+        string? DisplayName,
+        string? Organization,
+        string? FirstName,
+        string? LastName,
+        string? RelationshipType,
+        string? Region,
+        string? Country,
+        string? Email,
+        string? Phone,
+        string? Type,
+        string? Status,
+        string? Channel,
+        DateOnly? FirstDonation);
 }

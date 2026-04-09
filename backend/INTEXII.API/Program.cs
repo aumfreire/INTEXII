@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Data.SqlClient;
+using Microsoft.Data.Sqlite;
 using Scalar.AspNetCore;
 using Swashbuckle.AspNetCore.SwaggerUI;
 using Microsoft.IdentityModel.Tokens;
@@ -185,6 +186,28 @@ builder.Services.ConfigureApplicationCookie(options =>
 
     options.ExpireTimeSpan = TimeSpan.FromDays(7);
     options.SlidingExpiration = true;
+    options.Events.OnRedirectToLogin = context =>
+    {
+        if (context.Request.Path.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase))
+        {
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            return Task.CompletedTask;
+        }
+
+        context.Response.Redirect(context.RedirectUri);
+        return Task.CompletedTask;
+    };
+    options.Events.OnRedirectToAccessDenied = context =>
+    {
+        if (context.Request.Path.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase))
+        {
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            return Task.CompletedTask;
+        }
+
+        context.Response.Redirect(context.RedirectUri);
+        return Task.CompletedTask;
+    };
 });
 
 // CORS — only allow requests from the configured frontend origin
@@ -460,6 +483,14 @@ static async Task MigrateWithSqlServerBaselineAsync(
         await EnsureMigrationHistoryBaselineAsync(db, markerTable, baselineMigrations);
         await db.Database.MigrateAsync();
     }
+    catch (SqliteException ex) when (
+        db.Database.IsSqlite()
+        && ex.SqliteErrorCode == 1
+        && ex.Message.Contains("already exists", StringComparison.OrdinalIgnoreCase))
+    {
+        await EnsureMigrationHistoryBaselineAsync(db, markerTable, baselineMigrations);
+        await db.Database.MigrateAsync();
+    }
 }
 
 static async Task EnsureMigrationHistoryBaselineAsync(
@@ -467,8 +498,14 @@ static async Task EnsureMigrationHistoryBaselineAsync(
     string markerTable,
     IReadOnlyList<string> baselineMigrations)
 {
-    if (!db.Database.IsSqlServer())
+    if (!db.Database.IsSqlServer() && !db.Database.IsSqlite())
     {
+        return;
+    }
+
+    if (db.Database.IsSqlite())
+    {
+        await EnsureSqliteMigrationHistoryBaselineAsync(db, markerTable, baselineMigrations);
         return;
     }
 
@@ -512,5 +549,50 @@ static async Task EnsureMigrationHistoryBaselineAsync(
         const string productVersion = "10.0.0";
         await db.Database.ExecuteSqlAsync(
             $"IF NOT EXISTS (SELECT 1 FROM [dbo].[__EFMigrationsHistory] WHERE [MigrationId] = {migrationId}) BEGIN INSERT INTO [dbo].[__EFMigrationsHistory] ([MigrationId], [ProductVersion]) VALUES ({migrationId}, {productVersion}); END;");
+    }
+}
+
+static async Task EnsureSqliteMigrationHistoryBaselineAsync(
+    DbContext db,
+    string markerTable,
+    IReadOnlyList<string> baselineMigrations)
+{
+    var connection = db.Database.GetDbConnection();
+    var shouldCloseConnection = connection.State != ConnectionState.Open;
+
+    if (shouldCloseConnection)
+    {
+        await connection.OpenAsync();
+    }
+
+    int markerTableExists;
+    await using (var command = connection.CreateCommand())
+    {
+        command.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = @tableName;";
+        var parameter = command.CreateParameter();
+        parameter.ParameterName = "@tableName";
+        parameter.Value = markerTable;
+        command.Parameters.Add(parameter);
+
+        markerTableExists = Convert.ToInt32(await command.ExecuteScalarAsync());
+    }
+
+    if (shouldCloseConnection)
+    {
+        await connection.CloseAsync();
+    }
+
+    if (markerTableExists == 0)
+    {
+        return;
+    }
+
+    await db.Database.ExecuteSqlRawAsync(
+        "CREATE TABLE IF NOT EXISTS __EFMigrationsHistory (MigrationId TEXT NOT NULL PRIMARY KEY, ProductVersion TEXT NOT NULL);");
+
+    foreach (var migrationId in baselineMigrations)
+    {
+        await db.Database.ExecuteSqlInterpolatedAsync(
+            $"INSERT OR IGNORE INTO __EFMigrationsHistory (MigrationId, ProductVersion) VALUES ({migrationId}, {"10.0.0"});");
     }
 }

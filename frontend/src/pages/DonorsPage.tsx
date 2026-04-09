@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Search,
   Users,
@@ -12,13 +13,18 @@ import {
   Inbox,
   UserPlus,
   X,
+  PencilLine,
+  Trash2,
 } from 'lucide-react';
 import PrimaryButton from '../components/ui/PrimaryButton';
 import SecondaryButton from '../components/ui/SecondaryButton';
 import AlertBanner from '../components/ui/AlertBanner';
 import {
+  createAdminSupporter,
+  deleteAdminSupporter,
   getAdminSupporterDetail,
   getAdminSupporters,
+  updateAdminSupporter,
   type AdminSupporterAllocation,
 } from '../lib/authAPI';
 import '../styles/pages/donors.css';
@@ -44,6 +50,11 @@ interface Supporter {
   id: string;
   name: string;
   organization: string;
+  email?: string;
+  phone?: string;
+  region?: string;
+  country?: string;
+  relationshipType?: string;
   type: SupporterType;
   status: SupporterStatus;
   channel: AcquisitionChannel;
@@ -53,6 +64,38 @@ interface Supporter {
   contributions: Contribution[];
   allocations: Allocation[];
 }
+
+interface SupporterForm {
+  displayName: string;
+  organization: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  region: string;
+  country: string;
+  relationshipType: string;
+  type: SupporterType;
+  status: SupporterStatus;
+  channel: AcquisitionChannel;
+  firstDonation: string;
+}
+
+const emptySupporterForm: SupporterForm = {
+  displayName: '',
+  organization: '',
+  firstName: '',
+  lastName: '',
+  email: '',
+  phone: '',
+  region: '',
+  country: '',
+  relationshipType: '',
+  type: 'monetary',
+  status: 'active',
+  channel: 'online',
+  firstDonation: '',
+};
 
 /* ===== Mock Data ===== */
 const mockSupporters: Supporter[] = [
@@ -253,11 +296,15 @@ function mapAllocations(items: AdminSupporterAllocation[]): Allocation[] {
 function ActionMenu({
   supporterId,
   onViewProfile,
-  onViewHistory,
+  onEditSupporter,
+  onViewContributions,
+  onDeleteSupporter,
 }: {
   supporterId: string;
   onViewProfile: (id: string) => void;
-  onViewHistory: (id: string) => void;
+  onEditSupporter: (id: string) => void;
+  onViewContributions: (id: string) => void;
+  onDeleteSupporter: (id: string) => void;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -291,17 +338,24 @@ function ActionMenu({
           </button>
           <button
             className="donors-actions-menu-item"
-            onClick={() => setOpen(false)}
+            onClick={() => { setOpen(false); onEditSupporter(supporterId); }}
           >
-            <PlusCircle size={15} className="donors-menu-icon" />
-            Record Contribution
+            <PencilLine size={15} className="donors-menu-icon" />
+            Edit Supporter
           </button>
           <button
             className="donors-actions-menu-item"
-            onClick={() => { setOpen(false); onViewHistory(supporterId); }}
+            onClick={() => { setOpen(false); onViewContributions(supporterId); }}
           >
             <History size={15} className="donors-menu-icon" />
-            View History
+            View Contributions
+          </button>
+          <button
+            className="donors-actions-menu-item"
+            onClick={() => { setOpen(false); onDeleteSupporter(supporterId); }}
+          >
+            <Trash2 size={15} className="donors-menu-icon" />
+            Delete Supporter
           </button>
         </div>
       )}
@@ -311,17 +365,64 @@ function ActionMenu({
 
 /* ===== Main Page ===== */
 export default function DonorsPage() {
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const [supporters, setSupporters] = useState<Supporter[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedDetail, setSelectedDetail] = useState<Supporter | null>(null);
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editorId, setEditorId] = useState<string | null>(null);
+  const [editorForm, setEditorForm] = useState<SupporterForm>(emptySupporterForm);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Filters
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [filterChannel, setFilterChannel] = useState('');
+
+  function mapSupporterSummary(item: {
+    id: number;
+    name: string;
+    organization: string | null;
+    email: string | null;
+    phone: string | null;
+    region: string | null;
+    country: string | null;
+    relationshipType: string | null;
+    type: string;
+    status: string;
+    channel: string;
+    firstDonation: string | null;
+    lastContribution: string | null;
+    lifetimeValue: number;
+  }): Supporter {
+    return {
+      id: String(item.id),
+      name: item.name,
+      organization: item.organization ?? '',
+      email: item.email ?? '',
+      phone: item.phone ?? '',
+      region: item.region ?? '',
+      country: item.country ?? '',
+      relationshipType: item.relationshipType ?? '',
+      type: normalizeSupporterType(item.type),
+      status: normalizeSupporterStatus(item.status),
+      channel: normalizeSupporterChannel(item.channel),
+      firstDonation: item.firstDonation ?? '',
+      lastContribution: item.lastContribution ?? '',
+      lifetimeValue: `$${Math.round(item.lifetimeValue).toLocaleString()}`,
+      contributions: [],
+      allocations: [],
+    };
+  }
+
+  async function reloadSupporters() {
+    const data = await getAdminSupporters();
+    setSupporters(data.map(mapSupporterSummary));
+  }
 
   useEffect(() => {
     let isMounted = true;
@@ -333,25 +434,11 @@ export default function DonorsPage() {
       try {
         const data = await getAdminSupporters();
         if (!isMounted) return;
-
-        setSupporters(
-          data.map((item) => ({
-            id: String(item.id),
-            name: item.name,
-            organization: item.organization ?? '',
-            type: normalizeSupporterType(item.type),
-            status: normalizeSupporterStatus(item.status),
-            channel: normalizeSupporterChannel(item.channel),
-            firstDonation: item.firstDonation ?? '',
-            lastContribution: item.lastContribution ?? '',
-            lifetimeValue: `$${Math.round(item.lifetimeValue).toLocaleString()}`,
-            contributions: [],
-            allocations: [],
-          }))
-        );
+        setSupporters(data.map(mapSupporterSummary));
       } catch {
         if (!isMounted) return;
         setHasError(true);
+        setErrorMessage('Unable to load supporter data. Please try again.');
         setSupporters(mockSupporters);
       } finally {
         if (isMounted) {
@@ -384,6 +471,11 @@ export default function DonorsPage() {
           id: String(detail.id),
           name: detail.name,
           organization: detail.organization ?? '',
+          email: detail.email ?? '',
+          phone: detail.phone ?? '',
+          region: detail.region ?? '',
+          country: detail.country ?? '',
+          relationshipType: detail.relationshipType ?? '',
           type: normalizeSupporterType(detail.type),
           status: normalizeSupporterStatus(detail.status),
           channel: normalizeSupporterChannel(detail.channel),
@@ -410,6 +502,106 @@ export default function DonorsPage() {
       isMounted = false;
     };
   }, [selectedId, supporters]);
+
+  function openCreateSupporter() {
+    setEditorId(null);
+    setEditorForm(emptySupporterForm);
+    setEditorOpen(true);
+    setErrorMessage('');
+  }
+
+  function openEditSupporter(id: string) {
+    const target = supporters.find((item) => item.id === id);
+    if (!target) return;
+
+    setEditorId(id);
+    setEditorForm({
+      displayName: target.name,
+      organization: target.organization ?? '',
+      firstName: '',
+      lastName: '',
+      email: target.email ?? '',
+      phone: target.phone ?? '',
+      region: target.region ?? '',
+      country: target.country ?? '',
+      relationshipType: target.relationshipType ?? '',
+      type: target.type,
+      status: target.status,
+      channel: target.channel,
+      firstDonation: target.firstDonation ?? '',
+    });
+    setEditorOpen(true);
+    setErrorMessage('');
+  }
+
+  async function handleSaveSupporter() {
+    if (!editorForm.displayName.trim() && !editorForm.organization.trim() && !editorForm.email.trim()) {
+      setErrorMessage('Display name, organization, or email is required.');
+      return;
+    }
+
+    setIsSaving(true);
+    setErrorMessage('');
+
+    try {
+      const payload = {
+        displayName: editorForm.displayName || null,
+        organization: editorForm.organization || null,
+        firstName: editorForm.firstName || null,
+        lastName: editorForm.lastName || null,
+        relationshipType: editorForm.relationshipType || null,
+        region: editorForm.region || null,
+        country: editorForm.country || null,
+        email: editorForm.email || null,
+        phone: editorForm.phone || null,
+        type: editorForm.type,
+        status: editorForm.status,
+        channel: editorForm.channel,
+        firstDonation: editorForm.firstDonation || null,
+      };
+
+      if (editorId) {
+        await updateAdminSupporter(editorId, payload);
+      } else {
+        await createAdminSupporter(payload);
+      }
+
+      await reloadSupporters();
+      setEditorOpen(false);
+      setEditorId(null);
+      setEditorForm(emptySupporterForm);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Unable to save supporter.');
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function handleDeleteSupporter(id: string) {
+    const confirmed = window.confirm('Delete this supporter? This cannot be undone.');
+    if (!confirmed) return;
+
+    try {
+      await deleteAdminSupporter(id);
+      if (selectedId === id) {
+        setSelectedId(null);
+      }
+      await reloadSupporters();
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Unable to delete supporter.');
+    }
+  }
+
+  function viewContributions(id: string) {
+    const supporter = supporters.find((item) => item.id === id);
+    const params = new URLSearchParams();
+    params.set('supporterId', id);
+    if (supporter?.name) {
+      params.set('supporterName', supporter.name);
+    }
+
+    navigate(`/admin/contributions?${params.toString()}`);
+  }
 
   // Filtered results
   const filtered = supporters.filter((s) => {
@@ -446,15 +638,15 @@ export default function DonorsPage() {
         <div className="admin-page-header">
           <h1 className="admin-page-title">Supporters &amp; Contributions</h1>
           <p className="admin-page-subtitle">
-            Manage donor relationships and track all contributions.
+            Manage supporter profiles while keeping contribution records in the Contributions page.
           </p>
         </div>
         <div className="donors-header-actions">
-          <SecondaryButton onClick={() => { }}>
+          <SecondaryButton onClick={openCreateSupporter}>
             <UserPlus size={16} />
             Add Supporter
           </SecondaryButton>
-          <PrimaryButton onClick={() => { }}>
+          <PrimaryButton onClick={() => navigate('/admin/contributions')}>
             <PlusCircle size={16} />
             Record Contribution
           </PrimaryButton>
@@ -462,11 +654,14 @@ export default function DonorsPage() {
       </div>
 
       {/* Error State */}
-      {hasError && (
+      {(hasError || errorMessage) && (
         <AlertBanner
           type="warning"
-          message="Unable to load supporter data. Please try again."
-          onClose={() => setHasError(false)}
+          message={errorMessage || 'Unable to load supporter data. Please try again.'}
+          onClose={() => {
+            setHasError(false);
+            setErrorMessage('');
+          }}
         />
       )}
 
@@ -710,7 +905,9 @@ export default function DonorsPage() {
                           <ActionMenu
                             supporterId={s.id}
                             onViewProfile={() => setSelectedId(s.id)}
-                            onViewHistory={() => setSelectedId(s.id)}
+                            onEditSupporter={() => openEditSupporter(s.id)}
+                            onViewContributions={() => viewContributions(s.id)}
+                            onDeleteSupporter={() => { void handleDeleteSupporter(s.id); }}
                           />
                         </td>
                       </tr>
@@ -731,7 +928,7 @@ export default function DonorsPage() {
             <div className="donors-detail-panel">
               <div className="donors-detail-header">
                 <h3 className="donors-detail-title">
-                  {selected.name} — Contribution History
+                  {selected.name} — Supporter Profile
                 </h3>
                 <button
                   className="donors-detail-close"
@@ -743,38 +940,194 @@ export default function DonorsPage() {
               </div>
               <div className="donors-detail-body">
                 <div className="donors-detail-grid">
-                  {/* Recent Contributions */}
                   <div>
-                    <h4 className="donors-allocation-title">Recent Contributions</h4>
+                    <h4 className="donors-allocation-title">Profile Details</h4>
                     <div className="donors-history-list">
-                      {selected.contributions.map((c, i) => (
-                        <div className="donors-history-item" key={i}>
-                          <span className="donors-history-date">{formatDate(c.date)}</span>
-                          <span className="donors-history-desc">{c.description}</span>
-                          <span className="donors-history-amount">{c.amount}</span>
-                        </div>
-                      ))}
+                      <div className="donors-history-item">
+                        <span className="donors-history-date">Organization</span>
+                        <span className="donors-history-desc">{selected.organization || 'N/A'}</span>
+                      </div>
+                      <div className="donors-history-item">
+                        <span className="donors-history-date">Email</span>
+                        <span className="donors-history-desc">{selected.email || 'N/A'}</span>
+                      </div>
+                      <div className="donors-history-item">
+                        <span className="donors-history-date">Phone</span>
+                        <span className="donors-history-desc">{selected.phone || 'N/A'}</span>
+                      </div>
+                      <div className="donors-history-item">
+                        <span className="donors-history-date">Location</span>
+                        <span className="donors-history-desc">{[selected.region, selected.country].filter(Boolean).join(', ') || 'N/A'}</span>
+                      </div>
+                      <div className="donors-history-item">
+                        <span className="donors-history-date">Relationship</span>
+                        <span className="donors-history-desc">{selected.relationshipType || 'N/A'}</span>
+                      </div>
+                      <div style={{ marginTop: '12px' }}>
+                        <PrimaryButton onClick={() => viewContributions(selected.id)}>
+                          <History size={14} />
+                          Open Contributions
+                        </PrimaryButton>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Allocation */}
                   <div>
                     <h4 className="donors-allocation-title">Allocation by Program</h4>
-                    {selected.allocations.map((a, i) => (
-                      <div className="donors-alloc-item" key={i}>
-                        <div className="donors-alloc-label">
-                          <span>{a.label}</span>
-                          <span>{a.percent}%</span>
+                    {selected.allocations.length === 0 ? (
+                      <p className="donors-state-text" style={{ margin: 0 }}>
+                        No allocation profile available for this supporter yet.
+                      </p>
+                    ) : (
+                      selected.allocations.map((a, i) => (
+                        <div className="donors-alloc-item" key={i}>
+                          <div className="donors-alloc-label">
+                            <span>{a.label}</span>
+                            <span>{a.percent}%</span>
+                          </div>
+                          <div className="donors-alloc-bar">
+                            <div
+                              className={`donors-alloc-fill ${a.color}`}
+                              style={{ width: `${a.percent}%` }}
+                            />
+                          </div>
                         </div>
-                        <div className="donors-alloc-bar">
-                          <div
-                            className={`donors-alloc-fill ${a.color}`}
-                            style={{ width: `${a.percent}%` }}
-                          />
-                        </div>
-                      </div>
-                    ))}
+                      ))
+                    )}
                   </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {editorOpen && (
+            <div className="donors-detail-panel">
+              <div className="donors-detail-header">
+                <h3 className="donors-detail-title">
+                  {editorId ? 'Edit Supporter' : 'Add Supporter'}
+                </h3>
+                <button
+                  className="donors-detail-close"
+                  onClick={() => {
+                    setEditorOpen(false);
+                    setEditorId(null);
+                    setEditorForm(emptySupporterForm);
+                  }}
+                  aria-label="Close editor"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="donors-detail-body">
+                <div className="donors-detail-grid">
+                  <div>
+                    <h4 className="donors-allocation-title">Identity</h4>
+                    <div className="donors-history-list">
+                      <label className="donors-filter-label" htmlFor="supporter-display-name">Display Name</label>
+                      <input
+                        id="supporter-display-name"
+                        className="donors-filter-input"
+                        value={editorForm.displayName}
+                        onChange={(e) => setEditorForm({ ...editorForm, displayName: e.target.value })}
+                        placeholder="Supporter display name"
+                      />
+                      <label className="donors-filter-label" htmlFor="supporter-org">Organization</label>
+                      <input
+                        id="supporter-org"
+                        className="donors-filter-input"
+                        value={editorForm.organization}
+                        onChange={(e) => setEditorForm({ ...editorForm, organization: e.target.value })}
+                        placeholder="Organization"
+                      />
+                      <label className="donors-filter-label" htmlFor="supporter-email">Email</label>
+                      <input
+                        id="supporter-email"
+                        className="donors-filter-input"
+                        type="email"
+                        value={editorForm.email}
+                        onChange={(e) => setEditorForm({ ...editorForm, email: e.target.value })}
+                        placeholder="email@example.org"
+                      />
+                      <label className="donors-filter-label" htmlFor="supporter-phone">Phone</label>
+                      <input
+                        id="supporter-phone"
+                        className="donors-filter-input"
+                        value={editorForm.phone}
+                        onChange={(e) => setEditorForm({ ...editorForm, phone: e.target.value })}
+                        placeholder="Phone number"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="donors-allocation-title">Classification</h4>
+                    <div className="donors-history-list">
+                      <label className="donors-filter-label" htmlFor="supporter-type">Type</label>
+                      <select
+                        id="supporter-type"
+                        className="donors-filter-select"
+                        value={editorForm.type}
+                        onChange={(e) => setEditorForm({ ...editorForm, type: e.target.value as SupporterType })}
+                      >
+                        {Object.entries(typeLabels).map(([val, label]) => (
+                          <option key={val} value={val}>{label}</option>
+                        ))}
+                      </select>
+                      <label className="donors-filter-label" htmlFor="supporter-status">Status</label>
+                      <select
+                        id="supporter-status"
+                        className="donors-filter-select"
+                        value={editorForm.status}
+                        onChange={(e) => setEditorForm({ ...editorForm, status: e.target.value as SupporterStatus })}
+                      >
+                        {Object.entries(statusLabels).map(([val, label]) => (
+                          <option key={val} value={val}>{label}</option>
+                        ))}
+                      </select>
+                      <label className="donors-filter-label" htmlFor="supporter-channel">Channel</label>
+                      <select
+                        id="supporter-channel"
+                        className="donors-filter-select"
+                        value={editorForm.channel}
+                        onChange={(e) => setEditorForm({ ...editorForm, channel: e.target.value as AcquisitionChannel })}
+                      >
+                        {Object.entries(channelLabels).map(([val, label]) => (
+                          <option key={val} value={val}>{label}</option>
+                        ))}
+                      </select>
+                      <label className="donors-filter-label" htmlFor="supporter-region">Region</label>
+                      <input
+                        id="supporter-region"
+                        className="donors-filter-input"
+                        value={editorForm.region}
+                        onChange={(e) => setEditorForm({ ...editorForm, region: e.target.value })}
+                        placeholder="Region"
+                      />
+                      <label className="donors-filter-label" htmlFor="supporter-country">Country</label>
+                      <input
+                        id="supporter-country"
+                        className="donors-filter-input"
+                        value={editorForm.country}
+                        onChange={(e) => setEditorForm({ ...editorForm, country: e.target.value })}
+                        placeholder="Country"
+                      />
+                      <label className="donors-filter-label" htmlFor="supporter-relationship">Relationship Type</label>
+                      <input
+                        id="supporter-relationship"
+                        className="donors-filter-input"
+                        value={editorForm.relationshipType}
+                        onChange={(e) => setEditorForm({ ...editorForm, relationshipType: e.target.value })}
+                        placeholder="Relationship"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div style={{ marginTop: '16px', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                  <SecondaryButton onClick={() => setEditorOpen(false)}>
+                    Cancel
+                  </SecondaryButton>
+                  <PrimaryButton onClick={() => { void handleSaveSupporter(); }} disabled={isSaving}>
+                    {isSaving ? 'Saving...' : 'Save Supporter'}
+                  </PrimaryButton>
                 </div>
               </div>
             </div>

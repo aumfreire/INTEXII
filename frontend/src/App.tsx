@@ -131,7 +131,7 @@ function App() {
               />
               <Route path="residents/:id" element={<ResidentDetailPage />} />
               <Route path="donors" element={<DonorsPage />} />
-              <Route path="contributions" element={<DonorsPage />} />
+              <Route path="contributions" element={<AdminDonationsPage />} />
               <Route
                 path="process-recordings"
                 element={

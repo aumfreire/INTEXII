@@ -8,7 +8,6 @@ import {
     LayoutDashboard,
     Settings,
     ShieldCheck,
-    HandCoins,
     LogOut,
 } from 'lucide-react';
 import { useAuth } from '../../context/useAuth';
@@ -251,7 +250,6 @@ export default function Navbar() {
                                                 </div>
                                                 <div style={{ display: 'grid', gap: '4px' }}>
                                                     <MenuLink to="/admin" icon={ShieldCheck} label="Admin Dashboard" description="User management and metrics" onClick={closeMenus} />
-                                                    <MenuLink to="/admin/donations" icon={HandCoins} label="Manage Donations" description="Review and edit donation records" onClick={closeMenus} />
                                                 </div>
                                             </>
                                         ) : null}
@@ -402,7 +400,6 @@ export default function Navbar() {
                                 {isAdmin ? (
                                     <MobileMenuSection title="Admin Tools">
                                         <MobileMenuLink to="/admin" icon={ShieldCheck} label="Admin Dashboard" description="User management and metrics" onClick={closeMenus} />
-                                        <MobileMenuLink to="/admin/donations" icon={HandCoins} label="Manage Donations" description="Review and edit donation records" onClick={closeMenus} />
                                     </MobileMenuSection>
                                 ) : null}
                                 <Link

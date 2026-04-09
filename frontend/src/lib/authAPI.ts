@@ -121,6 +121,11 @@ export interface AdminSupporterSummary {
     id: number;
     name: string;
     organization: string | null;
+    email: string | null;
+    phone: string | null;
+    region: string | null;
+    country: string | null;
+    relationshipType: string | null;
     type: string;
     status: string;
     channel: string;
@@ -145,12 +150,33 @@ export interface AdminSupporterDetail {
     id: number;
     name: string;
     organization: string | null;
+    email: string | null;
+    phone: string | null;
+    region: string | null;
+    country: string | null;
+    relationshipType: string | null;
     type: string;
     status: string;
     channel: string;
     firstDonation: string | null;
     contributions: AdminSupporterContribution[];
     allocations: AdminSupporterAllocation[];
+}
+
+export interface AdminSupporterUpsertRequest {
+    displayName?: string | null;
+    organization?: string | null;
+    firstName?: string | null;
+    lastName?: string | null;
+    relationshipType?: string | null;
+    region?: string | null;
+    country?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    type?: string | null;
+    status?: string | null;
+    channel?: string | null;
+    firstDonation?: string | null;
 }
 
 const configuredApiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
@@ -538,6 +564,54 @@ export async function getAdminSupporterDetail(id: number | string): Promise<Admi
     }
 
     return response.json();
+}
+
+export async function createAdminSupporter(payload: AdminSupporterUpsertRequest): Promise<AdminSupporterDetail> {
+    const response = await apiFetch('/api/supporters', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+        throw new Error(
+            await readApiError(response, 'Unable to create supporter.')
+        );
+    }
+
+    return response.json();
+}
+
+export async function updateAdminSupporter(id: number | string, payload: AdminSupporterUpsertRequest): Promise<AdminSupporterDetail> {
+    const response = await apiFetch(`/api/supporters/${id}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+        throw new Error(
+            await readApiError(response, 'Unable to update supporter.')
+        );
+    }
+
+    return response.json();
+}
+
+export async function deleteAdminSupporter(id: number | string): Promise<void> {
+    const response = await apiFetch(`/api/supporters/${id}`, {
+        method: 'DELETE',
+    });
+
+    if (!response.ok) {
+        throw new Error(
+            await readApiError(response, 'Unable to delete supporter.')
+        );
+    }
 }
 
 function buildDonationQueryParams(options: {
