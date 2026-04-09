@@ -24,7 +24,7 @@ import type { DonorDonationCreateRequest, RepeatDonationState } from '../types/D
 import '../styles/pages/donation.css';
 
 const donationHeroImageUrl =
-  'https://images.unsplash.com/photo-1747509228690-8f1fef36d0bf?auto=format&fit=crop&w=1600&q=80';
+  'https://images.unsplash.com/photo-1657049017963-cfc54a066720?auto=format&fit=crop&w=1600&q=80';
 
 const MIN_DONATION_USD = 1;
 const DEFAULT_DONATION_USD = 50;
