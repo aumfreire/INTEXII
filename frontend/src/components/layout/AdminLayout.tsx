@@ -14,6 +14,7 @@ import {
   Menu,
   X,
   AlertTriangle,
+  Building2,
 } from 'lucide-react';
 import { useAuth } from '../../context/useAuth';
 import Navbar from './Navbar';
@@ -23,6 +24,7 @@ const navItems = [
   { to: '/admin', icon: LayoutDashboard, label: 'Dashboard', end: true },
   { to: '/admin/users', icon: UserCog, label: 'Manage Users' },
   { to: '/admin/caseload', icon: ClipboardList, label: 'Caseload' },
+  { to: '/admin/safehouses', icon: Building2, label: 'Safehouses' },
   { to: '/admin/donors', icon: Heart, label: 'Donors' },
   { to: '/admin/contributions', icon: DollarSign, label: 'Contributions' },
   { divider: true },

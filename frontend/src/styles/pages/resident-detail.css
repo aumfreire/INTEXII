@@ -9,36 +9,37 @@
   font-weight: 500;
   color: var(--color-muted);
 
-.rd-reference-panel {
-  background-color: #f7f4ef;
-  border: 1px solid rgba(171, 85, 58, 0.14);
-  box-shadow: none;
-}
+  .rd-reference-panel {
+    background-color: #f7f4ef;
+    border: 1px solid rgba(171, 85, 58, 0.14);
+    box-shadow: none;
+  }
 
-.rd-reference-title {
-  color: var(--color-primary-dark);
-}
+  .rd-reference-title {
+    color: var(--color-primary-dark);
+  }
 
-.rd-reference-text {
-  font-size: 0.88rem;
-  color: var(--color-muted);
-  line-height: 1.6;
-  margin: 12px 0 0;
-}
+  .rd-reference-text {
+    font-size: 0.88rem;
+    color: var(--color-muted);
+    line-height: 1.6;
+    margin: 12px 0 0;
+  }
 
-.rd-reference-list {
-  margin: 16px 0 0;
-  padding-left: 18px;
-  display: grid;
-  gap: 10px;
-  font-size: 0.86rem;
-  line-height: 1.55;
-  color: var(--color-dark);
-}
+  .rd-reference-list {
+    margin: 16px 0 0;
+    padding-left: 18px;
+    display: grid;
+    gap: 10px;
+    font-size: 0.86rem;
+    line-height: 1.55;
+    color: var(--color-dark);
+  }
 
-.rd-reference-list strong {
-  color: var(--color-primary-dark);
-}
+  .rd-reference-list strong {
+    color: var(--color-primary-dark);
+  }
+
   text-decoration: none;
   margin-bottom: 16px;
   transition: color var(--transition-fast);
@@ -159,15 +160,45 @@
   line-height: 1.4;
 }
 
-.rd-badge.risk-low { background-color: rgba(122, 158, 126, 0.1); color: var(--color-sage); }
-.rd-badge.risk-moderate { background-color: rgba(212, 146, 122, 0.12); color: var(--color-primary-light); }
-.rd-badge.risk-high { background-color: rgba(193, 96, 58, 0.1); color: var(--color-primary); }
-.rd-badge.risk-critical { background-color: rgba(171, 85, 58, 0.12); color: var(--color-primary-dark); }
+.rd-badge.risk-low {
+  background-color: rgba(122, 158, 126, 0.1);
+  color: var(--color-sage);
+}
 
-.rd-badge.status-active { background-color: rgba(122, 158, 126, 0.1); color: var(--color-sage); }
-.rd-badge.status-intake { background-color: rgba(212, 146, 122, 0.12); color: var(--color-primary-light); }
-.rd-badge.status-reintegration { background-color: rgba(193, 96, 58, 0.08); color: var(--color-primary); }
-.rd-badge.status-closed { background-color: rgba(133, 132, 129, 0.1); color: var(--color-muted); }
+.rd-badge.risk-moderate {
+  background-color: rgba(212, 146, 122, 0.12);
+  color: var(--color-primary-light);
+}
+
+.rd-badge.risk-high {
+  background-color: rgba(193, 96, 58, 0.1);
+  color: var(--color-primary);
+}
+
+.rd-badge.risk-critical {
+  background-color: rgba(171, 85, 58, 0.12);
+  color: var(--color-primary-dark);
+}
+
+.rd-badge.status-active {
+  background-color: rgba(122, 158, 126, 0.1);
+  color: var(--color-sage);
+}
+
+.rd-badge.status-intake {
+  background-color: rgba(212, 146, 122, 0.12);
+  color: var(--color-primary-light);
+}
+
+.rd-badge.status-reintegration {
+  background-color: rgba(193, 96, 58, 0.08);
+  color: var(--color-primary);
+}
+
+.rd-badge.status-closed {
+  background-color: rgba(133, 132, 129, 0.1);
+  color: var(--color-muted);
+}
 
 .rd-risk-dot {
   width: 7px;
@@ -175,10 +206,22 @@
   border-radius: 50%;
   flex-shrink: 0;
 }
-.rd-risk-dot.low { background-color: var(--color-sage); }
-.rd-risk-dot.moderate { background-color: var(--color-primary-light); }
-.rd-risk-dot.high { background-color: var(--color-primary); }
-.rd-risk-dot.critical { background-color: var(--color-primary-dark); }
+
+.rd-risk-dot.low {
+  background-color: var(--color-sage);
+}
+
+.rd-risk-dot.moderate {
+  background-color: var(--color-primary-light);
+}
+
+.rd-risk-dot.high {
+  background-color: var(--color-primary);
+}
+
+.rd-risk-dot.critical {
+  background-color: var(--color-primary-dark);
+}
 
 /* ===== Layout: Tabs + Content ===== */
 .rd-workspace {
@@ -433,9 +476,20 @@
   letter-spacing: 0.3px;
 }
 
-.rd-record-tag.progress { background-color: rgba(122, 158, 126, 0.1); color: var(--color-sage); }
-.rd-record-tag.concern { background-color: rgba(193, 96, 58, 0.1); color: var(--color-primary); }
-.rd-record-tag.referral { background-color: rgba(212, 146, 122, 0.12); color: var(--color-primary-light); }
+.rd-record-tag.progress {
+  background-color: rgba(122, 158, 126, 0.1);
+  color: var(--color-sage);
+}
+
+.rd-record-tag.concern {
+  background-color: rgba(193, 96, 58, 0.1);
+  color: var(--color-primary);
+}
+
+.rd-record-tag.referral {
+  background-color: rgba(212, 146, 122, 0.12);
+  color: var(--color-primary-light);
+}
 
 .rd-record-summary {
   font-size: 0.88rem;
@@ -493,8 +547,13 @@
   font-weight: 500;
 }
 
-.rd-visit-indicator.safe { color: var(--color-sage); }
-.rd-visit-indicator.warning { color: var(--color-primary); }
+.rd-visit-indicator.safe {
+  color: var(--color-sage);
+}
+
+.rd-visit-indicator.warning {
+  color: var(--color-primary);
+}
 
 /* ===== Case Conference ===== */
 .rd-conference-card {
@@ -620,8 +679,13 @@
   flex-shrink: 0;
 }
 
-.rd-check-icon.done { color: var(--color-sage); }
-.rd-check-icon.pending { color: var(--color-light-gray); }
+.rd-check-icon.done {
+  color: var(--color-sage);
+}
+
+.rd-check-icon.pending {
+  color: var(--color-light-gray);
+}
 
 .rd-checklist-text.done {
   color: var(--color-muted);

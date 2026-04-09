@@ -1275,6 +1275,7 @@ export interface SafehouseItem {
 }
 
 export interface SafehouseUpsertRequest {
+    safehouseId?: number;
     safehouseCode?: string | null;
     name?: string | null;
     region?: string | null;
@@ -1309,7 +1310,7 @@ export async function updateAdminSafehouse(id: number, payload: SafehouseUpsertR
     const response = await apiFetch(`/api/safehouses/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ ...payload, safehouseId: id }),
     });
     if (!response.ok) throw new Error(await readApiError(response, 'Unable to update safehouse.'));
 }

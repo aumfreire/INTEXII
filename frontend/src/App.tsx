@@ -17,6 +17,7 @@ import LoginPage from './pages/LoginPage';
 import SignUpPage from './pages/SignUpPage';
 import CaseloadPage from './pages/CaseloadPage';
 import ResidentDetailPage from './pages/ResidentDetailPage';
+import AdminSafehousesPage from './pages/AdminSafehousesPage';
 import DonorsPage from './pages/DonorsPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import { AuthProvider } from './context/AuthContext';
@@ -102,6 +103,7 @@ function App() {
               <Route path="users" element={<AdminUsersPage />} />
               <Route path="donations" element={<AdminDonationsPage />} />
               <Route path="caseload" element={<CaseloadPage />} />
+              <Route path="safehouses" element={<AdminSafehousesPage />} />
               <Route path="residents/:id" element={<ResidentDetailPage />} />
               <Route path="donors" element={<DonorsPage />} />
               <Route path="contributions" element={<AdminDonationsPage />} />
