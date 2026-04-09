@@ -14,6 +14,8 @@ interface ChatInputProps {
   onFilesAdded: (files: File[]) => void;
   onRemoveAttachment: (index: number) => void;
   accept: string;
+  /** File picker + drag-and-drop; off for now in product chat */
+  showAttachments?: boolean;
 }
 
 export default function ChatInput({
@@ -26,6 +28,7 @@ export default function ChatInput({
   onFilesAdded,
   onRemoveAttachment,
   accept,
+  showAttachments = false,
 }: ChatInputProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -35,6 +38,7 @@ export default function ChatInput({
   const { getRootProps, isDragActive } = useDropzone({
     noClick: true,
     noKeyboard: true,
+    disabled: !showAttachments,
     onDrop: onFilesAdded,
   });
 
@@ -64,19 +68,23 @@ export default function ChatInput({
   }, [value, isStreaming]);
 
   return (
-    <div className={`chat-input-wrap ${isDragActive ? 'chat-drop-active' : ''}`} {...getRootProps()}>
-      <ChatFilePreview attachments={attachments} onRemove={onRemoveAttachment} />
+    <div className={`chat-input-wrap ${showAttachments && isDragActive ? 'chat-drop-active' : ''}`} {...getRootProps()}>
+      {showAttachments ? (
+        <ChatFilePreview attachments={attachments} onRemove={onRemoveAttachment} />
+      ) : null}
       <div className="chat-input-mode">Haven Chat</div>
       <form className="chat-input-row" onSubmit={handleSubmit}>
-        <button
-          type="button"
-          className="chat-input-icon-btn"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={isStreaming}
-          aria-label="Attach files"
-        >
-          <Paperclip size={18} />
-        </button>
+        {showAttachments ? (
+          <button
+            type="button"
+            className="chat-input-icon-btn"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isStreaming}
+            aria-label="Attach files"
+          >
+            <Paperclip size={18} />
+          </button>
+        ) : null}
         <textarea
           ref={textareaRef}
           value={value}
@@ -95,14 +103,16 @@ export default function ChatInput({
           <Send size={17} />
         </button>
       </form>
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept={accept}
-        multiple
-        onChange={(event) => onFilesAdded(Array.from(event.target.files ?? []))}
-        style={{ display: 'none' }}
-      />
+      {showAttachments ? (
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept={accept}
+          multiple
+          onChange={(event) => onFilesAdded(Array.from(event.target.files ?? []))}
+          style={{ display: 'none' }}
+        />
+      ) : null}
     </div>
   );
 }

@@ -45,33 +45,28 @@
   box-shadow: 0 14px 30px rgba(193, 96, 58, 0.45);
 }
 
-/* Use almost the full viewport; keep top/side margins and room above the floating Chat pill */
+/* Compact widget by default; use header expand control for full viewport */
 .chat-popup-shell {
   position: fixed;
   z-index: 5001;
-  left: max(12px, env(safe-area-inset-left, 0px));
+  left: auto;
+  top: auto;
   right: max(12px, env(safe-area-inset-right, 0px));
-  top: max(12px, env(safe-area-inset-top, 0px));
-  bottom: max(92px, calc(12px + env(safe-area-inset-bottom, 0px)));
+  bottom: max(88px, calc(14px + env(safe-area-inset-bottom, 0px) + 52px));
   display: flex;
   flex-direction: column;
+  width: min(92vw, 420px);
+  height: min(56dvh, 520px);
+  min-height: 300px;
+  max-height: calc(
+    100dvh - max(12px, env(safe-area-inset-top, 0px)) - max(88px, calc(14px + env(safe-area-inset-bottom, 0px) + 52px))
+  );
   max-width: none;
-  max-height: none;
   border-radius: 14px;
   overflow: hidden;
   border: 1px solid rgba(18, 18, 18, 0.18);
   box-shadow: 0 24px 48px rgba(0, 0, 0, 0.32);
   background: #1b130f;
-  /* Explicit height: fixed + inset:auto sizing fails in some embedded browsers */
-  height: calc(
-    100vh - max(12px, env(safe-area-inset-top, 0px)) - max(92px, calc(12px + env(safe-area-inset-bottom, 0px)))
-  );
-  height: calc(
-    100dvh - max(12px, env(safe-area-inset-top, 0px)) - max(92px, calc(12px + env(safe-area-inset-bottom, 0px)))
-  );
-  max-height: calc(
-    100vh - max(12px, env(safe-area-inset-top, 0px)) - max(92px, calc(12px + env(safe-area-inset-bottom, 0px)))
-  );
   box-sizing: border-box;
 }
 
@@ -81,8 +76,11 @@
   top: 0;
   bottom: 0;
   width: 100vw;
+  height: 100vh;
   height: 100dvh;
+  min-height: 0;
   max-height: 100vh;
+  max-height: 100dvh;
   border-radius: 0;
   border-left: none;
   border-right: none;

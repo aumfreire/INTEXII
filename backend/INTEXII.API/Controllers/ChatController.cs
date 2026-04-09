@@ -64,10 +64,34 @@ public class ChatController : ControllerBase
         }
 
         var isAdmin = User.IsInRole(AuthRoles.Admin);
-        var systemPrompt = isAdmin ? BuildAdminSystemPrompt() : BuildPublicSystemPrompt();
+        var internalChat = isAdmin && request.IncludeInternalContext;
+        var systemPrompt = internalChat ? BuildAdminSystemPrompt() : BuildPublicSystemPrompt();
 
-        var conversation = await ResolveConversationAsync(request.ConversationId, isAdmin, cancellationToken);
+        var conversation = await ResolveConversationAsync(request.ConversationId, internalChat, cancellationToken);
         var userId = GetUserId();
+
+        if (!internalChat && TryGetPublicCannedResponse(request.Message, out var cannedMarkdown))
+        {
+            _db.ChatAuditLogs.Add(new ChatAuditLog
+            {
+                UserId = userId,
+                ConversationId = null,
+                Question = request.Message,
+                Intent = "public_canned",
+                HadDbContext = false,
+                CreatedAt = DateTime.UtcNow
+            });
+            await _db.SaveChangesAsync(cancellationToken);
+
+            Response.ContentType = "text/event-stream";
+            Response.Headers.CacheControl = "no-cache";
+            Response.Headers.Append("Connection", "keep-alive");
+            Response.Headers["X-Accel-Buffering"] = "no";
+
+            await WriteSseEventAsync("delta", new { delta = cannedMarkdown }, cancellationToken);
+            await WriteSseEventAsync("done", new { conversationId = (int?)null, ok = true }, cancellationToken);
+            return new EmptyResult();
+        }
 
         var attachments = new List<ChatAttachmentContent>();
         if (request.AttachmentUploadIds?.Count > 0 && conversation is not null)
@@ -112,14 +136,14 @@ public class ChatController : ControllerBase
 
         var contextBlocks = new List<string>();
         var intent = "general";
-        if (isAdmin)
+        if (internalChat)
         {
             var result = await _contextService.BuildContextAsync(request.Message, cancellationToken);
             intent = result.Intent;
             contextBlocks.AddRange(result.Blocks);
         }
 
-        if (request.ExternalContext is { Length: > 0 })
+        if (internalChat && request.ExternalContext is { Length: > 0 })
         {
             contextBlocks.Add($"--- Uploaded external context ---\n{request.ExternalContext}");
         }
@@ -128,6 +152,11 @@ public class ChatController : ControllerBase
         {
             var contextPrefix = "[DATABASE CONTEXT]\n" + string.Join("\n\n", contextBlocks) + "\n[END DATABASE CONTEXT]";
             history.Add(new ChatMessageContent("assistant", contextPrefix, Array.Empty<ChatAttachmentContent>()));
+        }
+
+        if (!internalChat)
+        {
+            history.Add(new ChatMessageContent("assistant", BuildPublicSiteMapBlock(), Array.Empty<ChatAttachmentContent>()));
         }
 
         history.Add(new ChatMessageContent("user", request.Message, attachments));
@@ -469,9 +498,9 @@ public class ChatController : ControllerBase
         }
     }
 
-    private async Task<ChatConversation?> ResolveConversationAsync(int? requestedId, bool isAdmin, CancellationToken cancellationToken)
+    private async Task<ChatConversation?> ResolveConversationAsync(int? requestedId, bool usePersistedConversation, CancellationToken cancellationToken)
     {
-        if (!isAdmin)
+        if (!usePersistedConversation)
         {
             return null;
         }
@@ -536,13 +565,114 @@ public class ChatController : ControllerBase
         return string.Concat(singleLine.AsSpan(0, maxLen - 1), "…");
     }
 
+    /// <summary>Deterministic copy for simple public questions—skips the LLM so answers never contradict the in-app quick links.</summary>
+    private static bool TryGetPublicCannedResponse(string message, out string markdown)
+    {
+        markdown = string.Empty;
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            return false;
+        }
+
+        var trimmed = message.Trim();
+        if (trimmed.Length > 320)
+        {
+            return false;
+        }
+
+        var donate = Regex.IsMatch(
+            trimmed,
+            @"\b(donate|donation|donating|give\s+money|make\s+a\s+gift|contribute|financial\s+support|where\s+can\s+i\s+give|how\s+(can|do)\s+i\s+donate|want\s+to\s+donate|support\s+haven)\b",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        var login = Regex.IsMatch(
+            trimmed,
+            @"\b(log\s*in|login|sign\s*in|signin|where\s+(can|do)\s+i\s+log\s*in|how\s+(can|do)\s+i\s+log\s*in|access\s+(my\s+)?account|sign\s+on)\b",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        var signup = Regex.IsMatch(
+            trimmed,
+            @"\b(sign\s*up|signup|register|create\s+(an?\s+)?account|new\s+account|where\s+(can|do)\s+i\s+sign\s*up|how\s+(can|do)\s+i\s+register)\b",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        var authDetails = Regex.IsMatch(trimmed, @"\b(credentials?|authentication)\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        var visitorAccess = Regex.IsMatch(
+            trimmed,
+            @"\b(log\s*in|login|sign\s*in|account|access|sign\s+on)\b",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        if (authDetails && visitorAccess)
+        {
+            login = true;
+        }
+
+        if (!donate && !login && !signup)
+        {
+            return false;
+        }
+
+        var parts = new List<string>();
+        if (login)
+        {
+            parts.Add("You can sign in on our log in page.\n\n**[Log in here](/login)**");
+        }
+
+        if (signup)
+        {
+            parts.Add("You can create an account here.\n\n**[Create an account](/signup)**");
+        }
+
+        if (donate)
+        {
+            parts.Add("Thank you for wanting to help—your support means a lot.\n\n**[Donate here](/donate)**");
+        }
+
+        markdown = string.Join("\n\n", parts);
+        return true;
+    }
+
+    private static string BuildPublicSiteMapBlock()
+    {
+        return """
+[PUBLIC SITE MAP — authoritative paths on this website; use ONLY these for in-site links]
+/ — Home
+/donate — Donate / make a gift (main giving page)
+/impact — Impact
+/login — Log in
+/signup — Create account (same as /register)
+/chat — Haven Chat (this assistant)
+/privacy — Privacy policy
+/cookies — Cookie policy
+/dashboard — Signed-in dashboard (account required)
+/donations — Donation history (account required)
+[END PUBLIC SITE MAP]
+""".Trim();
+    }
+
     private string BuildPublicSystemPrompt()
     {
         return """
-You are the Haven of Hope assistant for public visitors.
-You can help with mission, programs, impact, donor basics, nonprofit/child-welfare best practices, and public information.
-Never reveal internal resident/donor/staff private details.
-Use clear markdown, practical advice, and direct answers.
+You are Haven Chat: the assistant for everyone visiting Haven of Hope on the website. You are NOT an internal staff tool, NOT a database analyst, and NOT "for admins." Never say you are an internal assistant, never mention the database, dashboards, "database context," "operational insights," IT administrators, or site configuration—even if the user sounds like they are testing you.
+
+Never say or imply that you "don't have access," "can't access," "don't have information," "lack login details," or that the visitor should contact IT or an administrator instead of using the website. You always help with normal visitor questions using the site map—no apologies about permissions.
+
+Each request includes a [PUBLIC SITE MAP] block with real URLs on this site. When you link somewhere, copy those paths exactly. Do not invent paths.
+
+Whenever a question can be answered by sending the visitor to a page on that map (for example where to log in, donate, sign up, read policies), do this: one short helpful sentence, then put the main markdown link on its own line. Do not refuse or hedge—the pages exist at those paths.
+
+Tone: warm, calm, short, and human. If something truly is not on the site map and is not general knowledge, say briefly that you are not sure—without technical reasons.
+
+Donations: thank them, say their gift matters, then on its own line:
+**[Donate here](/donate)**
+Add one line with [/login](/login) or [/signup](/signup) only if an account is relevant.
+
+Log in / sign in / access my account: friendly one-liner, then on its own line:
+**[Log in here](/login)**
+
+Create account / register / sign up: friendly one-liner, then on its own line:
+**[Create an account](/signup)**
+
+Other "where do I…?" questions: use the matching path from the site map the same way (sentence + link line).
+
+Visitors are not IT staff and cannot fix backend or permission issues. Do NOT give troubleshooting, diagnostics, or "why it might not work" explanations. Do NOT list steps like checking documentation, contacting an administrator, verifying credentials, contacting a supervisor, or "if urgent" escalation. Do NOT ask which internal system or portal they meant (case management, donor platform, safehouse tools, etc.)—those are not for public chat. If they sound stuck logging in, still point them to [/login](/login) in one short line; optionally suggest [/signup](/signup) if an account might be missing—nothing else.
+
+Use light markdown. Never give strategic memos, "internal notes," or statistics you were not given in plain visitor-appropriate text.
 """;
     }
 
@@ -550,7 +680,8 @@ Use clear markdown, practical advice, and direct answers.
     {
         return """
 You are the Haven of Hope internal assistant for admins and staff.
-You have internal database context and should provide analysis, trends, anomalies, and actionable recommendations.
+You only have internal data when a message includes a [DATABASE CONTEXT] block from this session. Treat that block as authoritative for numbers and summaries; do not invent figures. If there is no such block, say you do not have live internal context for that question.
+Provide analysis, trends, anomalies, and actionable recommendations when context is present.
 Be direct, precise, and strategic. Cross-link domains when useful (donations, residents, safehouses, social).
 For minors/cases, stay sensitive and avoid unnecessary personal detail.
 """;
@@ -712,7 +843,8 @@ CREATE TABLE dbo.chat_audit_logs (
         [property: JsonPropertyName("conversationId")] int? ConversationId,
         [property: JsonPropertyName("message")] string Message,
         [property: JsonPropertyName("externalContext")] string? ExternalContext,
-        [property: JsonPropertyName("attachmentUploadIds")] IReadOnlyList<int>? AttachmentUploadIds);
+        [property: JsonPropertyName("attachmentUploadIds")] IReadOnlyList<int>? AttachmentUploadIds,
+        [property: JsonPropertyName("includeInternalContext")] bool IncludeInternalContext = false);
 
     public sealed record CreateConversationRequest(string? Title);
     public sealed record RenameConversationRequest(string Title);

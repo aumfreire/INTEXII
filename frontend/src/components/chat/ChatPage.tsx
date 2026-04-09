@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Maximize2, Minimize2, Moon, PanelLeft, Sun } from 'lucide-react';
 import { useAuth } from '../../context/useAuth';
 import { useChat } from '../../hooks/useChat';
+import ChatQuickNavCta from './ChatQuickNavCta';
 import ChatEmptyState from './ChatEmptyState';
 import ChatInput from './ChatInput';
 import ChatMessageList from './ChatMessageList';
@@ -104,6 +105,7 @@ export default function ChatPage({
               <div className="chat-main-scroll">
                 {messages.length === 0 ? <ChatEmptyState /> : <ChatMessageList messages={messages} />}
               </div>
+              {!adminMode ? <ChatQuickNavCta messages={messages} /> : null}
               <ChatInput
                 value={input}
                 onChange={setInput}
@@ -114,6 +116,7 @@ export default function ChatPage({
                 onFilesAdded={files.addFiles}
                 onRemoveAttachment={files.removeFile}
                 accept={files.accept}
+                showAttachments={false}
               />
               {error ? <div className="chat-error">{error}</div> : null}
             </>

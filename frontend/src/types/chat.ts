@@ -33,6 +33,8 @@ export interface ChatStreamRequest {
   message: string;
   externalContext?: string;
   attachmentUploadIds?: number[];
+  /** When true, server may attach DB summaries (admins only; Admin chat page). */
+  includeInternalContext?: boolean;
 }
 
 export interface StreamHandlers {

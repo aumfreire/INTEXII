@@ -67,7 +67,6 @@ function ScrollToTop() {
 
 function ChatLauncher() {
   const { pathname } = useLocation();
-  const { isAuthenticated, authSession } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -75,14 +74,16 @@ function ChatLauncher() {
     return null;
   }
 
-  const adminMode = isAuthenticated && authSession.roles.includes('Admin');
-
+  // Popup chat is always public: internal DB context is only for /admin/chat (AdminChatPage).
   return (
     <>
       <button
         type="button"
         className="chat-launcher-btn"
-        onClick={() => setIsOpen(true)}
+        onClick={() => {
+          setIsExpanded(false);
+          setIsOpen(true);
+        }}
         aria-label="Open chat"
       >
         Chat
@@ -100,13 +101,20 @@ function ChatLauncher() {
               >
                 {isExpanded ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
               </button>
-              <button type="button" onClick={() => setIsOpen(false)} aria-label="Close chat">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsOpen(false);
+                  setIsExpanded(false);
+                }}
+                aria-label="Close chat"
+              >
                 <X size={15} />
               </button>
             </div>
           </header>
           <div className="chat-popup-body">
-            <ChatPage adminMode={adminMode} popupMode showFullscreenToggle={false} />
+            <ChatPage adminMode={false} popupMode showFullscreenToggle={false} />
           </div>
         </section>
       ) : null}

@@ -74,6 +74,7 @@ export function useChat(adminMode: boolean) {
           conversationId: activeConversationId,
           message: trimmed,
           attachmentUploadIds: uploadIds,
+          includeInternalContext: adminMode,
         },
         setMessages
       );
