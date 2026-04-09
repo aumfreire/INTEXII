@@ -1,10 +1,13 @@
+using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
-using System.Security.Claims;
 using INTEXII.API.Data;
-using Microsoft.AspNetCore.Authentication;
+using INTEXII.API.Data.Models;
+using INTEXII.API.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace INTEXII.API.Controllers;
 
@@ -12,569 +15,588 @@ namespace INTEXII.API.Controllers;
 [Route("api/chat")]
 public class ChatController : ControllerBase
 {
-    private const string AnthropicEndpoint = "https://api.anthropic.com/v1/messages";
-    private const string AnthropicModel = "claude-haiku-4-5-20251001";
-    private const string SystemPrompt =
-        "You are a warm and helpful assistant for Haven of Hope, a nonprofit organization in the Philippines that protects, supports, and empowers vulnerable girls including those who have been trafficked, abused, neglected, or abandoned. Answer questions about the organization, how to donate, what impact donations make, and how to get involved. Keep responses concise, compassionate, and encouraging. Keep responses short and to the point: usually 2-5 sentences total plus short bullets only when needed. Always guide potential donors toward taking action. Never provide or suggest external URLs; only reference internal website routes like /donate, /login, /signup, /#mission, /#impact, and /cookies. Ask one thoughtful follow-up question at the end of each response to help the user narrow or deepen their request. If the user query is broad or ambiguous, ask 1-2 clarifying questions before giving a detailed answer. Make responses highly actionable: include a short 'Next actions' section with 2-4 concrete, prioritized steps. For admin metrics or operations questions, include what to do next, who should own it (team/role), and a suggested timeframe. Proactively offer execution help when relevant, such as: 'Want me to build a campaign outline?' or 'Want me to draft donor emails?'";
+    private static readonly SemaphoreSlim SchemaLock = new(1, 1);
+    private static bool _schemaReady;
 
-    private static readonly IReadOnlyList<KnowledgeDocument> KnowledgeBase =
-    [
-        new(
-            "mission",
-            "Mission and Services",
-            "/#mission",
-            "Haven of Hope protects, supports, heals, and empowers vulnerable girls, including survivors of trafficking, abuse, neglect, and abandonment. Services include emergency shelter, trauma-informed counseling, education support, life skills training, and long-term reintegration support."),
-        new(
-            "donation",
-            "How to Donate",
-            "/donate",
-            "People can donate through the Donate page. Donors can choose one-time or monthly gifts. Donation ranges and impact tiers are shown clearly, and a post-donation confirmation explains impact. Supporters are encouraged to take immediate action through the donation flow."),
-        new(
-            "impact",
-            "Donation Impact Messaging",
-            "/donate",
-            "Impact messages in the current donation experience include: meal support for smaller gifts, school supplies support for mid-level gifts, and shelter-and-care support for larger gifts. The app emphasizes that each gift creates measurable safety, healing, and opportunity for girls."),
-        new(
-            "involved",
-            "Ways to Get Involved",
-            "/#impact",
-            "People can get involved by donating, creating an account, and logging in to manage donor activity. The site highlights awareness, community support, and long-term commitment to protecting girls."),
-        new(
-            "contact",
-            "Contact and Trust",
-            "/cookies",
-            "The organization presents trust signals including secure donation language, nonprofit framing, and privacy/cookie policy access. Users can review policy details and proceed confidently."),
-    ];
-
-    private readonly IHttpClientFactory _httpClientFactory;
-    private readonly IConfiguration _configuration;
-    private readonly ILogger<ChatController> _logger;
     private readonly IntexDbContext _db;
+    private readonly ClaudeService _claudeService;
+    private readonly ChatContextService _contextService;
+    private readonly ChatFileService _fileService;
+    private readonly IMemoryCache _cache;
+    private readonly ILogger<ChatController> _logger;
+    private readonly IConfiguration _configuration;
 
     public ChatController(
-        IHttpClientFactory httpClientFactory,
-        IConfiguration configuration,
+        IntexDbContext db,
+        ClaudeService claudeService,
+        ChatContextService contextService,
+        ChatFileService fileService,
+        IMemoryCache cache,
         ILogger<ChatController> logger,
-        IntexDbContext db)
+        IConfiguration configuration)
     {
-        _httpClientFactory = httpClientFactory;
-        _configuration = configuration;
-        _logger = logger;
         _db = db;
+        _claudeService = claudeService;
+        _contextService = contextService;
+        _fileService = fileService;
+        _cache = cache;
+        _logger = logger;
+        _configuration = configuration;
     }
 
-    [HttpPost("widget")]
-    public async Task<IActionResult> Widget([FromBody] ChatRequest request)
+    [HttpPost("message")]
+    [AllowAnonymous]
+    public async Task<IActionResult> Message([FromBody] ChatMessageRequest request, CancellationToken cancellationToken)
     {
-        var apiKey = _configuration["Anthropic:ApiKey"];
-        if (string.IsNullOrWhiteSpace(apiKey))
+        await EnsureChatSchemaAsync(cancellationToken);
+        if (!PassesRateLimit())
         {
-            return StatusCode(500, new { message = "Chat service is not configured (missing Anthropic:ApiKey)." });
+            return StatusCode(429, new { message = "Rate limit exceeded. Try again shortly." });
         }
 
-        if (request.Messages is null || request.Messages.Count == 0)
+        var isAdmin = User.IsInRole(AuthRoles.Admin);
+        var systemPrompt = isAdmin ? BuildAdminSystemPrompt() : BuildPublicSystemPrompt();
+
+        var conversation = await ResolveConversationAsync(request.ConversationId, isAdmin, cancellationToken);
+        var userId = GetUserId();
+
+        var attachments = new List<ChatAttachmentContent>();
+        if (request.AttachmentUploadIds?.Count > 0 && conversation is not null)
         {
-            return BadRequest(new { message = "At least one chat message is required." });
-        }
-
-        var normalizedMessages = request.Messages
-            .Where(m => !string.IsNullOrWhiteSpace(m.Text) && (m.Role == "user" || m.Role == "assistant"))
-            .Select(m => new ChatMessagePayload(m.Role!, m.Text!.Trim()))
-            .TakeLast(12)
-            .ToList();
-
-        if (normalizedMessages.Count == 0)
-        {
-            return BadRequest(new { message = "No valid messages were provided." });
-        }
-
-        var latestUserMessage = normalizedMessages.LastOrDefault(m => m.Role == "user")?.Text ?? string.Empty;
-        var selectedKnowledge = SelectKnowledge(latestUserMessage, topN: 3);
-        var resolvedPrincipal = await ResolvePrincipalAsync();
-        var isAdmin = IsAdminUser(resolvedPrincipal);
-        var roleAccessGuardrail = isAdmin
-            ? "Access level: Admin. You may use provided admin insights from internal data to answer."
-            : "Access level: Public/Donor. You must only use public website/general knowledge context provided. Never claim access to private or internal database records.";
-
-        var dynamicInsights = isAdmin
-            ? await BuildAdminInsightsAsync(latestUserMessage)
-            : Array.Empty<KnowledgeDocument>();
-        var allGroundingDocs = selectedKnowledge.Concat(dynamicInsights).ToArray();
-        var groundingPrompt = BuildGroundingPrompt(allGroundingDocs);
-
-        if (isAdmin && IsAdminMetricsIntent(latestUserMessage))
-        {
-            var directAnswer = BuildDirectAdminMetricsAnswer(dynamicInsights);
-            var directSources = SelectRelevantSources(dynamicInsights, latestUserMessage).Select(d => new ChatSource(
-                d.Title,
-                d.Route,
-                TrimForSnippet(d.Content, 160))).ToArray();
-            var directPrompts = BuildFollowUpPrompts(latestUserMessage, isAdmin);
-            return Ok(new ChatResponse(directAnswer, directSources, directPrompts));
-        }
-
-        var anthropicPayload = new
-        {
-            model = AnthropicModel,
-            max_tokens = 320,
-            system = $"{SystemPrompt}\n\n{roleAccessGuardrail}\n\nUse this grounded context when answering:\n{groundingPrompt}\n\nFor admin users: never say you lack access to live data when admin insights are present in context; summarize the provided metrics directly.\n\nIf needed information is missing, say so briefly and suggest a next step.",
-            messages = normalizedMessages.Select(m => new
-            {
-                role = m.Role,
-                content = new[] { new { type = "text", text = m.Text } }
-            })
-        };
-
-        try
-        {
-            var client = _httpClientFactory.CreateClient();
-            using var outbound = new HttpRequestMessage(HttpMethod.Post, AnthropicEndpoint);
-            outbound.Headers.Add("x-api-key", apiKey);
-            outbound.Headers.Add("anthropic-version", "2023-06-01");
-            outbound.Content = new StringContent(JsonSerializer.Serialize(anthropicPayload), Encoding.UTF8, "application/json");
-
-            using var response = await client.SendAsync(outbound);
-            var raw = await response.Content.ReadAsStringAsync();
-
-            if (!response.IsSuccessStatusCode)
-            {
-                _logger.LogWarning("Anthropic chat call failed with status {Status}: {Body}", response.StatusCode, raw);
-                return StatusCode((int)response.StatusCode, new { message = "Chat provider request failed." });
-            }
-
-            using var json = JsonDocument.Parse(raw);
-            var answer = ExtractAssistantText(json.RootElement);
-            if (string.IsNullOrWhiteSpace(answer))
-            {
-                answer = "I could not generate a response right now. Please try again.";
-            }
-
-            var sources = SelectRelevantSources(allGroundingDocs, latestUserMessage).Select(d => new ChatSource(
-                d.Title,
-                d.Route,
-                TrimForSnippet(d.Content, 160))).ToArray();
-            var followUpPrompts = BuildFollowUpPrompts(latestUserMessage, isAdmin);
-
-            return Ok(new ChatResponse(answer, sources, followUpPrompts));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Unexpected error while processing chat request.");
-            return StatusCode(500, new { message = "Unexpected error while processing chat request." });
-        }
-    }
-
-    private async Task<IReadOnlyList<KnowledgeDocument>> BuildAdminInsightsAsync(string query)
-    {
-        var term = query.Trim();
-        var includeDonations = string.IsNullOrWhiteSpace(term)
-            || ContainsAny(term, "donation", "revenue", "amount", "fund", "campaign", "monthly");
-        var includeSupporters = string.IsNullOrWhiteSpace(term)
-            || ContainsAny(term, "supporter", "donor", "user", "account");
-        var includeOperations = string.IsNullOrWhiteSpace(term)
-            || ContainsAny(term, "resident", "safehouse", "case", "program", "shelter");
-
-        var docs = new List<KnowledgeDocument>();
-        int? donationCountSnapshot = null;
-        int? recurringCountSnapshot = null;
-        int? supporterCountSnapshot = null;
-        int? activeSupportersSnapshot = null;
-        int? residentCountSnapshot = null;
-        int? safehouseCountSnapshot = null;
-        // If intent matching misses, still provide a baseline admin snapshot.
-        if (!includeDonations && !includeSupporters && !includeOperations)
-        {
-            includeDonations = true;
-            includeSupporters = true;
-            includeOperations = true;
-        }
-
-        if (includeDonations)
-        {
-            var donationCount = await _db.Donations.CountAsync();
-            var totalAmount = await _db.Donations.SumAsync(d => d.Amount ?? 0m);
-            var recurringCount = await _db.Donations.CountAsync(d => d.IsRecurring == true);
-            donationCountSnapshot = donationCount;
-            recurringCountSnapshot = recurringCount;
-
-            var campaignRows = await _db.Donations
+            var uploads = await _db.ChatUploads
                 .AsNoTracking()
-                .Where(d => d.CampaignName != null && d.Amount != null)
-                .GroupBy(d => d.CampaignName!)
-                .Select(group => new { Campaign = group.Key, Total = group.Sum(d => d.Amount ?? 0m) })
-                .OrderByDescending(row => row.Total)
-                .Take(3)
-                .ToListAsync();
+                .Where(u => request.AttachmentUploadIds.Contains(u.UploadId) && u.ConversationId == conversation.ConversationId)
+                .ToListAsync(cancellationToken);
 
-            var topCampaigns = campaignRows.Count == 0
-                ? "No campaign totals available yet."
-                : string.Join("; ", campaignRows.Select(row => $"{row.Campaign}: {row.Total:0.##}"));
-
-            docs.Add(new KnowledgeDocument(
-                "admin-donations",
-                "Admin Insights: Donations (Live DB)",
-                "/admin/donations",
-                $"Donations count: {donationCount}. Total amount: {totalAmount:0.##}. Recurring donations: {recurringCount}. Top campaigns by amount: {topCampaigns}"));
-        }
-
-        if (includeSupporters)
-        {
-            var supporterCount = await _db.Supporters.CountAsync();
-            var activeSupporters = await _db.Supporters.CountAsync(s => s.Status != null && s.Status.ToLower() == "active");
-            var organizationSupporters = await _db.Supporters.CountAsync(s => s.OrganizationName != null && s.OrganizationName != "");
-            supporterCountSnapshot = supporterCount;
-            activeSupportersSnapshot = activeSupporters;
-
-            docs.Add(new KnowledgeDocument(
-                "admin-supporters",
-                "Admin Insights: Supporters (Live DB)",
-                "/admin/users",
-                $"Supporters total: {supporterCount}. Active supporters: {activeSupporters}. Supporters with organization names: {organizationSupporters}."));
-        }
-
-        if (includeOperations)
-        {
-            var residentCount = await _db.Residents.CountAsync();
-            var safehouseCount = await _db.Safehouses.CountAsync();
-            residentCountSnapshot = residentCount;
-            safehouseCountSnapshot = safehouseCount;
-
-            docs.Add(new KnowledgeDocument(
-                "admin-operations",
-                "Admin Insights: Program Operations (Live DB)",
-                "/admin",
-                $"Residents tracked: {residentCount}. Safehouses tracked: {safehouseCount}."));
-        }
-
-        var actionItems = new List<string>();
-
-        if (donationCountSnapshot.HasValue && recurringCountSnapshot.HasValue)
-        {
-            var total = donationCountSnapshot.Value;
-            var recurring = recurringCountSnapshot.Value;
-            var recurringRate = total == 0 ? 0m : (decimal)recurring / total;
-
-            if (total == 0)
+            foreach (var upload in uploads)
             {
-                actionItems.Add("Launch a quick donor acquisition test this week (Owner: Fundraising).");
-            }
-            else if (recurringRate < 0.30m)
-            {
-                actionItems.Add($"Increase recurring conversion (current ~{recurringRate:P0}) by adding a monthly default and post-donation upsell (Owner: Growth/Product, Timeline: next 7 days).");
+                var storedPath = Path.Combine(_fileService.GetStorageRoot(), upload.StoredFilename);
+                if (!System.IO.File.Exists(storedPath))
+                {
+                    continue;
+                }
+
+                var extracted = await _fileService.ExtractAttachmentAsync(
+                    upload.OriginalFilename,
+                    upload.ContentType,
+                    storedPath,
+                    cancellationToken);
+                attachments.Add(extracted);
             }
         }
 
-        if (supporterCountSnapshot.HasValue && activeSupportersSnapshot.HasValue && supporterCountSnapshot.Value > 0)
+        var history = new List<ChatMessageContent>();
+        if (conversation is not null)
         {
-            var activationRate = (decimal)activeSupportersSnapshot.Value / supporterCountSnapshot.Value;
-            if (activationRate < 0.60m)
+            var previous = await _db.ChatMessages
+                .AsNoTracking()
+                .Where(m => m.ConversationId == conversation.ConversationId)
+                .OrderBy(m => m.CreatedAt)
+                .Take(60)
+                .ToListAsync(cancellationToken);
+
+            foreach (var msg in previous)
             {
-                actionItems.Add($"Run a reactivation sequence for inactive supporters (active rate ~{activationRate:P0}) with segmented messaging (Owner: CRM/Marketing, Timeline: next 14 days).");
+                history.Add(new ChatMessageContent(msg.Role, msg.Content, Array.Empty<ChatAttachmentContent>()));
             }
         }
 
-        if (residentCountSnapshot.HasValue && safehouseCountSnapshot.HasValue && safehouseCountSnapshot.Value > 0)
+        var contextBlocks = new List<string>();
+        var intent = "general";
+        if (isAdmin)
         {
-            var residentsPerSafehouse = (decimal)residentCountSnapshot.Value / safehouseCountSnapshot.Value;
-            if (residentsPerSafehouse > 20m)
-            {
-                actionItems.Add($"Review safehouse capacity and case allocation (current ~{residentsPerSafehouse:0.0} residents/safehouse) (Owner: Operations, Timeline: this week).");
-            }
+            var result = await _contextService.BuildContextAsync(request.Message, cancellationToken);
+            intent = result.Intent;
+            contextBlocks.AddRange(result.Blocks);
         }
 
-        actionItems.Add("Set a weekly KPI review cadence and track 3 priorities only: recurring growth, activation rate, and program capacity (Owner: Admin Lead).");
+        if (request.ExternalContext is { Length: > 0 })
+        {
+            contextBlocks.Add($"--- Uploaded external context ---\n{request.ExternalContext}");
+        }
 
-        docs.Add(new KnowledgeDocument(
-            "admin-actions",
-            "Admin Insights: Recommended Next Actions (Live DB)",
-            "/admin",
-            string.Join("\n", actionItems.Select(item => $"- {item}"))));
+        if (contextBlocks.Count > 0)
+        {
+            var contextPrefix = "[DATABASE CONTEXT]\n" + string.Join("\n\n", contextBlocks) + "\n[END DATABASE CONTEXT]";
+            history.Add(new ChatMessageContent("assistant", contextPrefix, Array.Empty<ChatAttachmentContent>()));
+        }
 
-        return docs;
+        history.Add(new ChatMessageContent("user", request.Message, attachments));
+
+        if (conversation is not null)
+        {
+            _db.ChatMessages.Add(new ChatMessage
+            {
+                ConversationId = conversation.ConversationId,
+                Role = "user",
+                Content = request.Message,
+                AttachmentsJson = JsonSerializer.Serialize(request.AttachmentUploadIds ?? Array.Empty<int>()),
+                CreatedAt = DateTime.UtcNow
+            });
+            await _db.SaveChangesAsync(cancellationToken);
+        }
+
+        _db.ChatAuditLogs.Add(new ChatAuditLog
+        {
+            UserId = userId,
+            ConversationId = conversation?.ConversationId,
+            Question = request.Message,
+            Intent = intent,
+            HadDbContext = contextBlocks.Count > 0,
+            CreatedAt = DateTime.UtcNow
+        });
+        await _db.SaveChangesAsync(cancellationToken);
+
+        Response.ContentType = "text/event-stream";
+        Response.Headers.CacheControl = "no-cache";
+        Response.Headers.Append("Connection", "keep-alive");
+        Response.Headers["X-Accel-Buffering"] = "no";
+
+        var assistantBuilder = new StringBuilder();
+        await foreach (var token in _claudeService.StreamResponseAsync(history, systemPrompt, stream: true, cancellationToken))
+        {
+            assistantBuilder.Append(token);
+            await WriteSseEventAsync("delta", new { delta = token }, cancellationToken);
+        }
+
+        var finalText = assistantBuilder.ToString();
+        if (conversation is not null)
+        {
+            _db.ChatMessages.Add(new ChatMessage
+            {
+                ConversationId = conversation.ConversationId,
+                Role = "assistant",
+                Content = finalText,
+                CreatedAt = DateTime.UtcNow
+            });
+            conversation.UpdatedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync(cancellationToken);
+        }
+
+        await WriteSseEventAsync("done", new
+        {
+            conversationId = conversation?.ConversationId,
+            ok = true
+        }, cancellationToken);
+        return new EmptyResult();
     }
 
-    private static string ExtractAssistantText(JsonElement root)
+    [HttpPost("conversations")]
+    [Authorize(Roles = AuthRoles.Admin)]
+    public async Task<IActionResult> CreateConversation([FromBody] CreateConversationRequest request, CancellationToken cancellationToken)
     {
-        if (!root.TryGetProperty("content", out var content) || content.ValueKind != JsonValueKind.Array)
+        await EnsureChatSchemaAsync(cancellationToken);
+        var userId = GetRequiredUserId();
+        var conversation = new ChatConversation
         {
-            return string.Empty;
-        }
-
-        foreach (var part in content.EnumerateArray())
-        {
-            if (!part.TryGetProperty("type", out var typeElement) || typeElement.GetString() != "text")
-            {
-                continue;
-            }
-
-            if (part.TryGetProperty("text", out var textElement))
-            {
-                return textElement.GetString() ?? string.Empty;
-            }
-        }
-
-        return string.Empty;
+            UserId = userId,
+            Title = string.IsNullOrWhiteSpace(request.Title) ? "New conversation" : request.Title.Trim(),
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+            IsDeleted = false
+        };
+        _db.ChatConversations.Add(conversation);
+        await _db.SaveChangesAsync(cancellationToken);
+        return Ok(MapConversation(conversation));
     }
 
-    private static IReadOnlyList<KnowledgeDocument> SelectKnowledge(string query, int topN)
+    [HttpGet("conversations")]
+    [Authorize(Roles = AuthRoles.Admin)]
+    public async Task<IActionResult> ListConversations(CancellationToken cancellationToken)
     {
-        var queryTerms = Tokenize(query);
-        if (queryTerms.Count == 0)
+        await EnsureChatSchemaAsync(cancellationToken);
+        var userId = GetRequiredUserId();
+        var conversations = await _db.ChatConversations
+            .AsNoTracking()
+            .Where(c => c.UserId == userId && !c.IsDeleted)
+            .OrderByDescending(c => c.UpdatedAt)
+            .ToListAsync(cancellationToken);
+        return Ok(conversations.Select(MapConversation).ToArray());
+    }
+
+    [HttpGet("conversations/{id:int}")]
+    [Authorize(Roles = AuthRoles.Admin)]
+    public async Task<IActionResult> GetConversation(int id, CancellationToken cancellationToken)
+    {
+        await EnsureChatSchemaAsync(cancellationToken);
+        var userId = GetRequiredUserId();
+        var conversation = await _db.ChatConversations
+            .AsNoTracking()
+            .FirstOrDefaultAsync(c => c.ConversationId == id && c.UserId == userId && !c.IsDeleted, cancellationToken);
+        if (conversation is null)
         {
-            return KnowledgeBase.Take(topN).ToArray();
+            return NotFound();
         }
 
-        return KnowledgeBase
-            .Select(doc => new
+        var messages = await _db.ChatMessages
+            .AsNoTracking()
+            .Where(m => m.ConversationId == id)
+            .OrderBy(m => m.CreatedAt)
+            .ToListAsync(cancellationToken);
+
+        return Ok(new
+        {
+            conversation = MapConversation(conversation),
+            messages = messages.Select(m => new
             {
-                Doc = doc,
-                Score = queryTerms.Sum(term =>
-                    CountOccurrences(doc.Title, term) * 3 +
-                    CountOccurrences(doc.Content, term))
+                messageId = m.MessageId,
+                role = m.Role,
+                content = m.Content,
+                createdAt = m.CreatedAt
             })
-            .OrderByDescending(x => x.Score)
-            .ThenBy(x => x.Doc.Title)
-            .Take(topN)
-            .Select(x => x.Doc)
-            .ToArray();
+        });
     }
 
-    private static string BuildGroundingPrompt(IReadOnlyList<KnowledgeDocument> documents)
+    [HttpDelete("conversations/{id:int}")]
+    [Authorize(Roles = AuthRoles.Admin)]
+    public async Task<IActionResult> DeleteConversation(int id, CancellationToken cancellationToken)
     {
-        var builder = new StringBuilder();
-        foreach (var doc in documents)
+        await EnsureChatSchemaAsync(cancellationToken);
+        var userId = GetRequiredUserId();
+        var conversation = await _db.ChatConversations
+            .FirstOrDefaultAsync(c => c.ConversationId == id && c.UserId == userId && !c.IsDeleted, cancellationToken);
+        if (conversation is null)
         {
-            builder.AppendLine($"- Source: {doc.Title} ({doc.Route})");
-            builder.AppendLine($"  {doc.Content}");
+            return NotFound();
         }
 
-        return builder.ToString().Trim();
+        conversation.IsDeleted = true;
+        conversation.UpdatedAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync(cancellationToken);
+        return NoContent();
     }
 
-    private static HashSet<string> Tokenize(string text)
+    [HttpPatch("conversations/{id:int}")]
+    [Authorize(Roles = AuthRoles.Admin)]
+    public async Task<IActionResult> RenameConversation(int id, [FromBody] RenameConversationRequest request, CancellationToken cancellationToken)
     {
-        var terms = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var pieces = text.Split([' ', '\n', '\r', '\t', '.', ',', '!', '?', ':', ';', '(', ')', '-', '/', '\\', '"', '\''],
-            StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
-        foreach (var piece in pieces)
+        await EnsureChatSchemaAsync(cancellationToken);
+        var userId = GetRequiredUserId();
+        var conversation = await _db.ChatConversations
+            .FirstOrDefaultAsync(c => c.ConversationId == id && c.UserId == userId && !c.IsDeleted, cancellationToken);
+        if (conversation is null)
         {
-            if (piece.Length >= 3)
-            {
-                terms.Add(piece.ToLowerInvariant());
-            }
+            return NotFound();
         }
 
-        return terms;
+        conversation.Title = string.IsNullOrWhiteSpace(request.Title) ? conversation.Title : request.Title.Trim();
+        conversation.UpdatedAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync(cancellationToken);
+        return Ok(MapConversation(conversation));
     }
 
-    private static int CountOccurrences(string text, string term)
+    [HttpPost("upload")]
+    [Authorize(Roles = AuthRoles.Admin)]
+    [RequestSizeLimit(30_000_000)]
+    public async Task<IActionResult> Upload([FromForm] IFormFile file, [FromForm] int conversationId, CancellationToken cancellationToken)
     {
-        var count = 0;
-        var index = 0;
-        while (true)
-        {
-            index = text.IndexOf(term, index, StringComparison.OrdinalIgnoreCase);
-            if (index < 0)
-            {
-                return count;
-            }
+        await EnsureChatSchemaAsync(cancellationToken);
+        var userId = GetRequiredUserId();
 
-            count++;
-            index += term.Length;
-        }
-    }
-
-    private static string TrimForSnippet(string value, int maxLen)
-    {
-        if (value.Length <= maxLen)
+        var conversation = await _db.ChatConversations
+            .AsNoTracking()
+            .FirstOrDefaultAsync(c => c.ConversationId == conversationId && c.UserId == userId && !c.IsDeleted, cancellationToken);
+        if (conversation is null)
         {
-            return value;
+            return NotFound(new { message = "Conversation not found." });
         }
 
-        return $"{value[..(maxLen - 3)].TrimEnd()}...";
+        if (!_fileService.IsAllowedFileType(file.FileName))
+        {
+            return BadRequest(new { message = "Unsupported file type." });
+        }
+
+        var maxSizeMb = int.TryParse(_configuration["CHAT_MAX_FILE_SIZE_MB"], out var configuredMb) ? configuredMb : 25;
+        if (file.Length > maxSizeMb * 1024L * 1024L)
+        {
+            return BadRequest(new { message = $"File exceeds {maxSizeMb}MB limit." });
+        }
+
+        var (storedPath, contentType) = await _fileService.SaveUploadAsync(file, cancellationToken);
+        var upload = new ChatUpload
+        {
+            ConversationId = conversationId,
+            OriginalFilename = file.FileName,
+            StoredFilename = Path.GetFileName(storedPath),
+            ContentType = contentType,
+            FileSizeBytes = file.Length,
+            UploadedAt = DateTime.UtcNow
+        };
+        _db.ChatUploads.Add(upload);
+        await _db.SaveChangesAsync(cancellationToken);
+
+        return Ok(new
+        {
+            uploadId = upload.UploadId,
+            originalFilename = upload.OriginalFilename,
+            contentType = upload.ContentType,
+            fileSizeBytes = upload.FileSizeBytes
+        });
     }
 
-    private static bool ContainsAny(string text, params string[] terms)
+    [HttpPost("feedback")]
+    [Authorize(Roles = AuthRoles.Admin)]
+    public async Task<IActionResult> Feedback([FromBody] FeedbackRequest request, CancellationToken cancellationToken)
     {
-        return terms.Any(term => text.Contains(term, StringComparison.OrdinalIgnoreCase));
+        await EnsureChatSchemaAsync(cancellationToken);
+        var userId = GetRequiredUserId();
+        var message = await _db.ChatMessages
+            .AsNoTracking()
+            .FirstOrDefaultAsync(m => m.MessageId == request.MessageId, cancellationToken);
+        if (message is null)
+        {
+            return NotFound();
+        }
+
+        var rating = request.Rating?.Trim().ToLowerInvariant();
+        if (rating is not ("up" or "down"))
+        {
+            return BadRequest(new { message = "Rating must be 'up' or 'down'." });
+        }
+
+        _db.ChatFeedback.Add(new ChatFeedback
+        {
+            MessageId = request.MessageId,
+            UserId = userId,
+            Rating = rating,
+            CreatedAt = DateTime.UtcNow
+        });
+        await _db.SaveChangesAsync(cancellationToken);
+        return Ok(new { ok = true });
     }
 
-    private static bool IsAdminMetricsIntent(string query)
+    private bool PassesRateLimit()
     {
-        if (string.IsNullOrWhiteSpace(query))
+        var key = $"chat-rate:{GetUserId() ?? HttpContext.Connection.RemoteIpAddress?.ToString() ?? "anon"}";
+        var maxPerMinute = int.TryParse(_configuration["CHAT_RATE_LIMIT_PER_MINUTE"], out var configured) ? configured : 30;
+        var current = _cache.GetOrCreate<int>(key, entry =>
+        {
+            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(1);
+            return 0;
+        });
+
+        if (current >= maxPerMinute)
         {
             return false;
         }
 
-        return ContainsAny(
-            query,
-            "metric", "metrics", "insight", "insights", "dashboard",
-            "top", "summary", "summarize", "overview", "kpi", "kpis",
-            "donation", "supporter", "resident", "safehouse", "trend");
+        _cache.Set(key, current + 1, TimeSpan.FromMinutes(1));
+        return true;
     }
 
-    private static IReadOnlyList<string> BuildFollowUpPrompts(string latestUserMessage, bool isAdmin)
+    private async Task<ChatConversation?> ResolveConversationAsync(int? requestedId, bool isAdmin, CancellationToken cancellationToken)
     {
-        if (isAdmin)
+        if (!isAdmin)
         {
-            if (ContainsAny(latestUserMessage, "metric", "dashboard", "kpi", "top", "summary"))
+            return null;
+        }
+
+        var userId = GetRequiredUserId();
+        if (requestedId.HasValue)
+        {
+            var existing = await _db.ChatConversations
+                .FirstOrDefaultAsync(c => c.ConversationId == requestedId && c.UserId == userId && !c.IsDeleted, cancellationToken);
+            if (existing is not null)
             {
-                return
-                [
-                    "Break this down by campaign",
-                    "Show recurring vs one-time trend",
-                    "What insight should we act on first?"
-                ];
+                return existing;
+            }
+        }
+
+        var created = new ChatConversation
+        {
+            UserId = userId,
+            Title = "New conversation",
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+            IsDeleted = false
+        };
+        _db.ChatConversations.Add(created);
+        await _db.SaveChangesAsync(cancellationToken);
+        return created;
+    }
+
+    private static object MapConversation(ChatConversation conversation) => new
+    {
+        conversationId = conversation.ConversationId,
+        title = conversation.Title,
+        createdAt = conversation.CreatedAt,
+        updatedAt = conversation.UpdatedAt
+    };
+
+    private string BuildPublicSystemPrompt()
+    {
+        return """
+You are the Haven of Hope assistant for public visitors.
+You can help with mission, programs, impact, donor basics, nonprofit/child-welfare best practices, and public information.
+Never reveal internal resident/donor/staff private details.
+Use clear markdown, practical advice, and direct answers.
+""";
+    }
+
+    private string BuildAdminSystemPrompt()
+    {
+        return """
+You are the Haven of Hope internal assistant for admins and staff.
+You have internal database context and should provide analysis, trends, anomalies, and actionable recommendations.
+Be direct, precise, and strategic. Cross-link domains when useful (donations, residents, safehouses, social).
+For minors/cases, stay sensitive and avoid unnecessary personal detail.
+""";
+    }
+
+    private string GetRequiredUserId()
+    {
+        return GetUserId() ?? throw new UnauthorizedAccessException("User identity is required.");
+    }
+
+    private string? GetUserId()
+    {
+        return User.FindFirstValue(ClaimTypes.NameIdentifier);
+    }
+
+    private async Task WriteSseEventAsync(string eventName, object payload, CancellationToken cancellationToken)
+    {
+        var json = JsonSerializer.Serialize(payload);
+        await Response.WriteAsync($"event: {eventName}\n", cancellationToken);
+        await Response.WriteAsync($"data: {json}\n\n", cancellationToken);
+        await Response.Body.FlushAsync(cancellationToken);
+    }
+
+    private async Task EnsureChatSchemaAsync(CancellationToken cancellationToken)
+    {
+        if (_schemaReady)
+        {
+            return;
+        }
+
+        await SchemaLock.WaitAsync(cancellationToken);
+        try
+        {
+            if (_schemaReady)
+            {
+                return;
             }
 
-            return
-            [
-                "Give me top metrics based on live data",
-                "What changed in donations recently?",
-                "Where should we drill down next?"
-            ];
-        }
-
-        if (ContainsAny(latestUserMessage, "donate", "donation", "gift"))
-        {
-            return
-            [
-                "How do I choose the right donation amount?",
-                "Can I make a monthly donation?",
-                "Where does my donation go?"
-            ];
-        }
-
-        if (ContainsAny(latestUserMessage, "help", "involved", "volunteer", "support"))
-        {
-            return
-            [
-                "What are the best ways to get involved?",
-                "How does Haven support girls day-to-day?",
-                "What impact can a first donation make?"
-            ];
-        }
-
-        return
-        [
-            "How can I donate right now?",
-            "What impact do donations make?",
-            "How can I get involved beyond giving?"
-        ];
-    }
-
-    private static string BuildDirectAdminMetricsAnswer(IReadOnlyList<KnowledgeDocument> dynamicInsights)
-    {
-        var donations = dynamicInsights.FirstOrDefault(d => d.Id == "admin-donations")?.Content;
-        var supporters = dynamicInsights.FirstOrDefault(d => d.Id == "admin-supporters")?.Content;
-        var operations = dynamicInsights.FirstOrDefault(d => d.Id == "admin-operations")?.Content;
-        var actions = dynamicInsights.FirstOrDefault(d => d.Id == "admin-actions")?.Content;
-
-        var lines = new List<string>
-        {
-            "Here are the latest admin metrics from the live database:"
-        };
-
-        if (!string.IsNullOrWhiteSpace(donations))
-        {
-            lines.Add($"- Donations: {donations}");
-        }
-
-        if (!string.IsNullOrWhiteSpace(supporters))
-        {
-            lines.Add($"- Supporters: {supporters}");
-        }
-
-        if (!string.IsNullOrWhiteSpace(operations))
-        {
-            lines.Add($"- Operations: {operations}");
-        }
-
-        if (!string.IsNullOrWhiteSpace(actions))
-        {
-            lines.Add("");
-            lines.Add("Recommended next actions:");
-            lines.Add(actions);
-        }
-
-        lines.Add("");
-        lines.Add("Want me to build a campaign outline, draft donor emails, or create a weekly KPI check-in template from this data?");
-        lines.Add("");
-        lines.Add("Ask for a focused cut next (e.g., campaign breakdown, recurring trend changes, or supporter growth by segment).");
-        return string.Join("\n", lines);
-    }
-
-    private static IReadOnlyList<KnowledgeDocument> SelectRelevantSources(IReadOnlyList<KnowledgeDocument> documents, string query)
-    {
-        if (documents.Count == 0)
-        {
-            return Array.Empty<KnowledgeDocument>();
-        }
-
-        var queryTerms = Tokenize(query);
-        if (queryTerms.Count == 0)
-        {
-            return documents.Take(1).ToArray();
-        }
-
-        var ranked = documents
-            .Select(doc => new
+            if (_db.Database.IsSqlite())
             {
-                Doc = doc,
-                Score = queryTerms.Sum(term =>
-                    CountOccurrences(doc.Title, term) * 3 +
-                    CountOccurrences(doc.Content, term))
-            })
-            .OrderByDescending(x => x.Score)
-            .ThenBy(x => x.Doc.Title)
-            .ToList();
+                await _db.Database.ExecuteSqlRawAsync("""
+CREATE TABLE IF NOT EXISTS chat_conversations (
+    conversation_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    title TEXT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    is_deleted INTEGER NOT NULL DEFAULT 0
+);
+""", cancellationToken);
+                await _db.Database.ExecuteSqlRawAsync("""
+CREATE TABLE IF NOT EXISTS chat_messages (
+    message_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    conversation_id INTEGER NOT NULL,
+    role TEXT NOT NULL,
+    content TEXT NOT NULL,
+    attachments_json TEXT NULL,
+    created_at TEXT NOT NULL
+);
+""", cancellationToken);
+                await _db.Database.ExecuteSqlRawAsync("""
+CREATE TABLE IF NOT EXISTS chat_feedback (
+    feedback_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    message_id INTEGER NOT NULL,
+    user_id TEXT NOT NULL,
+    rating TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
+""", cancellationToken);
+                await _db.Database.ExecuteSqlRawAsync("""
+CREATE TABLE IF NOT EXISTS chat_uploads (
+    upload_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    conversation_id INTEGER NOT NULL,
+    original_filename TEXT NOT NULL,
+    stored_filename TEXT NOT NULL,
+    content_type TEXT NOT NULL,
+    file_size_bytes INTEGER NULL,
+    uploaded_at TEXT NOT NULL
+);
+""", cancellationToken);
+                await _db.Database.ExecuteSqlRawAsync("""
+CREATE TABLE IF NOT EXISTS chat_audit_logs (
+    chat_audit_log_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NULL,
+    conversation_id INTEGER NULL,
+    question TEXT NOT NULL,
+    intent TEXT NOT NULL,
+    had_db_context INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL
+);
+""", cancellationToken);
+            }
+            else if (_db.Database.IsSqlServer())
+            {
+                await _db.Database.ExecuteSqlRawAsync("""
+IF OBJECT_ID(N'dbo.chat_conversations', N'U') IS NULL
+CREATE TABLE dbo.chat_conversations (
+    conversation_id INT IDENTITY(1,1) PRIMARY KEY,
+    user_id NVARCHAR(450) NOT NULL,
+    title NVARCHAR(255) NULL,
+    created_at DATETIME2 NOT NULL,
+    updated_at DATETIME2 NOT NULL,
+    is_deleted BIT NOT NULL DEFAULT 0
+);
+IF OBJECT_ID(N'dbo.chat_messages', N'U') IS NULL
+CREATE TABLE dbo.chat_messages (
+    message_id INT IDENTITY(1,1) PRIMARY KEY,
+    conversation_id INT NOT NULL,
+    role NVARCHAR(20) NOT NULL,
+    content NVARCHAR(MAX) NOT NULL,
+    attachments_json NVARCHAR(MAX) NULL,
+    created_at DATETIME2 NOT NULL
+);
+IF OBJECT_ID(N'dbo.chat_feedback', N'U') IS NULL
+CREATE TABLE dbo.chat_feedback (
+    feedback_id INT IDENTITY(1,1) PRIMARY KEY,
+    message_id INT NOT NULL,
+    user_id NVARCHAR(450) NOT NULL,
+    rating NVARCHAR(10) NOT NULL,
+    created_at DATETIME2 NOT NULL
+);
+IF OBJECT_ID(N'dbo.chat_uploads', N'U') IS NULL
+CREATE TABLE dbo.chat_uploads (
+    upload_id INT IDENTITY(1,1) PRIMARY KEY,
+    conversation_id INT NOT NULL,
+    original_filename NVARCHAR(500) NOT NULL,
+    stored_filename NVARCHAR(500) NOT NULL,
+    content_type NVARCHAR(100) NOT NULL,
+    file_size_bytes BIGINT NULL,
+    uploaded_at DATETIME2 NOT NULL
+);
+IF OBJECT_ID(N'dbo.chat_audit_logs', N'U') IS NULL
+CREATE TABLE dbo.chat_audit_logs (
+    chat_audit_log_id INT IDENTITY(1,1) PRIMARY KEY,
+    user_id NVARCHAR(450) NULL,
+    conversation_id INT NULL,
+    question NVARCHAR(MAX) NOT NULL,
+    intent NVARCHAR(50) NOT NULL,
+    had_db_context BIT NOT NULL DEFAULT 0,
+    created_at DATETIME2 NOT NULL
+);
+""", cancellationToken);
+            }
 
-        var withMatches = ranked.Where(x => x.Score > 0).Take(2).Select(x => x.Doc).ToArray();
-        if (withMatches.Length > 0)
-        {
-            return withMatches;
+            _schemaReady = true;
         }
-
-        // No strong relevance signal; avoid noisy link lists.
-        return Array.Empty<KnowledgeDocument>();
+        finally
+        {
+            SchemaLock.Release();
+        }
     }
 
-    private static bool IsAdminUser(ClaimsPrincipal user)
-    {
-        if (user.IsInRole(AuthRoles.Admin))
-        {
-            return true;
-        }
+    public sealed record ChatMessageRequest(
+        int? ConversationId,
+        string Message,
+        string? ExternalContext,
+        IReadOnlyList<int>? AttachmentUploadIds);
 
-        return user.Claims.Any(claim =>
-            (claim.Type == ClaimTypes.Role
-             || claim.Type.Equals("role", StringComparison.OrdinalIgnoreCase)
-             || claim.Type.EndsWith("/claims/role", StringComparison.OrdinalIgnoreCase))
-            && claim.Value.Equals(AuthRoles.Admin, StringComparison.OrdinalIgnoreCase));
-    }
-
-    private async Task<ClaimsPrincipal> ResolvePrincipalAsync()
-    {
-        if (User?.Identity?.IsAuthenticated == true)
-        {
-            return User;
-        }
-
-        var authResult = await HttpContext.AuthenticateAsync("JwtOrCookie");
-        if (authResult.Succeeded && authResult.Principal is not null)
-        {
-            return authResult.Principal;
-        }
-
-        return User ?? new ClaimsPrincipal(new ClaimsIdentity());
-    }
-
-    public sealed record ChatRequest(IReadOnlyList<ChatMessageRequest>? Messages);
-    public sealed record ChatMessageRequest(string? Role, string? Text);
-    public sealed record ChatMessagePayload(string Role, string Text);
-    public sealed record ChatSource(string Title, string Route, string Snippet);
-    public sealed record ChatResponse(string Answer, IReadOnlyList<ChatSource> Sources, IReadOnlyList<string> FollowUpPrompts);
-
-    private sealed record KnowledgeDocument(string Id, string Title, string Route, string Content);
+    public sealed record CreateConversationRequest(string? Title);
+    public sealed record RenameConversationRequest(string Title);
+    public sealed record FeedbackRequest(int MessageId, string Rating);
 }

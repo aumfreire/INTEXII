@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import type { ReactElement } from 'react';
 import {
   BrowserRouter as Router,
@@ -7,6 +7,7 @@ import {
   useLocation,
   Navigate,
 } from 'react-router-dom';
+import { Maximize2, MessageCircle, Minimize2, X } from 'lucide-react';
 import './App.css';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
@@ -29,7 +30,9 @@ import CookiePolicyPage from './pages/CookiePolicyPage';
 import AuthCallbackPage from './pages/AuthCallbackPage';
 import ComingSoonPage from './pages/ComingSoonPage';
 import { CookieConsentProvider } from './context/CookieConsentContext';
-import ChatWidget from './components/ChatWidget';
+import AssistantPage from './pages/AssistantPage';
+import AdminChatPage from './pages/AdminChatPage';
+import ChatPage from './components/chat/ChatPage';
 
 function ScrollToTop() {
   const { pathname, hash } = useLocation();
@@ -74,6 +77,54 @@ function RequireAuth({
 }
 
 function App() {
+  function ChatLauncher() {
+    const { pathname } = useLocation();
+    const { isAuthenticated, authSession } = useAuth();
+    const [isOpen, setIsOpen] = useState(false);
+    const [isExpanded, setIsExpanded] = useState(false);
+    if (pathname === '/assistant' || pathname === '/admin/chat') {
+      return null;
+    }
+
+    const adminMode = isAuthenticated && authSession.roles.includes('Admin');
+
+    return (
+      <>
+        <button
+          type="button"
+          className="chat-launcher-btn"
+          onClick={() => setIsOpen(true)}
+          aria-label="Open assistant"
+        >
+          <MessageCircle size={16} />
+          Assistant
+        </button>
+        {isOpen ? (
+          <section className={`chat-popup-shell ${isExpanded ? 'expanded' : ''}`} aria-label="Assistant popup">
+            <header className="chat-popup-header">
+              <div>Assistant</div>
+              <div className="chat-popup-header-actions">
+                <button
+                  type="button"
+                  onClick={() => setIsExpanded((prev) => !prev)}
+                  aria-label={isExpanded ? 'Downsize chat window' : 'Expand chat window'}
+                >
+                  {isExpanded ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
+                </button>
+                <button type="button" onClick={() => setIsOpen(false)} aria-label="Close chat popup">
+                  <X size={15} />
+                </button>
+              </div>
+            </header>
+            <div className="chat-popup-body">
+              <ChatPage adminMode={adminMode} popupMode showFullscreenToggle={false} />
+            </div>
+          </section>
+        ) : null}
+      </>
+    );
+  }
+
   return (
     <CookieConsentProvider>
       <AuthProvider>
@@ -89,6 +140,7 @@ function App() {
                 <Route path="/auth/callback" element={<AuthCallbackPage />} />
                 <Route path="/cookies" element={<CookiePolicyPage />} />
                 <Route path="/coming-soon" element={<ComingSoonPage />} />
+                <Route path="/assistant" element={<AssistantPage />} />
                 <Route path="/signup" element={<SignUpPage />} />
                 <Route path="/register" element={<SignUpPage />} />
                 <Route path="/logout" element={<LogoutPage />} />
@@ -148,10 +200,18 @@ function App() {
                     </RequireAuth>
                   }
                 />
+                <Route
+                  path="/admin/chat"
+                  element={
+                    <RequireAuth adminOnly>
+                      <AdminChatPage />
+                    </RequireAuth>
+                  }
+                />
               </Routes>
             </main>
             <Footer />
-            <ChatWidget />
+            <ChatLauncher />
             <CookieConsentBanner />
           </div>
         </Router>
