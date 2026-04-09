@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Heart,
   Shield,
@@ -23,18 +24,50 @@ import type { DonorDonationCreateRequest, RepeatDonationState } from '../types/D
 import '../styles/pages/donation.css';
 
 const donationHeroImageUrl =
-  'https://images.unsplash.com/photo-1747509228690-8f1fef36d0bf?auto=format&fit=crop&w=1600&q=80';
+  'https://images.unsplash.com/photo-1657049017963-cfc54a066720?auto=format&fit=crop&w=1600&q=80';
 
-const amounts = [25, 50, 75, 150, 300, 500];
+const MIN_DONATION_USD = 1;
+const DEFAULT_DONATION_USD = 50;
+
+const amounts = [5, 10, 25, 50, 100, 250, 500, 1000, 2500];
 
 const impactItems = [
-  { amount: 25, text: 'School supplies for one girl for a full term' },
-  { amount: 50, text: 'One week of trauma-informed counseling sessions' },
-  { amount: 75, text: 'Educational materials and tutoring for one month' },
-  { amount: 150, text: 'One month of safe housing and nutritious meals' },
-  { amount: 300, text: 'Complete life skills and vocational training course' },
-  { amount: 500, text: 'Full program enrollment for one girl for three months' },
+  { amount: 10, text: 'A warm meal and snacks for a girl in our care' },
+  { amount: 25, text: 'School supplies for one girl for a week' },
+  { amount: 50, text: 'One week of trauma-informed counseling support' },
+  { amount: 100, text: 'Educational materials and tutoring for one month' },
+  { amount: 250, text: 'One month of safe housing basics and meals' },
+  { amount: 500, text: 'Expanded program support for a girl for several months' },
+  { amount: 1000, text: 'Deepened counseling, education, and reintegration support' },
+  { amount: 2500, text: 'Major investment in long-term safety and opportunity for girls' },
 ];
+
+function normalizeDonationUsd(amount: number): number {
+  if (!Number.isFinite(amount)) {
+    return DEFAULT_DONATION_USD;
+  }
+  const rounded = Math.round(amount * 100) / 100;
+  return Math.max(MIN_DONATION_USD, rounded);
+}
+
+function formatUsd(amount: number): string {
+  return `$${amount.toLocaleString('en-US', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  })}`;
+}
+
+/** Thank-you impact copy by gift size (USD). */
+function getDonationImpactMessageUsd(amountUsd: number): string {
+  const usd = Math.round(amountUsd * 100) / 100;
+  if (usd < 50) {
+    return 'You provided a meal for a girl in need';
+  }
+  if (usd <= 199) {
+    return 'You covered a week of school supplies';
+  }
+  return 'You funded a month of shelter and care';
+}
 
 const faqItems = [
   {
@@ -93,10 +126,14 @@ export default function DonationPage() {
     repeatDonation?.donationType === 'one-time' ? 'one-time' : 'monthly'
   );
   const [selectedAmount, setSelectedAmount] = useState<number | null>(
-    repeatDonation?.amount ?? 50
+    typeof repeatDonation?.amount === 'number' && repeatDonation.amount > 0
+      ? normalizeDonationUsd(repeatDonation.amount)
+      : DEFAULT_DONATION_USD
   );
   const [customAmount, setCustomAmount] = useState(
-    repeatDonation?.amount ? repeatDonation.amount.toString() : ''
+    typeof repeatDonation?.amount === 'number' && repeatDonation.amount > 0
+      ? normalizeDonationUsd(repeatDonation.amount).toString()
+      : ''
   );
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -109,16 +146,16 @@ export default function DonationPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [thankYouDetails, setThankYouDetails] = useState<{
+    amountUsd: number;
+    donationType: 'monthly' | 'one-time';
+    firstName: string;
+  } | null>(null);
   const [isPrefilling, setIsPrefilling] = useState(false);
 
   const activeAmount = customAmount
     ? parseFloat(customAmount)
     : selectedAmount;
-
-  const annualImpact =
-    donationType === 'monthly' && activeAmount
-      ? activeAmount * 12
-      : null;
 
   const handleAmountClick = (amount: number) => {
     if (!isAuthenticated) {
@@ -153,8 +190,9 @@ export default function DonationPage() {
     }
 
     if (typeof repeatDonation.amount === 'number' && repeatDonation.amount > 0) {
-      setSelectedAmount(repeatDonation.amount);
-      setCustomAmount(repeatDonation.amount.toString());
+      const normalized = normalizeDonationUsd(repeatDonation.amount);
+      setSelectedAmount(normalized);
+      setCustomAmount(normalized.toString());
     }
 
     if (typeof repeatDonation.notes === 'string') {
@@ -212,8 +250,11 @@ export default function DonationPage() {
       return;
     }
 
-    if (!activeAmount || activeAmount <= 0)
+    if (!activeAmount || Number.isNaN(activeAmount)) {
       newErrors.amount = 'Please select or enter an amount';
+    } else if (activeAmount < MIN_DONATION_USD) {
+      newErrors.amount = `Enter an amount of at least ${formatUsd(MIN_DONATION_USD)}`;
+    }
     if (!firstName.trim()) newErrors.firstName = 'First name is required';
     if (!lastName.trim()) newErrors.lastName = 'Last name is required';
     if (!email.trim()) newErrors.email = 'Email is required';
@@ -224,8 +265,13 @@ export default function DonationPage() {
     }
 
     setErrors({});
-    setIsSubmitting(true);
+    const validatedAmount = activeAmount as number;
+    const confirmedAmountUsd = normalizeDonationUsd(validatedAmount);
+    if (confirmedAmountUsd < MIN_DONATION_USD) {
+      return;
+    }
 
+    setIsSubmitting(true);
     try {
       const payload: DonorDonationCreateRequest = {
         firstName: firstName.trim(),
@@ -237,14 +283,19 @@ export default function DonationPage() {
         campaignName: repeatDonation?.campaignName ?? null,
         channelSource: repeatDonation?.channelSource ?? null,
         currencyCode: 'USD',
-        amount: activeAmount,
-        estimatedValue: activeAmount,
+        amount: confirmedAmountUsd,
+        estimatedValue: confirmedAmountUsd,
         impactUnit: null,
         notes: dedication.trim() || null,
         referralPostId: null,
       };
 
       await createMyDonation(payload);
+      setThankYouDetails({
+        amountUsd: confirmedAmountUsd,
+        donationType,
+        firstName: firstName.trim(),
+      });
       setShowSuccess(true);
     } catch (error) {
       setErrors({
@@ -257,11 +308,13 @@ export default function DonationPage() {
 
   const resetForm = () => {
     setShowSuccess(false);
+    setThankYouDetails(null);
     if (typeof repeatDonation?.amount === 'number' && repeatDonation.amount > 0) {
-      setSelectedAmount(repeatDonation.amount);
-      setCustomAmount(repeatDonation.amount.toString());
+      const normalized = normalizeDonationUsd(repeatDonation.amount);
+      setSelectedAmount(normalized);
+      setCustomAmount(normalized.toString());
     } else {
-      setSelectedAmount(50);
+      setSelectedAmount(DEFAULT_DONATION_USD);
       setCustomAmount('');
     }
 
@@ -281,6 +334,17 @@ export default function DonationPage() {
   const clearError = (field: string) => {
     if (errors[field]) setErrors((prev) => ({ ...prev, [field]: '' }));
   };
+
+  useEffect(() => {
+    if (!showSuccess) {
+      return;
+    }
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [showSuccess]);
 
   return (
     <>
@@ -351,26 +415,7 @@ export default function DonationPage() {
           ) : null}
 
           {showSuccess ? (
-            <div className="donation-success">
-              <CheckCircle size={64} className="success-icon" />
-              <h2 style={{ marginBottom: '12px' }}>Thank You!</h2>
-              <p
-                style={{
-                  color: 'var(--color-muted)',
-                  fontSize: '1.1rem',
-                  maxWidth: '480px',
-                  margin: '0 auto 28px',
-                  lineHeight: '1.7',
-                }}
-              >
-                Your {donationType === 'monthly' ? 'monthly ' : ''}donation of
-                <strong> ${activeAmount?.toFixed(2)}</strong> will help create
-                safety and healing for girls who need it most.
-              </p>
-              <PrimaryButton onClick={resetForm}>
-                Make Another Donation
-              </PrimaryButton>
-            </div>
+            <div className="donation-success-placeholder" aria-hidden="true" />
           ) : (
             <div className="row g-4">
               {/* Left: Stepped Form */}
@@ -434,6 +479,17 @@ export default function DonationPage() {
                       <span className="donate-step-num">2.</span> Select Your
                       Amount
                     </h3>
+                    <p
+                      style={{
+                        fontSize: '0.9rem',
+                        color: 'var(--color-muted)',
+                        marginTop: '-12px',
+                        marginBottom: '16px',
+                      }}
+                    >
+                      Pick a suggested amount or enter any custom gift (minimum{' '}
+                      {formatUsd(MIN_DONATION_USD)}).
+                    </p>
                     <div className="amount-grid">
                       {amounts.map((amt) => (
                         <button
@@ -443,7 +499,7 @@ export default function DonationPage() {
                           onClick={() => handleAmountClick(amt)}
                           disabled={!isAuthenticated}
                         >
-                          ${amt}
+                          {formatUsd(amt)}
                         </button>
                       ))}
                     </div>
@@ -462,7 +518,7 @@ export default function DonationPage() {
                       </span>
                       <input
                         type="text"
-                        placeholder="Enter custom amount"
+                        placeholder="Custom amount"
                         value={customAmount}
                         onChange={handleCustomAmountChange}
                         className="custom-amount-input"
@@ -630,7 +686,7 @@ export default function DonationPage() {
                           {donationType === 'monthly' ? 'Monthly ' : ''}
                           Donation
                           {activeAmount && activeAmount > 0
-                            ? ` — $${activeAmount.toFixed(2)}`
+                            ? ` — ${formatUsd(activeAmount)}`
                             : ''}
                           {donationType === 'monthly' ? '/mo' : ''}
                         </>
@@ -668,20 +724,10 @@ export default function DonationPage() {
                           }}
                         >
                           {activeAmount && activeAmount > 0
-                            ? `$${activeAmount.toFixed(0)}`
+                            ? formatUsd(activeAmount)
                             : '—'}
                         </strong>
                       </div>
-                      {annualImpact && (
-                        <div className="gift-summary-row">
-                          <span>Annual Impact</span>
-                          <strong
-                            style={{ color: 'var(--color-primary-dark)' }}
-                          >
-                            ${annualImpact.toLocaleString()}/year
-                          </strong>
-                        </div>
-                      )}
                       <div className="gift-summary-secure">
                         <Shield size={14} />
                         Secure &middot; Encrypted &middot; Tax-deductible
@@ -704,7 +750,7 @@ export default function DonationPage() {
                             }}
                           />
                           <div>
-                            <strong>${item.amount} provides</strong>
+                            <strong>{formatUsd(item.amount)} provides</strong>
                             <p>{item.text}</p>
                           </div>
                         </div>
@@ -772,6 +818,45 @@ export default function DonationPage() {
           </div>
         </div>
       </section>
+
+      {showSuccess && thankYouDetails
+        ? createPortal(
+            <div
+              className="donation-thankyou-backdrop"
+              role="presentation"
+              onClick={resetForm}
+            >
+              <div
+                className="donation-thankyou-modal"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="donation-thankyou-title"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <CheckCircle size={56} className="donation-thankyou-icon" />
+                <h2 id="donation-thankyou-title" className="donation-thankyou-heading">
+                  {thankYouDetails.firstName
+                    ? `Thank you, ${thankYouDetails.firstName}!`
+                    : 'Thank you!'}
+                </h2>
+                <p className="donation-thankyou-amount">
+                  Your {thankYouDetails.donationType === 'monthly' ? 'monthly ' : ''}
+                  gift of{' '}
+                  <strong>{formatUsd(thankYouDetails.amountUsd)}</strong>
+                  {thankYouDetails.donationType === 'monthly' ? ' / month' : ''}{' '}
+                  is on its way to girls who need it most.
+                </p>
+                <p className="donation-thankyou-impact">
+                  {getDonationImpactMessageUsd(thankYouDetails.amountUsd)}
+                </p>
+                <PrimaryButton type="button" onClick={resetForm} fullWidth>
+                  Make Another Donation
+                </PrimaryButton>
+              </div>
+            </div>,
+            document.body
+          )
+        : null}
     </>
   );
 }
