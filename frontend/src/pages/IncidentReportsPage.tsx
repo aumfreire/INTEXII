@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { AlertTriangle, Edit3, Plus, Search, XCircle } from 'lucide-react';
 import PrimaryButton from '../components/ui/PrimaryButton';
 import SecondaryButton from '../components/ui/SecondaryButton';
@@ -239,7 +240,15 @@ export default function IncidentReportsPage() {
                         {items.map((item) => (
                             <tr key={item.id}>
                                 <td>{item.incidentDate || '—'}</td>
-                                <td>{item.residentName}</td>
+                                <td>
+                                    {item.residentId ? (
+                                        <Link to={`/admin/residents/${item.residentId}`} className="ir-resident-link" style={{ textDecoration: 'none' }}>
+                                            {item.residentName}
+                                        </Link>
+                                    ) : (
+                                        item.residentName
+                                    )}
+                                </td>
                                 <td>{item.safehouseName || (item.safehouseId ? safehouseNameById.get(item.safehouseId) : '—')}</td>
                                 <td>{item.incidentType || '—'}</td>
                                 <td>{item.severity || '—'}</td>

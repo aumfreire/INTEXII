@@ -132,26 +132,15 @@ const mockInterventions = [
   'Life skills program — cooking and budgeting modules',
 ];
 
-const mockMilestones = [
-  { text: 'Intake assessment completed', done: true },
-  { text: 'Case plan established', done: true },
-  { text: 'Education enrollment confirmed', done: true },
-  { text: 'Initial trauma assessment', done: true },
-  { text: 'Family contact initiated', done: false },
-  { text: 'Home safety assessment', done: false },
-  { text: 'Family mediation sessions', done: false },
-  { text: 'Community reintegration plan', done: false },
-  { text: 'Post-reintegration follow-up schedule', done: false },
-];
-
-const mockBlockers = [
-  { text: 'Safety concern from Feb home visit — needs resolution before family contact proceeds', date: 'Flagged Feb 28' },
-  { text: 'Nightmares and sleep disturbance — trauma therapy progress being monitored', date: 'Noted Mar 20' },
-];
-
 /* ===== Helpers ===== */
 const riskLabels: Record<RiskLevel, string> = { low: 'Low', moderate: 'Moderate', high: 'High', critical: 'Critical' };
 const statusLabels: Record<CaseStatus, string> = { active: 'Active', intake: 'Intake', reintegration: 'Reintegration', closed: 'Closed' };
+
+function hasMeaningfulText(value: string | null | undefined): boolean {
+  if (!value) return false;
+  const normalized = value.trim().toLowerCase();
+  return normalized.length > 0 && normalized !== 'n/a' && normalized !== 'not assigned' && normalized !== 'unassigned';
+}
 
 function formatDate(iso: string): string {
   if (!iso) {
@@ -178,6 +167,30 @@ function normalizeRiskLevel(value: string): RiskLevel {
   }
 
   return 'moderate';
+}
+
+function calculateAge(dateOfBirth: string | null | undefined): number | null {
+  if (!dateOfBirth) {
+    return null;
+  }
+
+  const birthDate = new Date(`${dateOfBirth}T00:00:00`);
+  if (Number.isNaN(birthDate.getTime())) {
+    return null;
+  }
+
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDelta = today.getMonth() - birthDate.getMonth();
+  if (monthDelta < 0 || (monthDelta === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+
+  if (age < 0 || age > 120) {
+    return null;
+  }
+
+  return age;
 }
 
 /* ===== Component ===== */
@@ -325,6 +338,83 @@ export default function ResidentDetailPage() {
   }
 
   const r = resident;
+  const displayAge = calculateAge(r.dateOfBirth) ?? (typeof r.age === 'number' && r.age > 0 && r.age <= 120 ? r.age : null);
+  const interventionText = interventions.join(' ').toLowerCase();
+  const conferenceText = conferences.map((c) => c.notes).join(' ').toLowerCase();
+
+  const reintegrationMilestones = [
+    {
+      text: 'Intake assessment completed',
+      done: hasMeaningfulText(r.referralSource) || hasMeaningfulText(r.referralOfficer) || hasMeaningfulText(r.admissionDate),
+    },
+    {
+      text: 'Case plan established',
+      done: interventions.length > 0 || conferences.length > 0,
+    },
+    {
+      text: 'Education enrollment confirmed',
+      done: hasMeaningfulText(r.education) && !r.education.toLowerCase().includes('not started'),
+    },
+    {
+      text: 'Initial trauma assessment',
+      done: recordings.length > 0 || interventionText.includes('trauma'),
+    },
+    {
+      text: 'Family contact initiated',
+      done: hasMeaningfulText(r.familyContact),
+    },
+    {
+      text: 'Home safety assessment',
+      done: visits.length > 0,
+    },
+    {
+      text: 'Family mediation sessions',
+      done: interventionText.includes('mediation') || conferenceText.includes('mediation'),
+    },
+    {
+      text: 'Community reintegration plan',
+      done: hasMeaningfulText(r.reintegrationType) || interventions.length > 0,
+    },
+    {
+      text: 'Post-reintegration follow-up schedule',
+      done: conferences.some((c) => c.upcoming) || visits.some((v) => v.followUpNeeded),
+    },
+  ];
+
+  const derivedBlockers: { text: string; date: string }[] = [];
+
+  const safetyConcernVisit = visits.find((v) => v.safetyConcern);
+  if (safetyConcernVisit) {
+    derivedBlockers.push({
+      text: 'Safety concern flagged in home visit — review needed before next reintegration step.',
+      date: `Visit ${formatDate(safetyConcernVisit.date)}`,
+    });
+  }
+
+  const clinicalConcernRecording = recordings.find((rec) => rec.concernFlagged || rec.referralMade);
+  if (clinicalConcernRecording) {
+    derivedBlockers.push({
+      text: clinicalConcernRecording.referralMade
+        ? 'Clinical referral is open and should be tracked before transition decisions.'
+        : 'Counseling concerns are flagged and need follow-up actions.',
+      date: `Recording ${formatDate(clinicalConcernRecording.date)}`,
+    });
+  }
+
+  if (!hasMeaningfulText(r.familyContact)) {
+    derivedBlockers.push({
+      text: 'Family contact has not been established yet.',
+      date: 'Pending',
+    });
+  }
+
+  if (!conferences.some((c) => c.upcoming)) {
+    derivedBlockers.push({
+      text: 'No upcoming case conference scheduled to review reintegration progress.',
+      date: 'Schedule needed',
+    });
+  }
+
   const tabs: { key: Tab; label: string }[] = [
     { key: 'overview', label: 'Overview' },
     { key: 'recordings', label: 'Process Recordings' },
@@ -362,8 +452,8 @@ export default function ResidentDetailPage() {
 
   const confirmDeleteLabel =
     confirmDelete?.type === 'recording' ? 'process recording' :
-    confirmDelete?.type === 'visit' ? 'home visit' :
-    'case conference';
+      confirmDelete?.type === 'visit' ? 'home visit' :
+        'case conference';
 
   return (
     <div>
@@ -450,7 +540,7 @@ export default function ResidentDetailPage() {
                 <div className="rd-overview-grid" style={{ marginTop: '16px' }}>
                   <div className="rd-field">
                     <span className="rd-field-label">Date of Birth</span>
-                    <span className="rd-field-value">{formatDate(r.dateOfBirth)} (Age {r.age})</span>
+                    <span className="rd-field-value">{formatDate(r.dateOfBirth)} {displayAge !== null ? `(Age ${displayAge})` : '(Age N/A)'}</span>
                   </div>
                   <div className="rd-field">
                     <span className="rd-field-label">Gender</span>
@@ -803,7 +893,7 @@ export default function ResidentDetailPage() {
                 <div>
                   <span className="rd-reint-status-label">Progress</span>
                   <div className="rd-reint-status-value">
-                    {mockMilestones.filter((m) => m.done).length} of {mockMilestones.length} milestones
+                    {reintegrationMilestones.filter((m) => m.done).length} of {reintegrationMilestones.length} milestones
                   </div>
                 </div>
               </div>
@@ -812,7 +902,7 @@ export default function ResidentDetailPage() {
               <div className="rd-panel">
                 <h3 className="rd-panel-title">Milestones</h3>
                 <ul className="rd-checklist" style={{ marginTop: '16px' }}>
-                  {mockMilestones.map((m, i) => (
+                  {reintegrationMilestones.map((m, i) => (
                     <li className="rd-checklist-item" key={i}>
                       {m.done ? (
                         <CheckCircle size={18} className="rd-check-icon done" />
@@ -828,13 +918,13 @@ export default function ResidentDetailPage() {
               {/* Blockers */}
               <div className="rd-panel">
                 <h3 className="rd-panel-title">Blockers &amp; Follow-up Actions</h3>
-                {mockBlockers.length === 0 ? (
+                {derivedBlockers.length === 0 ? (
                   <div className="rd-empty" style={{ padding: '24px' }}>
                     <p className="rd-empty-text" style={{ margin: 0 }}>No current blockers. Keep up the great work.</p>
                   </div>
                 ) : (
                   <div style={{ marginTop: '16px' }}>
-                    {mockBlockers.map((b, i) => (
+                    {derivedBlockers.map((b, i) => (
                       <div className="rd-blocker" key={i}>
                         <AlertTriangle size={16} className="rd-blocker-icon" />
                         <div>
@@ -883,7 +973,7 @@ export default function ResidentDetailPage() {
               </div>
               <div className="rd-field">
                 <span className="rd-field-label">Age</span>
-                <span className="rd-field-value">{r.age} years old</span>
+                <span className="rd-field-value">{displayAge !== null ? `${displayAge} years old` : 'Age N/A'}</span>
               </div>
               <div className="rd-field">
                 <span className="rd-field-label">Recordings</span>

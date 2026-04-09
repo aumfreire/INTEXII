@@ -10,10 +10,10 @@ import {
     Gift,
     UserCheck,
     ArrowRight,
-    HandCoins,
 } from 'lucide-react';
 import AlertBanner from '../components/ui/AlertBanner';
 import { getAdminCaseload, getAdminSupporters, getReportsSummary, getAdminSafehouses } from '../lib/authAPI';
+import { useAuth } from '../context/useAuth';
 import '../styles/pages/admin-dashboard.css';
 
 /* ===== Types ===== */
@@ -96,6 +96,7 @@ function formatEventDate(iso: string): { day: string; month: string } {
 
 /* ===== Main Page ===== */
 export default function AdminDashboardPage() {
+    const { authSession } = useAuth();
     const [isLoading, setIsLoading] = useState(true);
     const [hasError, setHasError] = useState(false);
     const [activeResidents, setActiveResidents] = useState(0);
@@ -106,6 +107,12 @@ export default function AdminDashboardPage() {
     const [statusDistributionData, setStatusDistributionData] = useState(statusDistribution);
     const [occupancyDataRows, setOccupancyDataRows] = useState(occupancyData);
     const [safehouseRows, setSafehouseRows] = useState<SafehouseData[]>(mockSafehouses);
+
+    const greetingName =
+        authSession.displayName
+        ?? authSession.userName
+        ?? authSession.email?.split('@')[0]
+        ?? 'User';
 
     useEffect(() => {
         let isMounted = true;
@@ -230,16 +237,10 @@ export default function AdminDashboardPage() {
         <div>
             {/* Welcome Header */}
             <div className="dash-header">
-                <h1 className="dash-welcome">Good morning, Maria</h1>
+                <h1 className="dash-welcome">Hello, {greetingName}</h1>
                 <p className="dash-welcome-sub">
                     Here's what needs your attention today — April 8, 2026
                 </p>
-                <div style={{ marginTop: '10px' }}>
-                    <Link to="/admin/contributions" className="dash-panel-link" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                        <HandCoins size={14} />
-                        Manage Donations
-                    </Link>
-                </div>
             </div>
 
             {/* Error State */}

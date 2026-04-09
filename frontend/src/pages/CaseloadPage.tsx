@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Search,
   UserPlus,
@@ -632,8 +632,10 @@ export default function CaseloadPage() {
                     {filtered.map((r) => (
                       <tr key={r.id}>
                         <td>
-                          <div className="caseload-resident-name">{r.name}</div>
-                          <div className="caseload-resident-code">{r.code}</div>
+                          <Link to={`/admin/residents/${r.id}`} className="caseload-resident-link" style={{ textDecoration: 'none' }}>
+                            <div className="caseload-resident-name">{r.name}</div>
+                            <div className="caseload-resident-code">{r.code}</div>
+                          </Link>
                         </td>
                         <td style={{ fontSize: '0.85rem' }}>{r.safehouse}</td>
                         <td><span className={`caseload-badge status-${r.caseStatus}`}>{statusLabels[r.caseStatus]}</span></td>

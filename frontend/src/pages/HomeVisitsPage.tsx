@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   Search,
   Home,
@@ -159,7 +159,6 @@ function HomeVisitsTab({ residents, prefilledResidentId }: { residents: Resident
     setEditorId(null);
     setEditorForm({ ...emptyVisitForm, residentId: filterResidentId });
     setEditorOpen(true);
-    setTimeout(() => document.getElementById('hv-editor')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
   }
 
   function openEdit(id: number) {
@@ -181,7 +180,6 @@ function HomeVisitsTab({ residents, prefilledResidentId }: { residents: Resident
       visitOutcome: v.visitOutcome ?? '',
     });
     setEditorOpen(true);
-    setTimeout(() => document.getElementById('hv-editor')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
   }
 
   async function handleSave() {
@@ -296,7 +294,15 @@ function HomeVisitsTab({ residents, prefilledResidentId }: { residents: Resident
                   {visits.map((v) => (
                     <tr key={v.id}>
                       <td className="hv-date">{formatDate(v.visitDate)}</td>
-                      <td><div className="hv-resident-name">{v.residentName}</div></td>
+                      <td>
+                        {v.residentId ? (
+                          <Link to={`/admin/residents/${v.residentId}`} className="hv-resident-link" style={{ textDecoration: 'none' }}>
+                            <div className="hv-resident-name">{v.residentName}</div>
+                          </Link>
+                        ) : (
+                          <div className="hv-resident-name">{v.residentName}</div>
+                        )}
+                      </td>
                       <td className="hv-worker">{v.socialWorker ?? '—'}</td>
                       <td><span className="hv-badge type">{visitTypeLabels[v.visitType ?? ''] ?? v.visitType ?? '—'}</span></td>
                       <td style={{ fontSize: '0.85rem', color: 'var(--color-muted)' }}>—</td>
@@ -326,56 +332,58 @@ function HomeVisitsTab({ residents, prefilledResidentId }: { residents: Resident
 
       {/* Editor Panel */}
       {editorOpen && (
-        <div id="hv-editor" className="donors-detail-panel" style={{ marginTop: '24px' }}>
-          <div className="donors-detail-header">
-            <h3 className="donors-detail-title"><Home size={16} style={{ display: 'inline', marginRight: '8px', color: 'var(--color-primary)' }} />{editorId ? 'Edit Home Visit' : 'Log Home Visit'}</h3>
-            <button className="donors-detail-close" onClick={() => { setEditorOpen(false); setEditorId(null); setEditorForm(emptyVisitForm); }} aria-label="Close"><X size={20} /></button>
-          </div>
-          <div className="donors-detail-body">
-            <div className="donors-detail-grid">
-              <div className="donors-history-list">
-                <label className="hv-filter-label">Resident</label>
-                <select className="hv-filter-select" value={editorForm.residentId} onChange={(e) => setEditorForm({ ...editorForm, residentId: e.target.value })}>
-                  <option value="">— Select Resident —</option>
-                  {residents.map((r) => <option key={r.id} value={String(r.id)}>{r.name}</option>)}
-                </select>
-                <label className="hv-filter-label">Visit Date *</label>
-                <input type="date" className="hv-filter-input" value={editorForm.visitDate} onChange={(e) => setEditorForm({ ...editorForm, visitDate: e.target.value })} />
-                <label className="hv-filter-label">Social Worker</label>
-                <input className="hv-filter-input" value={editorForm.socialWorker} onChange={(e) => setEditorForm({ ...editorForm, socialWorker: e.target.value })} placeholder="Social worker name" />
-                <label className="hv-filter-label">Visit Type</label>
-                <select className="hv-filter-select" value={editorForm.visitType} onChange={(e) => setEditorForm({ ...editorForm, visitType: e.target.value })}>
-                  {Object.entries(visitTypeLabels).map(([val, label]) => <option key={val} value={val}>{label}</option>)}
-                </select>
-                <label className="hv-filter-label">Location Visited</label>
-                <input className="hv-filter-input" value={editorForm.locationVisited} onChange={(e) => setEditorForm({ ...editorForm, locationVisited: e.target.value })} placeholder="Address or area" />
-                <label className="hv-filter-label">Family Cooperation</label>
-                <select className="hv-filter-select" value={editorForm.familyCooperationLevel} onChange={(e) => setEditorForm({ ...editorForm, familyCooperationLevel: e.target.value })}>
-                  {Object.entries(cooperationLabels).map(([val, label]) => <option key={val} value={val}>{label}</option>)}
-                </select>
-              </div>
-              <div className="donors-history-list">
-                <label className="hv-filter-label">Purpose</label>
-                <textarea className="hv-filter-textarea" rows={2} value={editorForm.purpose} onChange={(e) => setEditorForm({ ...editorForm, purpose: e.target.value })} placeholder="Purpose of visit..." />
-                <label className="hv-filter-label">Observations</label>
-                <textarea className="hv-filter-textarea" rows={4} value={editorForm.observations} onChange={(e) => setEditorForm({ ...editorForm, observations: e.target.value })} placeholder="What was observed during the visit..." />
-                <label className="hv-filter-label">Visit Outcome</label>
-                <input className="hv-filter-input" value={editorForm.visitOutcome} onChange={(e) => setEditorForm({ ...editorForm, visitOutcome: e.target.value })} placeholder="Summary outcome" />
-                <div className="hv-flags-form">
-                  <label className="hv-check-label"><input type="checkbox" checked={editorForm.safetyConcernsNoted} onChange={(e) => setEditorForm({ ...editorForm, safetyConcernsNoted: e.target.checked })} style={{ accentColor: '#c0392b' }} /><AlertTriangle size={14} style={{ color: '#c0392b' }} /> Safety Concerns Noted</label>
-                  <label className="hv-check-label"><input type="checkbox" checked={editorForm.followUpNeeded} onChange={(e) => setEditorForm({ ...editorForm, followUpNeeded: e.target.checked })} style={{ accentColor: '#e67e22' }} /><Clock size={14} style={{ color: '#e67e22' }} /> Follow-Up Needed</label>
-                </div>
-                {editorForm.followUpNeeded && (
-                  <>
-                    <label className="hv-filter-label">Follow-Up Notes</label>
-                    <textarea className="hv-filter-textarea" rows={2} value={editorForm.followUpNotes} onChange={(e) => setEditorForm({ ...editorForm, followUpNotes: e.target.value })} placeholder="Describe follow-up actions..." />
-                  </>
-                )}
-              </div>
+        <div className="hv-modal-overlay" onClick={() => { setEditorOpen(false); setEditorId(null); setEditorForm(emptyVisitForm); }}>
+          <div id="hv-editor" className="hv-modal-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="hv-modal-header">
+              <h3 className="hv-modal-title"><Home size={16} style={{ display: 'inline', marginRight: '8px', color: 'var(--color-primary)' }} />{editorId ? 'Edit Home Visit' : 'Log Home Visit'}</h3>
+              <button className="hv-modal-close" onClick={() => { setEditorOpen(false); setEditorId(null); setEditorForm(emptyVisitForm); }} aria-label="Close"><X size={20} /></button>
             </div>
-            <div style={{ marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-              <SecondaryButton onClick={() => { setEditorOpen(false); setEditorId(null); setEditorForm(emptyVisitForm); }}>Cancel</SecondaryButton>
-              <PrimaryButton onClick={() => { void handleSave(); }} disabled={isSaving}>{isSaving ? 'Saving...' : editorId ? 'Update Visit' : 'Save Visit'}</PrimaryButton>
+            <div className="hv-modal-body">
+              <div className="hv-editor-grid">
+                <div className="hv-editor-column">
+                  <label className="hv-filter-label">Resident</label>
+                  <select className="hv-filter-select" value={editorForm.residentId} onChange={(e) => setEditorForm({ ...editorForm, residentId: e.target.value })}>
+                    <option value="">— Select Resident —</option>
+                    {residents.map((r) => <option key={r.id} value={String(r.id)}>{r.name}</option>)}
+                  </select>
+                  <label className="hv-filter-label">Visit Date *</label>
+                  <input type="date" className="hv-filter-input" value={editorForm.visitDate} onChange={(e) => setEditorForm({ ...editorForm, visitDate: e.target.value })} />
+                  <label className="hv-filter-label">Social Worker</label>
+                  <input className="hv-filter-input" value={editorForm.socialWorker} onChange={(e) => setEditorForm({ ...editorForm, socialWorker: e.target.value })} placeholder="Social worker name" />
+                  <label className="hv-filter-label">Visit Type</label>
+                  <select className="hv-filter-select" value={editorForm.visitType} onChange={(e) => setEditorForm({ ...editorForm, visitType: e.target.value })}>
+                    {Object.entries(visitTypeLabels).map(([val, label]) => <option key={val} value={val}>{label}</option>)}
+                  </select>
+                  <label className="hv-filter-label">Location Visited</label>
+                  <input className="hv-filter-input" value={editorForm.locationVisited} onChange={(e) => setEditorForm({ ...editorForm, locationVisited: e.target.value })} placeholder="Address or area" />
+                  <label className="hv-filter-label">Family Cooperation</label>
+                  <select className="hv-filter-select" value={editorForm.familyCooperationLevel} onChange={(e) => setEditorForm({ ...editorForm, familyCooperationLevel: e.target.value })}>
+                    {Object.entries(cooperationLabels).map(([val, label]) => <option key={val} value={val}>{label}</option>)}
+                  </select>
+                </div>
+                <div className="hv-editor-column">
+                  <label className="hv-filter-label">Purpose</label>
+                  <textarea className="hv-filter-textarea" rows={2} value={editorForm.purpose} onChange={(e) => setEditorForm({ ...editorForm, purpose: e.target.value })} placeholder="Purpose of visit..." />
+                  <label className="hv-filter-label">Observations</label>
+                  <textarea className="hv-filter-textarea" rows={4} value={editorForm.observations} onChange={(e) => setEditorForm({ ...editorForm, observations: e.target.value })} placeholder="What was observed during the visit..." />
+                  <label className="hv-filter-label">Visit Outcome</label>
+                  <input className="hv-filter-input" value={editorForm.visitOutcome} onChange={(e) => setEditorForm({ ...editorForm, visitOutcome: e.target.value })} placeholder="Summary outcome" />
+                  <div className="hv-flags-form">
+                    <label className="hv-check-label"><input type="checkbox" checked={editorForm.safetyConcernsNoted} onChange={(e) => setEditorForm({ ...editorForm, safetyConcernsNoted: e.target.checked })} style={{ accentColor: '#c0392b' }} /><AlertTriangle size={14} style={{ color: '#c0392b' }} /> Safety Concerns Noted</label>
+                    <label className="hv-check-label"><input type="checkbox" checked={editorForm.followUpNeeded} onChange={(e) => setEditorForm({ ...editorForm, followUpNeeded: e.target.checked })} style={{ accentColor: '#e67e22' }} /><Clock size={14} style={{ color: '#e67e22' }} /> Follow-Up Needed</label>
+                  </div>
+                  {editorForm.followUpNeeded && (
+                    <>
+                      <label className="hv-filter-label">Follow-Up Notes</label>
+                      <textarea className="hv-filter-textarea" rows={2} value={editorForm.followUpNotes} onChange={(e) => setEditorForm({ ...editorForm, followUpNotes: e.target.value })} placeholder="Describe follow-up actions..." />
+                    </>
+                  )}
+                </div>
+              </div>
+              <div style={{ marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                <SecondaryButton onClick={() => { setEditorOpen(false); setEditorId(null); setEditorForm(emptyVisitForm); }}>Cancel</SecondaryButton>
+                <PrimaryButton onClick={() => { void handleSave(); }} disabled={isSaving}>{isSaving ? 'Saving...' : editorId ? 'Update Visit' : 'Save Visit'}</PrimaryButton>
+              </div>
             </div>
           </div>
         </div>
@@ -432,7 +440,6 @@ function CaseConferencesTab({ residents }: { residents: ResidentOption[] }) {
     setEditorId(null);
     setEditorForm(emptyConferenceForm);
     setEditorOpen(true);
-    setTimeout(() => document.getElementById('cc-editor')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
   }
 
   function openEdit(id: number) {
@@ -448,7 +455,6 @@ function CaseConferencesTab({ residents }: { residents: ResidentOption[] }) {
       status: p.status ?? 'upcoming',
     });
     setEditorOpen(true);
-    setTimeout(() => document.getElementById('cc-editor')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
   }
 
   async function handleSave() {
@@ -535,7 +541,15 @@ function CaseConferencesTab({ residents }: { residents: ResidentOption[] }) {
                 {plans.map((p) => (
                   <tr key={p.id}>
                     <td className="hv-date">{formatDate(p.caseConferenceDate)}</td>
-                    <td><div className="hv-resident-name">{p.residentName ?? '—'}</div></td>
+                    <td>
+                      {p.residentId ? (
+                        <Link to={`/admin/residents/${p.residentId}`} className="hv-resident-link" style={{ textDecoration: 'none' }}>
+                          <div className="hv-resident-name">{p.residentName ?? '—'}</div>
+                        </Link>
+                      ) : (
+                        <div className="hv-resident-name">{p.residentName ?? '—'}</div>
+                      )}
+                    </td>
                     <td style={{ fontSize: '0.85rem', color: 'var(--color-muted)' }}>{p.planCategory ?? '—'}</td>
                     <td style={{ fontSize: '0.85rem', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.servicesProvided ?? '—'}</td>
                     <td>
@@ -554,39 +568,41 @@ function CaseConferencesTab({ residents }: { residents: ResidentOption[] }) {
 
       {/* Editor Panel */}
       {editorOpen && (
-        <div id="cc-editor" className="donors-detail-panel" style={{ marginTop: '24px' }}>
-          <div className="donors-detail-header">
-            <h3 className="donors-detail-title"><Calendar size={16} style={{ display: 'inline', marginRight: '8px', color: 'var(--color-primary)' }} />{editorId ? 'Edit Case Conference' : 'Schedule Case Conference'}</h3>
-            <button className="donors-detail-close" onClick={() => { setEditorOpen(false); setEditorId(null); }} aria-label="Close"><X size={20} /></button>
-          </div>
-          <div className="donors-detail-body">
-            <div className="donors-detail-grid">
-              <div className="donors-history-list">
-                <label className="hv-filter-label">Resident</label>
-                <select className="hv-filter-select" value={editorForm.residentId} onChange={(e) => setEditorForm({ ...editorForm, residentId: e.target.value })}>
-                  <option value="">— Select Resident —</option>
-                  {residents.map((r) => <option key={r.id} value={String(r.id)}>{r.name}</option>)}
-                </select>
-                <label className="hv-filter-label">Conference Date *</label>
-                <input type="date" className="hv-filter-input" value={editorForm.caseConferenceDate} onChange={(e) => setEditorForm({ ...editorForm, caseConferenceDate: e.target.value })} />
-                <label className="hv-filter-label">Category</label>
-                <input className="hv-filter-input" value={editorForm.planCategory} onChange={(e) => setEditorForm({ ...editorForm, planCategory: e.target.value })} placeholder="e.g. Reintegration, Health" />
-                <label className="hv-filter-label">Status</label>
-                <select className="hv-filter-select" value={editorForm.status} onChange={(e) => setEditorForm({ ...editorForm, status: e.target.value })}>
-                  <option value="upcoming">Upcoming</option>
-                  <option value="completed">Completed</option>
-                </select>
-              </div>
-              <div className="donors-history-list">
-                <label className="hv-filter-label">Services / Topics Discussed</label>
-                <textarea className="hv-filter-textarea" rows={3} value={editorForm.servicesProvided} onChange={(e) => setEditorForm({ ...editorForm, servicesProvided: e.target.value })} placeholder="Services or topics to be discussed..." />
-                <label className="hv-filter-label">Plan Description / Notes</label>
-                <textarea className="hv-filter-textarea" rows={4} value={editorForm.planDescription} onChange={(e) => setEditorForm({ ...editorForm, planDescription: e.target.value })} placeholder="Plans agreed upon or observations..." />
-              </div>
+        <div className="hv-modal-overlay" onClick={() => { setEditorOpen(false); setEditorId(null); }}>
+          <div id="cc-editor" className="hv-modal-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="hv-modal-header">
+              <h3 className="hv-modal-title"><Calendar size={16} style={{ display: 'inline', marginRight: '8px', color: 'var(--color-primary)' }} />{editorId ? 'Edit Case Conference' : 'Schedule Case Conference'}</h3>
+              <button className="hv-modal-close" onClick={() => { setEditorOpen(false); setEditorId(null); }} aria-label="Close"><X size={20} /></button>
             </div>
-            <div style={{ marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-              <SecondaryButton onClick={() => { setEditorOpen(false); setEditorId(null); }}>Cancel</SecondaryButton>
-              <PrimaryButton onClick={() => { void handleSave(); }} disabled={isSaving}>{isSaving ? 'Saving...' : editorId ? 'Update Conference' : 'Schedule Conference'}</PrimaryButton>
+            <div className="hv-modal-body">
+              <div className="hv-editor-grid">
+                <div className="hv-editor-column">
+                  <label className="hv-filter-label">Resident</label>
+                  <select className="hv-filter-select" value={editorForm.residentId} onChange={(e) => setEditorForm({ ...editorForm, residentId: e.target.value })}>
+                    <option value="">— Select Resident —</option>
+                    {residents.map((r) => <option key={r.id} value={String(r.id)}>{r.name}</option>)}
+                  </select>
+                  <label className="hv-filter-label">Conference Date *</label>
+                  <input type="date" className="hv-filter-input" value={editorForm.caseConferenceDate} onChange={(e) => setEditorForm({ ...editorForm, caseConferenceDate: e.target.value })} />
+                  <label className="hv-filter-label">Category</label>
+                  <input className="hv-filter-input" value={editorForm.planCategory} onChange={(e) => setEditorForm({ ...editorForm, planCategory: e.target.value })} placeholder="e.g. Reintegration, Health" />
+                  <label className="hv-filter-label">Status</label>
+                  <select className="hv-filter-select" value={editorForm.status} onChange={(e) => setEditorForm({ ...editorForm, status: e.target.value })}>
+                    <option value="upcoming">Upcoming</option>
+                    <option value="completed">Completed</option>
+                  </select>
+                </div>
+                <div className="hv-editor-column">
+                  <label className="hv-filter-label">Services / Topics Discussed</label>
+                  <textarea className="hv-filter-textarea" rows={3} value={editorForm.servicesProvided} onChange={(e) => setEditorForm({ ...editorForm, servicesProvided: e.target.value })} placeholder="Services or topics to be discussed..." />
+                  <label className="hv-filter-label">Plan Description / Notes</label>
+                  <textarea className="hv-filter-textarea" rows={4} value={editorForm.planDescription} onChange={(e) => setEditorForm({ ...editorForm, planDescription: e.target.value })} placeholder="Plans agreed upon or observations..." />
+                </div>
+              </div>
+              <div style={{ marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                <SecondaryButton onClick={() => { setEditorOpen(false); setEditorId(null); }}>Cancel</SecondaryButton>
+                <PrimaryButton onClick={() => { void handleSave(); }} disabled={isSaving}>{isSaving ? 'Saving...' : editorId ? 'Update Conference' : 'Schedule Conference'}</PrimaryButton>
+              </div>
             </div>
           </div>
         </div>

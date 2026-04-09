@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   Search,
   FileText,
@@ -174,7 +174,6 @@ export default function ProcessRecordingsPage() {
     setEditorId(null);
     setEditorForm({ ...emptyForm, residentId: filterResidentId });
     setEditorOpen(true);
-    setTimeout(() => document.getElementById('pr-editor')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
   }
 
   function openEdit(id: number) {
@@ -197,7 +196,6 @@ export default function ProcessRecordingsPage() {
       referralMade: rec.referralMade,
     });
     setEditorOpen(true);
-    setTimeout(() => document.getElementById('pr-editor')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
   }
 
   async function handleSave() {
@@ -333,7 +331,13 @@ export default function ProcessRecordingsPage() {
                     <tr key={r.id}>
                       <td className="pr-date">{formatDate(r.sessionDate)}</td>
                       <td>
-                        <div className="pr-resident-name">{r.residentName}</div>
+                        {r.residentId ? (
+                          <Link to={`/admin/residents/${r.residentId}`} className="pr-resident-link" style={{ textDecoration: 'none' }}>
+                            <div className="pr-resident-name">{r.residentName}</div>
+                          </Link>
+                        ) : (
+                          <div className="pr-resident-name">{r.residentName}</div>
+                        )}
                       </td>
                       <td className="pr-worker">{r.socialWorker ?? '—'}</td>
                       <td>
@@ -367,21 +371,21 @@ export default function ProcessRecordingsPage() {
 
       {/* Editor Panel */}
       {editorOpen && (
-        <div id="pr-editor" className="donors-detail-panel" style={{ marginTop: '24px' }}>
-          <div className="donors-detail-header">
-            <h3 className="donors-detail-title">
-              <FileText size={16} style={{ display: 'inline', marginRight: '8px', color: 'var(--color-primary)' }} />
-              {editorId ? 'Edit Process Recording' : 'New Process Recording'}
-            </h3>
-            <button className="donors-detail-close" onClick={() => { setEditorOpen(false); setEditorId(null); setEditorForm(emptyForm); }} aria-label="Close">
-              <X size={20} />
-            </button>
-          </div>
-          <div className="donors-detail-body">
-            <div className="donors-detail-grid">
-              {/* Left */}
-              <div>
-                <div className="donors-history-list">
+        <div className="pr-modal-overlay" onClick={() => { setEditorOpen(false); setEditorId(null); setEditorForm(emptyForm); }}>
+          <div id="pr-editor" className="pr-modal-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="pr-modal-header">
+              <h3 className="pr-modal-title">
+                <FileText size={16} style={{ display: 'inline', marginRight: '8px', color: 'var(--color-primary)' }} />
+                {editorId ? 'Edit Process Recording' : 'New Process Recording'}
+              </h3>
+              <button className="pr-modal-close" onClick={() => { setEditorOpen(false); setEditorId(null); setEditorForm(emptyForm); }} aria-label="Close">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="pr-modal-body">
+              <div className="pr-editor-grid">
+                {/* Left */}
+                <div className="pr-editor-column">
                   <label className="pr-filter-label" htmlFor="f-resident">Resident *</label>
                   <select id="f-resident" className="pr-filter-select" value={editorForm.residentId} onChange={(e) => setEditorForm({ ...editorForm, residentId: e.target.value })}>
                     <option value="">— Select Resident —</option>
@@ -414,11 +418,9 @@ export default function ProcessRecordingsPage() {
                     {emotionOptions.map((o) => <option key={o} value={o}>{o}</option>)}
                   </select>
                 </div>
-              </div>
 
-              {/* Right */}
-              <div>
-                <div className="donors-history-list">
+                {/* Right */}
+                <div className="pr-editor-column">
                   <label className="pr-filter-label" htmlFor="f-narrative">Session Narrative</label>
                   <textarea id="f-narrative" className="pr-filter-textarea" rows={5} value={editorForm.sessionNarrative} onChange={(e) => setEditorForm({ ...editorForm, sessionNarrative: e.target.value })} placeholder="Describe what happened in the session..." />
 
@@ -444,13 +446,13 @@ export default function ProcessRecordingsPage() {
                   </div>
                 </div>
               </div>
-            </div>
 
-            <div style={{ marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-              <SecondaryButton onClick={() => { setEditorOpen(false); setEditorId(null); setEditorForm(emptyForm); }}>Cancel</SecondaryButton>
-              <PrimaryButton onClick={() => { void handleSave(); }} disabled={isSaving}>
-                {isSaving ? 'Saving...' : editorId ? 'Update Recording' : 'Save Recording'}
-              </PrimaryButton>
+              <div style={{ marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                <SecondaryButton onClick={() => { setEditorOpen(false); setEditorId(null); setEditorForm(emptyForm); }}>Cancel</SecondaryButton>
+                <PrimaryButton onClick={() => { void handleSave(); }} disabled={isSaving}>
+                  {isSaving ? 'Saving...' : editorId ? 'Update Recording' : 'Save Recording'}
+                </PrimaryButton>
+              </div>
             </div>
           </div>
         </div>
