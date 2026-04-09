@@ -483,13 +483,29 @@
 }
 
 .dash-bar-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   font-size: 0.8rem;
   color: var(--color-dark);
-  width: 90px;
+  width: 160px;
   flex-shrink: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.15;
+  align-items: flex-start;
+}
+
+.dash-bar-label-name {
+  font-weight: 500;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.dash-bar-label-number {
+  font-size: 0.72rem;
+  color: var(--color-muted);
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }
 
 .dash-bar-track {
@@ -506,9 +522,17 @@
   transition: width var(--transition-normal);
 }
 
-.dash-bar-fill.primary { background-color: var(--color-primary); }
-.dash-bar-fill.sage { background-color: var(--color-sage); }
-.dash-bar-fill.light { background-color: var(--color-primary-light); }
+.dash-bar-fill.primary {
+  background-color: var(--color-primary);
+}
+
+.dash-bar-fill.sage {
+  background-color: var(--color-sage);
+}
+
+.dash-bar-fill.light {
+  background-color: var(--color-primary-light);
+}
 
 .dash-bar-value {
   font-size: 0.78rem;
@@ -552,10 +576,21 @@
   flex-shrink: 0;
 }
 
-.dash-status-dot.active { background-color: var(--color-sage); }
-.dash-status-dot.intake { background-color: var(--color-primary-light); }
-.dash-status-dot.reintegration { background-color: var(--color-primary); }
-.dash-status-dot.closed { background-color: var(--color-muted); }
+.dash-status-dot.active {
+  background-color: var(--color-sage);
+}
+
+.dash-status-dot.intake {
+  background-color: var(--color-primary-light);
+}
+
+.dash-status-dot.reintegration {
+  background-color: var(--color-primary);
+}
+
+.dash-status-dot.closed {
+  background-color: var(--color-muted);
+}
 
 .dash-status-value {
   font-size: 0.88rem;
@@ -624,19 +659,22 @@
 .dash-skeleton-bar {
   height: 14px;
   border-radius: 4px;
-  background: linear-gradient(
-    90deg,
-    var(--color-light-gray) 25%,
-    var(--color-cream) 50%,
-    var(--color-light-gray) 75%
-  );
+  background: linear-gradient(90deg,
+      var(--color-light-gray) 25%,
+      var(--color-cream) 50%,
+      var(--color-light-gray) 75%);
   background-size: 200% 100%;
   animation: dash-shimmer 1.5s ease-in-out infinite;
 }
 
 @keyframes dash-shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 .dash-skeleton-kpi {

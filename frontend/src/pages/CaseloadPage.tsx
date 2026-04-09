@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Search,
   UserPlus,
@@ -260,6 +260,8 @@ function CheckRow({ label, checked, onChange }: { label: string; checked: boolea
 
 /* ===== Main Page ===== */
 export default function CaseloadPage() {
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -320,7 +322,7 @@ export default function CaseloadPage() {
     setEditorOpen(true);
   }
 
-  async function openEdit(id: string) {
+  const openEdit = useCallback(async (id: string) => {
     try {
       const detail = await getAdminResidentDetail(id);
       setEditorId(id);
@@ -355,6 +357,42 @@ export default function CaseloadPage() {
       setEditorOpen(true);
     } catch {
       setErrorMessage('Unable to load resident details for editing.');
+    }
+  }, []);
+
+  useEffect(() => {
+    const editResidentId = searchParams.get('editResidentId');
+    if (!editResidentId) {
+      return;
+    }
+
+    void openEdit(editResidentId);
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('editResidentId');
+    setSearchParams(nextParams, { replace: true });
+  }, [openEdit, searchParams, setSearchParams]);
+
+  function getReturnTarget(): string | null {
+    const returnTo = searchParams.get('returnTo');
+    if (!returnTo) {
+      return null;
+    }
+
+    try {
+      return decodeURIComponent(returnTo);
+    } catch {
+      return returnTo;
+    }
+  }
+
+  function closeEditor() {
+    const returnTarget = getReturnTarget();
+    setEditorOpen(false);
+    setEditorId(null);
+    setEditorForm(emptyForm);
+
+    if (returnTarget) {
+      navigate(returnTarget);
     }
   }
 
@@ -415,10 +453,15 @@ export default function CaseloadPage() {
         await createAdminResident(payload);
       }
 
+      const returnTarget = getReturnTarget();
       setEditorOpen(false);
       setEditorId(null);
       setEditorForm(emptyForm);
       await reloadCaseload();
+
+      if (returnTarget) {
+        navigate(returnTarget);
+      }
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : 'Unable to save resident.');
     } finally {
@@ -665,11 +708,11 @@ export default function CaseloadPage() {
 
           {/* Editor Panel */}
           {editorOpen && (
-            <div className="caseload-editor-overlay" onClick={() => { setEditorOpen(false); setEditorId(null); setEditorForm(emptyForm); }}>
+            <div className="caseload-editor-overlay" onClick={closeEditor}>
               <div className="caseload-editor-panel" onClick={(e) => e.stopPropagation()}>
                 <div className="donors-detail-header">
                   <h3 className="donors-detail-title">{editorId ? 'Edit Resident' : 'Add New Resident'}</h3>
-                  <button className="donors-detail-close" onClick={() => { setEditorOpen(false); setEditorId(null); setEditorForm(emptyForm); }} aria-label="Close">
+                  <button className="donors-detail-close" onClick={closeEditor} aria-label="Close">
                     <X size={20} />
                   </button>
                 </div>
@@ -818,7 +861,7 @@ export default function CaseloadPage() {
                   </div>
 
                   <div style={{ marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-                    <SecondaryButton onClick={() => { setEditorOpen(false); setEditorId(null); setEditorForm(emptyForm); }}>
+                    <SecondaryButton onClick={closeEditor}>
                       Cancel
                     </SecondaryButton>
                     <PrimaryButton onClick={() => { void handleSave(); }} disabled={isSaving}>

@@ -38,10 +38,20 @@ interface ActivityItem {
 }
 
 interface SafehouseData {
+    safehouseId: number;
+    safehouseCode: string | null;
     name: string;
     residents: number;
     capacity: number;
     highRisk: number;
+}
+
+interface OccupancyRow {
+    label: string;
+    safehouseLabel: string;
+    value: number;
+    max: number;
+    color: string;
 }
 
 /* ===== Mock Data ===== */
@@ -60,9 +70,9 @@ const mockActivityItems: ActivityItem[] = [
 ];
 
 const mockSafehouses: SafehouseData[] = [
-    { name: 'Haven House A', residents: 4, capacity: 6, highRisk: 2 },
-    { name: 'Haven House B', residents: 2, capacity: 5, highRisk: 0 },
-    { name: 'Haven House C', residents: 2, capacity: 5, highRisk: 1 },
+    { safehouseId: 1, safehouseCode: 'HH-A', name: 'Haven House A', residents: 4, capacity: 6, highRisk: 2 },
+    { safehouseId: 2, safehouseCode: 'HH-B', name: 'Haven House B', residents: 2, capacity: 5, highRisk: 0 },
+    { safehouseId: 3, safehouseCode: 'HH-C', name: 'Haven House C', residents: 2, capacity: 5, highRisk: 1 },
 ];
 
 /* Status distribution */
@@ -75,9 +85,9 @@ const statusDistribution = [
 
 /* Safehouse occupancy for bar chart */
 const occupancyData = [
-    { label: 'House A', value: 4, max: 6, color: 'primary' },
-    { label: 'House B', value: 2, max: 5, color: 'sage' },
-    { label: 'House C', value: 2, max: 5, color: 'light' },
+    { label: 'House A', safehouseLabel: '#1', value: 4, max: 6, color: 'primary' },
+    { label: 'House B', safehouseLabel: '#2', value: 2, max: 5, color: 'sage' },
+    { label: 'House C', safehouseLabel: '#3', value: 2, max: 5, color: 'light' },
 ];
 
 const riskLabels: Record<RiskLevel, string> = {
@@ -105,7 +115,7 @@ export default function AdminDashboardPage() {
     const [attentionItems, setAttentionItems] = useState<AttentionItem[]>(mockAttentionItems);
     const [activityItems, setActivityItems] = useState<ActivityItem[]>(mockActivityItems);
     const [statusDistributionData, setStatusDistributionData] = useState(statusDistribution);
-    const [occupancyDataRows, setOccupancyDataRows] = useState(occupancyData);
+    const [occupancyDataRows, setOccupancyDataRows] = useState<OccupancyRow[]>(occupancyData);
     const [safehouseRows, setSafehouseRows] = useState<SafehouseData[]>(mockSafehouses);
 
     const greetingName =
@@ -141,6 +151,8 @@ export default function AdminDashboardPage() {
                 /* Real safehouse capacity from API */
                 if (safehouses.length > 0) {
                     const shData = safehouses.map((sh) => ({
+                        safehouseId: sh.safehouseId,
+                        safehouseCode: sh.safehouseCode,
                         name: sh.name ?? 'Unknown',
                         residents: caseload.filter((r) => r.safehouse === sh.name).length,
                         capacity: sh.capacityGirls ?? 6,
@@ -149,7 +161,8 @@ export default function AdminDashboardPage() {
                     setSafehouseRows(shData);
                     setOccupancyDataRows(
                         shData.map((house, index) => ({
-                            label: house.name.length > 16 ? house.name.slice(0, 16) + '…' : house.name,
+                            label: house.name,
+                            safehouseLabel: house.safehouseCode ? house.safehouseCode : `#${house.safehouseId}`,
                             value: house.residents,
                             max: house.capacity,
                             color: index % 3 === 0 ? 'primary' : index % 3 === 1 ? 'sage' : 'light',
@@ -198,7 +211,7 @@ export default function AdminDashboardPage() {
                 if (safehouses.length === 0) {
                     const grouped = caseload.reduce<Record<string, SafehouseData>>((acc, item) => {
                         const key = item.safehouse || 'Unassigned';
-                        if (!acc[key]) acc[key] = { name: key, residents: 0, capacity: 6, highRisk: 0 };
+                        if (!acc[key]) acc[key] = { safehouseId: 0, safehouseCode: null, name: key, residents: 0, capacity: 6, highRisk: 0 };
                         acc[key].residents += 1;
                         if (item.riskLevel === 'high' || item.riskLevel === 'critical') acc[key].highRisk += 1;
                         return acc;
@@ -209,6 +222,7 @@ export default function AdminDashboardPage() {
                         setOccupancyDataRows(
                             fallback.map((house, index) => ({
                                 label: house.name,
+                                safehouseLabel: house.safehouseCode ? house.safehouseCode : `#${house.safehouseId}`,
                                 value: house.residents,
                                 max: house.capacity,
                                 color: index % 3 === 0 ? 'primary' : index % 3 === 1 ? 'sage' : 'light',
@@ -424,7 +438,10 @@ export default function AdminDashboardPage() {
                             <h4 className="dash-snapshot-title">Safehouse Occupancy</h4>
                             {occupancyDataRows.map((row) => (
                                 <div className="dash-bar-row" key={row.label}>
-                                    <span className="dash-bar-label">{row.label}</span>
+                                    <span className="dash-bar-label" title={`${row.label} ${row.safehouseLabel}`}>
+                                        <span className="dash-bar-label-name">{row.label}</span>
+                                        <span className="dash-bar-label-number">{row.safehouseLabel}</span>
+                                    </span>
                                     <div className="dash-bar-track">
                                         <div
                                             className={`dash-bar-fill ${row.color}`}

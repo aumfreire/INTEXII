@@ -20,10 +20,12 @@ import {
   ArrowRightLeft,
   Trash2,
   ExternalLink,
+  PencilLine,
 } from 'lucide-react';
 import PrimaryButton from '../components/ui/PrimaryButton';
 import SecondaryButton from '../components/ui/SecondaryButton';
 import AlertBanner from '../components/ui/AlertBanner';
+import { useAuth } from '../context/useAuth';
 import {
   getAdminResidentDetail,
   deleteAdminProcessRecording,
@@ -64,13 +66,8 @@ const mockResident = {
   familyContact: 'Mother — Mrs. Florence M.',
   reintegrationStatus: 'Not Started',
   reintegrationType: 'Family Reunification',
+  notesRestricted: null as string | null,
 };
-
-const mockAlerts = [
-  { icon: AlertTriangle, color: 'var(--color-primary)', text: 'Risk level elevated — last assessed Apr 5', date: '2 days ago' },
-  { icon: Calendar, color: 'var(--color-primary-light)', text: 'Case conference scheduled Apr 14', date: 'In 6 days' },
-  { icon: FileText, color: 'var(--color-sage)', text: 'Process recording due this week', date: 'Apr 11' },
-];
 
 const mockRecordings = [
   {
@@ -197,6 +194,7 @@ function calculateAge(dateOfBirth: string | null | undefined): number | null {
 export default function ResidentDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { authSession } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>('overview');
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -209,6 +207,7 @@ export default function ResidentDetailPage() {
   const [interventions, setInterventions] = useState(mockInterventions);
   const [expandedRecording, setExpandedRecording] = useState<string | null>(null);
   const [expandedVisit, setExpandedVisit] = useState<string | null>(null);
+  const isAdmin = authSession.roles.includes('Admin');
 
   useEffect(() => {
     let isMounted = true;
@@ -253,6 +252,7 @@ export default function ResidentDetailPage() {
           familyContact: detail.familyContact ?? 'N/A',
           reintegrationStatus: detail.reintegrationStatus,
           reintegrationType: detail.reintegrationType ?? 'Not assigned',
+          notesRestricted: detail.notesRestricted ?? null,
         });
 
         setRecordings(
@@ -480,6 +480,9 @@ export default function ResidentDetailPage() {
             </div>
           </div>
           <div className="rd-header-actions">
+            <SecondaryButton onClick={() => navigate(`/admin/caseload?editResidentId=${id ?? ''}&returnTo=${encodeURIComponent(`/admin/residents/${id ?? ''}`)}`)}>
+              <PencilLine size={15} /> Edit Resident Record
+            </SecondaryButton>
             <SecondaryButton onClick={() => navigate(`/admin/process-recordings?residentId=${id ?? ''}`)}>
               <FileText size={15} /> Add Recording
             </SecondaryButton>
@@ -618,16 +621,17 @@ export default function ResidentDetailPage() {
                 </div>
               </div>
 
-              {/* Restricted Notes */}
-              <div className="rd-panel">
-                <h3 className="rd-panel-title">Restricted Notes</h3>
-                <div className="rd-restricted" style={{ marginTop: '16px' }}>
-                  <Lock size={20} className="rd-restricted-icon" />
-                  <div className="rd-restricted-text">
-                    <strong>Access restricted.</strong> Detailed case notes and sensitive disclosures are available only to authorized case workers and supervisors.
+              {isAdmin && hasMeaningfulText(r.notesRestricted) && (
+                <div className="rd-panel">
+                  <h3 className="rd-panel-title">Restricted Notes</h3>
+                  <div className="rd-restricted" style={{ marginTop: '16px' }}>
+                    <Lock size={20} className="rd-restricted-icon" />
+                    <div className="rd-restricted-text" style={{ whiteSpace: 'pre-wrap' }}>
+                      {r.notesRestricted}
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
             </>
           )}
 
@@ -936,29 +940,31 @@ export default function ResidentDetailPage() {
                   </div>
                 )}
               </div>
+
+              {/* Milestone Guide */}
+              <div className="rd-panel rd-reference-panel">
+                <h3 className="rd-panel-title rd-reference-title">How Milestones Are Met</h3>
+                <p className="rd-reference-text">
+                  These milestones update automatically from the resident&apos;s records. This guide is only a reference for what data needs to be added or updated.
+                </p>
+                <ul className="rd-reference-list">
+                  <li><strong>Intake assessment completed:</strong> add a referral source, referral officer, or admission date.</li>
+                  <li><strong>Case plan established:</strong> create an intervention plan or schedule a case conference.</li>
+                  <li><strong>Education enrollment confirmed:</strong> enter education details that do not say “not started”.</li>
+                  <li><strong>Initial trauma assessment:</strong> add a process recording, especially one that mentions trauma or counseling concerns.</li>
+                  <li><strong>Family contact initiated:</strong> fill in the primary family contact field.</li>
+                  <li><strong>Home safety assessment:</strong> log at least one home visit.</li>
+                  <li><strong>Family mediation sessions:</strong> note mediation in an intervention plan or conference note.</li>
+                  <li><strong>Community reintegration plan:</strong> add a reintegration type or an intervention plan.</li>
+                  <li><strong>Post-reintegration follow-up schedule:</strong> schedule an upcoming conference or mark a visit for follow-up.</li>
+                </ul>
+              </div>
             </>
           )}
         </div>
 
         {/* ===== Sidebar ===== */}
         <div className="rd-sidebar">
-          {/* Alerts & Next Actions */}
-          <div className="rd-sidebar-card">
-            <h4 className="rd-sidebar-title">Alerts &amp; Next Actions</h4>
-            {mockAlerts.map((a, i) => {
-              const Icon = a.icon;
-              return (
-                <div className="rd-alert-item" key={i}>
-                  <Icon size={16} className="rd-alert-icon" style={{ color: a.color }} />
-                  <div>
-                    <div className="rd-alert-text">{a.text}</div>
-                    <div className="rd-alert-date">{a.date}</div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
           {/* Quick Info */}
           <div className="rd-sidebar-card">
             <h4 className="rd-sidebar-title">Quick Reference</h4>

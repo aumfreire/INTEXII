@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
   Search,
@@ -55,6 +55,25 @@ function formatDate(iso: string | null): string {
   if (!iso) return '—';
   const d = new Date(iso + 'T00:00:00');
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function isUpcomingConference(plan: InterventionPlanItem): boolean {
+  if (typeof plan.status === 'string' && plan.status.trim().toLowerCase() === 'upcoming') {
+    return true;
+  }
+
+  if (!plan.caseConferenceDate) {
+    return false;
+  }
+
+  const conferenceDate = new Date(`${plan.caseConferenceDate}T00:00:00`);
+  if (Number.isNaN(conferenceDate.getTime())) {
+    return false;
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return conferenceDate >= today;
 }
 
 /* ===== Action Menu ===== */
@@ -423,12 +442,23 @@ function CaseConferencesTab({ residents }: { residents: ResidentOption[] }) {
 
   useEffect(() => { void loadPlans(); }, [filterResidentId, filterStatus]); // eslint-disable-line
 
+  const visiblePlans = useMemo(() => {
+    if (filterStatus === 'upcoming') {
+      return plans.filter((plan) => isUpcomingConference(plan));
+    }
+
+    if (filterStatus === 'completed') {
+      return plans.filter((plan) => !isUpcomingConference(plan));
+    }
+
+    return plans;
+  }, [filterStatus, plans]);
+
   async function loadPlans() {
     setIsLoading(true);
     try {
       const data = await getAdminInterventionPlans({
         residentId: filterResidentId ? Number(filterResidentId) : undefined,
-        status: filterStatus || undefined,
         hasConference: true,
       });
       setPlans(data);
@@ -518,7 +548,7 @@ function CaseConferencesTab({ residents }: { residents: ResidentOption[] }) {
       <div className="hv-table-wrap">
         {isLoading ? (
           <div className="hv-state">{[1, 2, 3].map((i) => <div key={i} className="hv-skeleton-row"><div className="hv-skeleton-bar" style={{ width: '100px' }} /><div className="hv-skeleton-bar" style={{ flex: 1 }} /></div>)}</div>
-        ) : plans.length === 0 ? (
+        ) : visiblePlans.length === 0 ? (
           <div className="hv-state">
             <div className="hv-state-icon"><Inbox size={44} /></div>
             <h3 className="hv-state-title">No case conferences found</h3>
@@ -538,7 +568,7 @@ function CaseConferencesTab({ residents }: { residents: ResidentOption[] }) {
                 </tr>
               </thead>
               <tbody>
-                {plans.map((p) => (
+                {visiblePlans.map((p) => (
                   <tr key={p.id}>
                     <td className="hv-date">{formatDate(p.caseConferenceDate)}</td>
                     <td>
@@ -553,8 +583,8 @@ function CaseConferencesTab({ residents }: { residents: ResidentOption[] }) {
                     <td style={{ fontSize: '0.85rem', color: 'var(--color-muted)' }}>{p.planCategory ?? '—'}</td>
                     <td style={{ fontSize: '0.85rem', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.servicesProvided ?? '—'}</td>
                     <td>
-                      <span className={`hv-badge ${p.status === 'upcoming' ? 'upcoming' : 'completed'}`}>
-                        {p.status === 'upcoming' ? 'Upcoming' : 'Completed'}
+                      <span className={`hv-badge ${isUpcomingConference(p) ? 'upcoming' : 'completed'}`}>
+                        {isUpcomingConference(p) ? 'Upcoming' : 'Completed'}
                       </span>
                     </td>
                     <td><ActionMenu id={p.id} onEdit={openEdit} onDelete={(id) => setConfirmDeleteId(id)} /></td>
