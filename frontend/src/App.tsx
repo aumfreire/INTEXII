@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import type { ReactElement } from 'react';
 import {
   BrowserRouter as Router,
@@ -7,7 +7,11 @@ import {
   useLocation,
   Navigate,
 } from 'react-router-dom';
+import { Maximize2, MessageCircle, Minimize2, X } from 'lucide-react';
 import './App.css';
+import AssistantPage from './pages/AssistantPage';
+import AdminChatPage from './pages/AdminChatPage';
+import ChatPage from './components/chat/ChatPage';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import AdminLayout from './components/layout/AdminLayout';
@@ -59,6 +63,55 @@ function ScrollToTop() {
   }, [pathname, hash]);
 
   return null;
+}
+
+function ChatLauncher() {
+  const { pathname } = useLocation();
+  const { isAuthenticated, authSession } = useAuth();
+  const [isOpen, setIsOpen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  if (pathname === '/chat' || pathname.startsWith('/admin')) {
+    return null;
+  }
+
+  const adminMode = isAuthenticated && authSession.roles.includes('Admin');
+
+  return (
+    <>
+      <button
+        type="button"
+        className="chat-launcher-btn"
+        onClick={() => setIsOpen(true)}
+        aria-label="Open chat"
+      >
+        Chat
+        <MessageCircle size={16} />
+      </button>
+      {isOpen ? (
+        <section className={`chat-popup-shell ${isExpanded ? 'expanded' : ''}`} aria-label="Chat popup">
+          <header className="chat-popup-header">
+            <div>Chat</div>
+            <div className="chat-popup-header-actions">
+              <button
+                type="button"
+                onClick={() => setIsExpanded((prev) => !prev)}
+                aria-label={isExpanded ? 'Smaller chat window' : 'Larger chat window'}
+              >
+                {isExpanded ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
+              </button>
+              <button type="button" onClick={() => setIsOpen(false)} aria-label="Close chat">
+                <X size={15} />
+              </button>
+            </div>
+          </header>
+          <div className="chat-popup-body">
+            <ChatPage adminMode={adminMode} popupMode showFullscreenToggle={false} />
+          </div>
+        </section>
+      ) : null}
+    </>
+  );
 }
 
 function RequireAuth({
@@ -114,6 +167,7 @@ function App() {
               <Route path="incidents" element={<IncidentReportsPage />} />
               <Route path="reports" element={<ReportsPage />} />
               <Route path="insights" element={<AdminInsightsPage />} />
+              <Route path="chat" element={<AdminChatPage />} />
             </Route>
 
             <Route
@@ -131,6 +185,8 @@ function App() {
                       <Route path="/auth/callback" element={<AuthCallbackPage />} />
                       <Route path="/cookies" element={<CookiePolicyPage />} />
                       <Route path="/coming-soon" element={<ComingSoonPage />} />
+                      <Route path="/chat" element={<AssistantPage />} />
+                      <Route path="/assistant" element={<Navigate to="/chat" replace />} />
                       <Route path="/signup" element={<SignUpPage />} />
                       <Route path="/register" element={<SignUpPage />} />
                       <Route path="/logout" element={<LogoutPage />} />
@@ -169,6 +225,7 @@ function App() {
                     </Routes>
                   </main>
                   <Footer />
+                  <ChatLauncher />
                   <CookieConsentBanner />
                 </div>
               }

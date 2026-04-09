@@ -16,6 +16,7 @@ import {
   AlertTriangle,
   Building2,
   BrainCircuit,
+  MessagesSquare,
 } from 'lucide-react';
 import { useAuth } from '../../context/useAuth';
 import Navbar from './Navbar';
@@ -36,6 +37,7 @@ const navItems = [
   { divider: true },
   { to: '/admin/reports', icon: BarChart3, label: 'Reports' },
   { to: '/admin/insights', icon: BrainCircuit, label: 'Action Insights' },
+  { to: '/admin/chat', icon: MessagesSquare, label: 'Chat' },
 ] as const;
 
 function getInitials(name: string): string {

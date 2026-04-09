@@ -45,28 +45,51 @@
   box-shadow: 0 14px 30px rgba(193, 96, 58, 0.45);
 }
 
+/* Use almost the full viewport; keep top/side margins and room above the floating Chat pill */
 .chat-popup-shell {
   position: fixed;
-  right: 24px;
-  bottom: 84px;
-  width: min(90vw, 460px);
-  height: min(66vh, 620px);
   z-index: 5001;
+  left: max(12px, env(safe-area-inset-left, 0px));
+  right: max(12px, env(safe-area-inset-right, 0px));
+  top: max(12px, env(safe-area-inset-top, 0px));
+  bottom: max(92px, calc(12px + env(safe-area-inset-bottom, 0px)));
+  display: flex;
+  flex-direction: column;
+  max-width: none;
+  max-height: none;
   border-radius: 14px;
   overflow: hidden;
   border: 1px solid rgba(18, 18, 18, 0.18);
   box-shadow: 0 24px 48px rgba(0, 0, 0, 0.32);
   background: #1b130f;
+  /* Explicit height: fixed + inset:auto sizing fails in some embedded browsers */
+  height: calc(
+    100vh - max(12px, env(safe-area-inset-top, 0px)) - max(92px, calc(12px + env(safe-area-inset-bottom, 0px)))
+  );
+  height: calc(
+    100dvh - max(12px, env(safe-area-inset-top, 0px)) - max(92px, calc(12px + env(safe-area-inset-bottom, 0px)))
+  );
+  max-height: calc(
+    100vh - max(12px, env(safe-area-inset-top, 0px)) - max(92px, calc(12px + env(safe-area-inset-bottom, 0px)))
+  );
+  box-sizing: border-box;
 }
 
 .chat-popup-shell.expanded {
-  right: 18px;
-  bottom: 18px;
-  width: min(95vw, 860px);
-  height: min(84vh, 860px);
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100dvh;
+  max-height: 100vh;
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
 }
 
 .chat-popup-header {
+  flex-shrink: 0;
   height: 44px;
   padding: 0 10px;
   display: flex;
@@ -95,8 +118,9 @@
 }
 
 .chat-popup-body {
-  height: calc(100% - 44px);
+  flex: 1 1 0;
   min-height: 0;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;

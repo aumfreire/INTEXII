@@ -8,6 +8,9 @@ import ChatMessageList from './ChatMessageList';
 import ChatSidebar from './ChatSidebar';
 import '../../styles/components/chat-page.css';
 
+/** Set true to show history sidebar + toggle again */
+const conversationSidebarEnabled = false;
+
 interface ChatPageProps {
   adminMode: boolean;
   popupMode?: boolean;
@@ -19,7 +22,7 @@ export default function ChatPage({
   popupMode = false,
   showFullscreenToggle = true,
 }: ChatPageProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const { isAuthenticated, authSession } = useAuth();
@@ -58,11 +61,12 @@ export default function ChatPage({
   }, [isFullscreen]);
 
   const canUseAdmin = isAuthenticated && authSession.roles.includes('Admin');
+  const sidebarVisible = adminMode && conversationSidebarEnabled && sidebarOpen;
 
   return (
     <section className={`chat-page ${popupMode ? 'chat-page-popup' : ''} ${darkMode ? 'chat-theme-dark' : 'chat-theme-light'} ${isFullscreen ? 'chat-fullscreen' : 'chat-windowed'}`}>
-      <div className="chat-shell">
-        {adminMode && sidebarOpen ? (
+      <div className={`chat-shell ${sidebarVisible ? '' : 'chat-shell-single'}`}>
+        {sidebarVisible ? (
           <ChatSidebar
             conversations={history.conversations}
             activeConversationId={conversationId}
@@ -74,12 +78,14 @@ export default function ChatPage({
         ) : null}
         <div className="chat-main">
           <div className="chat-main-topbar">
-            {adminMode ? (
+            {adminMode && conversationSidebarEnabled ? (
               <button type="button" className="chat-topbar-btn" onClick={() => setSidebarOpen((prev) => !prev)}>
                 <PanelLeft size={15} />
                 {sidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
               </button>
-            ) : <span />}
+            ) : (
+              <span />
+            )}
             <div className="chat-topbar-actions">
               <button type="button" className="chat-topbar-btn" onClick={() => setDarkMode((prev) => !prev)}>
                 {darkMode ? <Sun size={15} /> : <Moon size={15} />}

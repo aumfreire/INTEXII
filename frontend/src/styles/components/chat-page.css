@@ -5,8 +5,9 @@
 
 .chat-page.chat-page-popup {
   min-height: 0;
-  flex: 1 1 auto;
-  height: 100%;
+  flex: 1 1 0;
+  height: auto;
+  max-height: 100%;
   padding: 0;
   display: flex;
   flex-direction: column;
@@ -26,6 +27,17 @@
   align-items: flex-start;
   justify-content: center;
   padding: 12px;
+}
+
+/* Launcher popup: never center a small “card” — stretch to the host panel */
+.chat-page.chat-page-popup.chat-windowed {
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: 0;
+  flex: 1 1 0;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
 }
 
 .chat-theme-dark {
@@ -50,6 +62,11 @@
   overflow: hidden;
 }
 
+/* One column when conversation sidebar is hidden (avoids 280px-wide main column) */
+.chat-shell.chat-shell-single {
+  grid-template-columns: 1fr;
+}
+
 .chat-page.chat-fullscreen .chat-shell {
   width: 100vw;
   height: 100vh;
@@ -70,9 +87,11 @@
 
 .chat-page.chat-page-popup.chat-windowed .chat-shell {
   width: 100%;
-  height: 100%;
+  max-width: none;
+  height: auto;
   min-height: 0;
-  flex: 1 1 auto;
+  flex: 1 1 0;
+  align-self: stretch;
   margin: 0;
   border-radius: 0;
   box-shadow: none;
@@ -162,6 +181,10 @@
   color: inherit;
   text-align: left;
   padding: 8px;
+  font: inherit;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 .chat-conversation-item.active {
@@ -183,6 +206,66 @@
   font-size: 0.72rem;
   text-decoration: underline;
   opacity: 0.8;
+}
+
+/* Dark theme: explicit text (Bootstrap/global button styles were leaving history rows nearly unreadable) */
+.chat-theme-dark .chat-sidebar {
+  color: #f5efe8;
+}
+
+.chat-theme-dark .chat-new-btn {
+  color: #f5efe8;
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+.chat-theme-dark .chat-conversation-item,
+.chat-theme-dark button.chat-conversation-item {
+  background: #3a2e26;
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #faf4eb;
+}
+
+.chat-theme-dark .chat-conversation-title {
+  color: #fffaf4;
+}
+
+.chat-theme-dark .chat-conversation-meta {
+  color: rgba(255, 250, 244, 0.75);
+  opacity: 1;
+}
+
+.chat-theme-dark .chat-conversation-delete {
+  color: #f0c9a8;
+  opacity: 1;
+}
+
+.chat-theme-dark .chat-conversation-item.active {
+  background: #4a3d34;
+  border-color: rgba(193, 96, 58, 0.95);
+  box-shadow: inset 0 0 0 1px rgba(193, 96, 58, 0.25);
+}
+
+/* Light theme list rows */
+.chat-theme-light .chat-conversation-item,
+.chat-theme-light button.chat-conversation-item {
+  background: #f3ece4;
+  border-color: rgba(31, 22, 16, 0.14);
+  color: #1f1610;
+}
+
+.chat-theme-light .chat-conversation-meta {
+  color: rgba(31, 22, 16, 0.62);
+  opacity: 1;
+}
+
+.chat-theme-light .chat-conversation-delete {
+  color: #8f472f;
+  opacity: 1;
+}
+
+.chat-theme-light .chat-conversation-item.active {
+  background: #ebe3d9;
+  border-color: rgba(193, 96, 58, 0.65);
 }
 
 .chat-main {
@@ -448,7 +531,8 @@
 .chat-input-row textarea {
   flex: 1;
   min-height: 44px;
-  max-height: 180px;
+  max-height: 260px;
+  overflow-y: auto;
   resize: none;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -571,5 +655,12 @@
     min-height: calc(100vh - 74px);
     margin: 0;
     box-shadow: none;
+  }
+
+  .chat-page.chat-page-popup.chat-windowed .chat-shell {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    flex: 1 1 0;
   }
 }

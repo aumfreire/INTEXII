@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -133,6 +134,9 @@ public class ChatController : ControllerBase
 
         if (conversation is not null)
         {
+            var priorUserMessageCount = await _db.ChatMessages
+                .CountAsync(m => m.ConversationId == conversation.ConversationId && m.Role == "user", cancellationToken);
+
             _db.ChatMessages.Add(new ChatMessage
             {
                 ConversationId = conversation.ConversationId,
@@ -142,6 +146,13 @@ public class ChatController : ControllerBase
                 CreatedAt = DateTime.UtcNow
             });
             await _db.SaveChangesAsync(cancellationToken);
+
+            if (priorUserMessageCount == 0 && IsPlaceholderConversationTitle(conversation.Title))
+            {
+                conversation.Title = DeriveChatTitleFromUserMessage(request.Message);
+                conversation.UpdatedAt = DateTime.UtcNow;
+                await _db.SaveChangesAsync(cancellationToken);
+            }
         }
 
         _db.ChatAuditLogs.Add(new ChatAuditLog
@@ -219,7 +230,44 @@ public class ChatController : ControllerBase
             .Where(c => c.UserId == userId && !c.IsDeleted)
             .OrderByDescending(c => c.UpdatedAt)
             .ToListAsync(cancellationToken);
-        return Ok(conversations.Select(MapConversation).ToArray());
+
+        var placeholderIds = conversations
+            .Where(c => IsPlaceholderConversationTitle(c.Title))
+            .Select(c => c.ConversationId)
+            .ToList();
+
+        Dictionary<int, string> firstUserContentByConvId = [];
+        if (placeholderIds.Count > 0)
+        {
+            var userRows = await _db.ChatMessages
+                .AsNoTracking()
+                .Where(m => placeholderIds.Contains(m.ConversationId) && m.Role == "user")
+                .Select(m => new { m.ConversationId, m.CreatedAt, m.Content })
+                .ToListAsync(cancellationToken);
+
+            firstUserContentByConvId = userRows
+                .GroupBy(x => x.ConversationId)
+                .ToDictionary(g => g.Key, g => g.OrderBy(x => x.CreatedAt).First().Content);
+        }
+
+        return Ok(conversations.Select(c =>
+        {
+            var title = c.Title ?? string.Empty;
+            if (IsPlaceholderConversationTitle(title)
+                && firstUserContentByConvId.TryGetValue(c.ConversationId, out var firstMsg)
+                && !string.IsNullOrWhiteSpace(firstMsg))
+            {
+                title = DeriveChatTitleFromUserMessage(firstMsg);
+            }
+
+            return new
+            {
+                conversationId = c.ConversationId,
+                title,
+                createdAt = c.CreatedAt,
+                updatedAt = c.UpdatedAt
+            };
+        }).ToArray());
     }
 
     [HttpGet("conversations/{id:int}")]
@@ -242,9 +290,25 @@ public class ChatController : ControllerBase
             .OrderBy(m => m.CreatedAt)
             .ToListAsync(cancellationToken);
 
+        var displayTitle = conversation.Title ?? string.Empty;
+        if (IsPlaceholderConversationTitle(displayTitle))
+        {
+            var firstUser = messages.FirstOrDefault(m => m.Role == "user");
+            if (firstUser is not null && !string.IsNullOrWhiteSpace(firstUser.Content))
+            {
+                displayTitle = DeriveChatTitleFromUserMessage(firstUser.Content);
+            }
+        }
+
         return Ok(new
         {
-            conversation = MapConversation(conversation),
+            conversation = new
+            {
+                conversationId = conversation.ConversationId,
+                title = displayTitle,
+                createdAt = conversation.CreatedAt,
+                updatedAt = conversation.UpdatedAt
+            },
             messages = messages.Select(m => new
             {
                 messageId = m.MessageId,
@@ -443,6 +507,34 @@ public class ChatController : ControllerBase
         createdAt = conversation.CreatedAt,
         updatedAt = conversation.UpdatedAt
     };
+
+    private static bool IsPlaceholderConversationTitle(string? title)
+    {
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            return true;
+        }
+
+        return string.Equals(title.Trim(), "New conversation", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>Short single-line title from the first user message (sidebar list).</summary>
+    private static string DeriveChatTitleFromUserMessage(string? message)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            return "New conversation";
+        }
+
+        var singleLine = Regex.Replace(message.Trim(), @"\s+", " ");
+        const int maxLen = 72;
+        if (singleLine.Length <= maxLen)
+        {
+            return singleLine;
+        }
+
+        return string.Concat(singleLine.AsSpan(0, maxLen - 1), "…");
+    }
 
     private string BuildPublicSystemPrompt()
     {

@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 import { Paperclip, Send } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import ChatFilePreview from './ChatFilePreview';
@@ -28,6 +28,10 @@ export default function ChatInput({
   accept,
 }: ChatInputProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  /** Match CSS max-height so JS cap aligns with scroll + padding */
+  const textareaMaxPx = 260;
+
   const { getRootProps, isDragActive } = useDropzone({
     noClick: true,
     noKeyboard: true,
@@ -52,10 +56,17 @@ export default function ChatInput({
     }
   }
 
+  useLayoutEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(el.scrollHeight, textareaMaxPx)}px`;
+  }, [value, isStreaming]);
+
   return (
     <div className={`chat-input-wrap ${isDragActive ? 'chat-drop-active' : ''}`} {...getRootProps()}>
       <ChatFilePreview attachments={attachments} onRemove={onRemoveAttachment} />
-      <div className="chat-input-mode">Haven AI</div>
+      <div className="chat-input-mode">Haven Chat</div>
       <form className="chat-input-row" onSubmit={handleSubmit}>
         <button
           type="button"
@@ -67,6 +78,7 @@ export default function ChatInput({
           <Paperclip size={18} />
         </button>
         <textarea
+          ref={textareaRef}
           value={value}
           onChange={(event) => onChange(event.target.value)}
           onKeyDown={onKeyDown}

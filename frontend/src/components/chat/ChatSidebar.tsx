@@ -20,7 +20,7 @@ export default function ChatSidebar({
 }: ChatSidebarProps) {
   return (
     <aside className="chat-sidebar">
-      <div className="chat-sidebar-title">Haven Assistant</div>
+      <div className="chat-sidebar-title">Haven Chat</div>
       <button type="button" className="chat-new-btn" onClick={onNewChat}>
         New chat
       </button>
