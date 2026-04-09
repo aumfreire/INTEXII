@@ -19,6 +19,13 @@ public class InsightsController : ControllerBase
     }
 
     /// <summary>
+    /// Unauthenticated health-check — confirms InsightsController is deployed.
+    /// </summary>
+    [HttpGet("ping")]
+    [AllowAnonymous]
+    public IActionResult Ping() => Ok(new { ok = true, controller = "InsightsController" });
+
+    /// <summary>
     /// Returns donor lapse risk predictions with phone numbers joined from supporters.
     /// Sorted High → Medium → Low risk.
     /// </summary>
