@@ -6,7 +6,6 @@ import {
     Heart,
     ChevronDown,
     LayoutDashboard,
-    Settings,
     ShieldCheck,
     LogOut,
 } from 'lucide-react';
@@ -239,7 +238,6 @@ export default function Navbar() {
 
                                         <div style={{ display: 'grid', gap: '4px' }}>
                                             <MenuLink to="/dashboard" icon={LayoutDashboard} label="My Dashboard" description="Overview and quick actions" onClick={closeMenus} />
-                                            <MenuLink to="/profile" icon={Settings} label="Edit Profile" description="Update personal details" onClick={closeMenus} />
                                         </div>
 
                                         {isAdmin ? (
@@ -395,7 +393,6 @@ export default function Navbar() {
                                 </div>
                                 <MobileMenuSection title="Account">
                                     <MobileMenuLink to="/dashboard" icon={LayoutDashboard} label="My Dashboard" description="Overview and quick actions" onClick={closeMenus} />
-                                    <MobileMenuLink to="/profile" icon={Settings} label="Edit Profile" description="Update personal details" onClick={closeMenus} />
                                 </MobileMenuSection>
                                 {isAdmin ? (
                                     <MobileMenuSection title="Admin Tools">
