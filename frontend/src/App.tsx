@@ -39,7 +39,6 @@ import ProcessRecordingsPage from './pages/ProcessRecordingsPage';
 import HomeVisitsPage from './pages/HomeVisitsPage';
 import ReportsPage from './pages/ReportsPage';
 import PartnersPage from './pages/PartnersPage';
-import ImpactPage from './pages/ImpactPage';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import IncidentReportsPage from './pages/IncidentReportsPage';
 
@@ -114,6 +113,7 @@ function App() {
               <Route path="incidents" element={<IncidentReportsPage />} />
               <Route path="reports" element={<ReportsPage />} />
               <Route path="insights" element={<AdminInsightsPage />} />
+              <Route path="chat" element={<Navigate to="/admin" replace />} />
             </Route>
 
             <Route
@@ -125,8 +125,9 @@ function App() {
                     <Routes>
                       <Route path="/" element={<LandingPage />} />
                       <Route path="/donate" element={<DonationPage />} />
-                      <Route path="/impact" element={<ImpactPage />} />
+                      <Route path="/impact" element={<Navigate to="/#impact" replace />} />
                       <Route path="/privacy" element={<PrivacyPolicyPage />} />
+                      <Route path="/assistant" element={<Navigate to="/" replace />} />
                       <Route path="/login" element={<LoginPage />} />
                       <Route path="/auth/callback" element={<AuthCallbackPage />} />
                       <Route path="/cookies" element={<CookiePolicyPage />} />
