@@ -1,0 +1,424 @@
+/* ===== Admin ML Insights Page ===== */
+
+/* Section header row */
+.insights-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 28px;
+  margin-top: 28px;
+  margin-bottom: 16px;
+  border-top: 1px solid var(--color-light-gray);
+}
+
+.insights-section-header:first-of-type {
+  border-top: none;
+  padding-top: 0;
+  margin-top: 0;
+}
+
+.insights-section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--color-dark);
+  margin: 0;
+}
+
+.insights-section-title-icon {
+  color: var(--color-primary);
+}
+
+.insights-run-date {
+  font-size: 0.82rem;
+  color: var(--color-muted);
+}
+
+.insights-run-date strong {
+  color: var(--color-dark);
+  font-weight: 600;
+}
+
+/* ===== Tier Summary Pills ===== */
+.insights-tier-summary {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.insights-tier-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.insights-tier-pill.high {
+  background-color: rgba(193, 96, 58, 0.1);
+  color: var(--color-primary-dark);
+}
+
+.insights-tier-pill.medium {
+  background-color: rgba(212, 146, 122, 0.15);
+  color: var(--color-primary);
+}
+
+.insights-tier-pill.low {
+  background-color: rgba(122, 158, 126, 0.1);
+  color: var(--color-sage);
+}
+
+/* Alert tier pills */
+.insights-tier-pill.alert {
+  background-color: rgba(193, 96, 58, 0.1);
+  color: var(--color-primary-dark);
+}
+
+.insights-tier-pill.watch {
+  background-color: rgba(212, 146, 122, 0.15);
+  color: var(--color-primary);
+}
+
+.insights-tier-pill.stable {
+  background-color: rgba(122, 158, 126, 0.1);
+  color: var(--color-sage);
+}
+
+/* ===== Table ===== */
+.insights-table-wrap {
+  background-color: var(--color-white);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.insights-table-scroll {
+  overflow-x: auto;
+}
+
+.insights-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 700px;
+}
+
+.insights-table th {
+  text-align: left;
+  padding: 12px 16px;
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--color-light-gray);
+  background-color: var(--color-cream);
+  white-space: nowrap;
+}
+
+.insights-table td {
+  padding: 13px 16px;
+  font-size: 0.88rem;
+  color: var(--color-dark);
+  border-bottom: 1px solid var(--color-light-gray);
+  vertical-align: middle;
+}
+
+.insights-table tbody tr {
+  transition: background-color var(--transition-fast);
+}
+
+.insights-table tbody tr:hover {
+  background-color: var(--color-cream);
+}
+
+.insights-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.insights-table .expanded-row td {
+  background-color: var(--color-cream);
+  border-bottom: 1px solid var(--color-light-gray);
+}
+
+/* Cell content helpers */
+.insights-name {
+  font-weight: 600;
+  color: var(--color-dark);
+  margin-bottom: 1px;
+}
+
+.insights-sub {
+  font-size: 0.8rem;
+  color: var(--color-muted);
+}
+
+/* ===== Risk / Alert Badges ===== */
+.insights-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.insights-badge.risk-high,
+.insights-badge.alert-alert {
+  background-color: rgba(193, 96, 58, 0.1);
+  color: var(--color-primary-dark);
+}
+
+.insights-badge.risk-medium,
+.insights-badge.alert-watch {
+  background-color: rgba(212, 146, 122, 0.15);
+  color: var(--color-primary);
+}
+
+.insights-badge.risk-low,
+.insights-badge.alert-stable {
+  background-color: rgba(122, 158, 126, 0.1);
+  color: var(--color-sage);
+}
+
+/* ===== Contact Buttons ===== */
+.insights-contact-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-decoration: none;
+  border: 1.5px solid var(--color-light-gray);
+  background: none;
+  cursor: pointer;
+  color: var(--color-dark);
+  font-family: var(--font-body);
+  transition: border-color var(--transition-fast), color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.insights-contact-btn:hover {
+  border-color: var(--color-primary-light);
+  color: var(--color-primary);
+  background-color: var(--color-blush);
+}
+
+.insights-contact-btn.primary {
+  border-color: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.insights-contact-btn.primary:hover {
+  background-color: var(--color-primary);
+  color: var(--color-white);
+}
+
+/* ===== Expanded Detail Panel ===== */
+.insights-detail-panel {
+  padding: 16px 20px;
+}
+
+.insights-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.insights-detail-col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.insights-detail-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--color-dark);
+}
+
+.insights-detail-reason {
+  font-size: 0.85rem;
+  color: var(--color-dark-mid);
+  line-height: 1.5;
+}
+
+.insights-detail-meta {
+  font-size: 0.8rem;
+  color: var(--color-muted);
+}
+
+/* ===== Expand Button ===== */
+.insights-expand-btn {
+  background: none;
+  border: 1.5px solid var(--color-light-gray);
+  border-radius: var(--radius-sm);
+  padding: 5px 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--color-muted);
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: border-color var(--transition-fast), color var(--transition-fast);
+}
+
+.insights-expand-btn:hover {
+  border-color: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+/* ===== Safehouse Cards ===== */
+.insights-safehouse-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.insights-safehouse-card {
+  background-color: var(--color-white);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  box-shadow: var(--shadow-sm);
+  border-left: 4px solid var(--color-light-gray);
+}
+
+.insights-safehouse-card.alert {
+  border-left-color: var(--color-primary-dark);
+}
+
+.insights-safehouse-card.watch {
+  border-left-color: var(--color-primary-light);
+}
+
+.insights-safehouse-card.stable {
+  border-left-color: var(--color-sage);
+}
+
+.insights-safehouse-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.insights-safehouse-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--color-dark);
+  margin-bottom: 2px;
+}
+
+.insights-safehouse-meta {
+  font-size: 0.8rem;
+  color: var(--color-muted);
+}
+
+/* Progress bars */
+.insights-progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--color-muted);
+  margin-bottom: 4px;
+}
+
+.insights-progress-label strong {
+  color: var(--color-dark);
+}
+
+.insights-progress-track {
+  height: 6px;
+  background-color: var(--color-light-gray);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.insights-progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.insights-progress-fill.good {
+  background-color: var(--color-sage);
+}
+
+.insights-progress-fill.warn {
+  background-color: var(--color-primary-light);
+}
+
+.insights-progress-fill.bad {
+  background-color: var(--color-primary-dark);
+}
+
+.insights-safehouse-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 4px;
+  font-size: 0.8rem;
+  color: var(--color-muted);
+}
+
+.insights-safehouse-footer strong {
+  color: var(--color-dark);
+}
+
+.insights-safehouse-footer strong.bad {
+  color: var(--color-primary-dark);
+}
+
+.insights-safehouse-footer strong.good {
+  color: var(--color-sage);
+}
+
+/* ===== Empty / Loading States ===== */
+.insights-empty {
+  background-color: var(--color-white);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: 40px 32px;
+  text-align: center;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 991px) {
+  .insights-safehouse-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .insights-detail-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .insights-safehouse-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .insights-section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+}
