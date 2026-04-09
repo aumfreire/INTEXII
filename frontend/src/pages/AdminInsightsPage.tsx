@@ -451,7 +451,6 @@ function SocialMediaActionSection() {
                         <div className="social-action-stat">{card.stat}</div>
                         <div className="social-action-headline">{card.headline}</div>
                         <p className="social-action-body">{card.body}</p>
-                        <span className="social-action-cta">Try this &rarr;</span>
                     </div>
                 ))}
             </div>
