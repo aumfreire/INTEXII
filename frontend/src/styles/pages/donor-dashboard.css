@@ -1,0 +1,89 @@
+.donor-dashboard-shell {
+  max-width: 1200px;
+}
+
+.donor-dashboard-account {
+  margin: 8px 0 0;
+  color: var(--color-muted);
+  font-size: 0.86rem;
+}
+
+.donor-kpis {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.donor-actions-panel {
+  margin-top: 4px;
+}
+
+.donor-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  padding: 16px 20px 20px;
+}
+
+.donor-action-link {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  text-decoration: none;
+  color: inherit;
+  border: 1px solid var(--color-light-gray);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-white);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
+}
+
+.donor-action-link:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+  border-color: rgba(193, 96, 58, 0.32);
+}
+
+.donor-action-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background-color: rgba(193, 96, 58, 0.1);
+  color: var(--color-primary);
+}
+
+.donor-action-link span {
+  display: flex;
+  flex-direction: column;
+}
+
+.donor-action-link strong {
+  font-size: 0.9rem;
+  line-height: 1.35;
+  color: var(--color-dark);
+}
+
+.donor-action-link small {
+  margin-top: 2px;
+  color: var(--color-muted);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+@media (max-width: 992px) {
+  .donor-kpis {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .donor-actions-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .donor-kpis {
+    grid-template-columns: 1fr;
+  }
+}
