@@ -33,6 +33,7 @@ type SortDirection = 'asc' | 'desc';
 type RoleTemplate = 'donor' | 'admin';
 
 export default function AdminUsersPage() {
+    const pageSizeOptions = [10, 25, 50, 100];
     const { authSession } = useAuth();
     const [users, setUsers] = useState<AdminUserSummary[]>([]);
     const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
@@ -42,6 +43,8 @@ export default function AdminUsersPage() {
     const [activeSearch, setActiveSearch] = useState('');
     const [sortBy, setSortBy] = useState<SortBy>('email');
     const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
 
     const [isLoading, setIsLoading] = useState(true);
     const [isWorking, setIsWorking] = useState(false);
@@ -153,6 +156,11 @@ export default function AdminUsersPage() {
         return output;
     }, [sortBy, sortDirection, users]);
 
+    const totalPages = Math.max(1, Math.ceil(sortedUsers.length / pageSize));
+    const currentPage = Math.min(page, totalPages);
+    const startIndex = (currentPage - 1) * pageSize;
+    const pagedUsers = sortedUsers.slice(startIndex, startIndex + pageSize);
+
     const metrics = useMemo(() => {
         const totalUsers = users.length;
         const adminUsers = users.filter((u) => u.roles.includes('Admin')).length;
@@ -170,6 +178,16 @@ export default function AdminUsersPage() {
     const selectedUserDonationsRoute = selectedUser?.supporter?.supporterId
         ? `/admin/contributions?supporterId=${selectedUser.supporter.supporterId}&supporterName=${encodeURIComponent(selectedUser.preferredDisplayName)}`
         : '/admin/contributions';
+
+    useEffect(() => {
+        setPage(1);
+    }, [activeSearch, sortBy, sortDirection]);
+
+    useEffect(() => {
+        if (page > totalPages) {
+            setPage(totalPages);
+        }
+    }, [page, totalPages]);
 
     async function handleCreateUser() {
         if (!createEmail.trim() || !createPassword.trim()) {
@@ -376,11 +394,17 @@ export default function AdminUsersPage() {
 
     return (
         <div>
-            <div className="admin-page-header au-header">
-                <h1 className="admin-page-title">Manage Users</h1>
-                <p className="admin-page-subtitle">
-                    Create accounts, assign roles, maintain user identity details, and manage account security.
-                </p>
+            <div className="admin-page-header au-header" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', flexWrap: 'nowrap' }}>
+                <div>
+                    <h1 className="admin-page-title">Manage Users</h1>
+                    <p className="admin-page-subtitle">
+                        Create accounts, assign roles, maintain user identity details, and manage account security.
+                    </p>
+                </div>
+                <PrimaryButton onClick={() => setCreateOpen(true)}>
+                    <UserPlus size={16} />
+                    Create User
+                </PrimaryButton>
             </div>
 
             {(errorMessage || successMessage) && (
@@ -402,8 +426,8 @@ export default function AdminUsersPage() {
             </div>
 
             <div className="au-filters">
-                <div className="au-filters-row">
-                    <div className="au-filter-group">
+                <div className="au-filters-row" style={{ display: 'flex', flexWrap: 'nowrap', gap: '8px', alignItems: 'flex-end' }}>
+                    <div className="au-filter-group" style={{ flex: '1 1 260px', minWidth: '220px', maxWidth: '300px' }}>
                         <label className="au-filter-label" htmlFor="au-search">Search</label>
                         <div className="au-search-wrap">
                             <Search size={16} className="au-search-icon" />
@@ -422,7 +446,7 @@ export default function AdminUsersPage() {
                         </div>
                     </div>
 
-                    <div className="au-filter-group">
+                    <div className="au-filter-group" style={{ minWidth: '120px', maxWidth: '140px' }}>
                         <label className="au-filter-label" htmlFor="au-sortby">Sort By</label>
                         <select
                             id="au-sortby"
@@ -436,7 +460,7 @@ export default function AdminUsersPage() {
                         </select>
                     </div>
 
-                    <div className="au-filter-group">
+                    <div className="au-filter-group" style={{ minWidth: '120px', maxWidth: '140px' }}>
                         <label className="au-filter-label" htmlFor="au-direction">Direction</label>
                         <select
                             id="au-direction"
@@ -448,22 +472,37 @@ export default function AdminUsersPage() {
                             <option value="desc">Descending</option>
                         </select>
                     </div>
-                </div>
 
-                <div className="au-filter-actions">
-                    <SecondaryButton onClick={() => setActiveSearch(searchInput.trim())}>Apply</SecondaryButton>
-                    <SecondaryButton
-                        onClick={() => {
-                            setSearchInput('');
-                            setActiveSearch('');
-                        }}
-                    >
-                        Clear
-                    </SecondaryButton>
-                    <PrimaryButton onClick={() => setCreateOpen(true)}>
-                        <UserPlus size={16} />
-                        Create User
-                    </PrimaryButton>
+                    <div className="au-filter-group" style={{ minWidth: '90px', maxWidth: '100px' }}>
+                        <label className="au-filter-label" htmlFor="au-page-size">Display</label>
+                        <select
+                            id="au-page-size"
+                            className="au-filter-select"
+                            value={pageSize}
+                            onChange={(event) => {
+                                setPageSize(Number(event.target.value));
+                                setPage(1);
+                            }}
+                        >
+                            {pageSizeOptions.map((size) => (
+                                <option key={size} value={size}>{size}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="au-filter-group" style={{ flex: '0 0 auto', justifyContent: 'flex-end', marginLeft: 'auto' }}>
+                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'nowrap' }}>
+                            <SecondaryButton onClick={() => setActiveSearch(searchInput.trim())}>Apply</SecondaryButton>
+                            <SecondaryButton
+                                onClick={() => {
+                                    setSearchInput('');
+                                    setActiveSearch('');
+                                }}
+                            >
+                                Clear
+                            </SecondaryButton>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -485,7 +524,7 @@ export default function AdminUsersPage() {
                                 </tr>
                             )}
 
-                            {sortedUsers.map((user) => {
+                            {pagedUsers.map((user) => {
                                 const isActive = selectedUserId === user.id;
                                 return (
                                     <tr key={user.id} className={isActive ? 'active' : ''} onClick={() => setSelectedUserId(user.id)}>
@@ -514,7 +553,14 @@ export default function AdminUsersPage() {
                     </table>
                 </div>
                 <div className="au-table-footer">
-                    <span>Showing {sortedUsers.length} user{sortedUsers.length === 1 ? '' : 's'}</span>
+                    <span>
+                        Showing {sortedUsers.length === 0 ? 0 : startIndex + 1}-{Math.min(startIndex + pageSize, sortedUsers.length)} of {sortedUsers.length}
+                    </span>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <button className="au-danger-btn" type="button" disabled={currentPage <= 1} onClick={() => setPage(currentPage - 1)}>Prev</button>
+                        <span style={{ color: 'var(--color-muted)', fontSize: '0.88rem' }}>Page {currentPage} of {totalPages}</span>
+                        <button className="au-danger-btn" type="button" disabled={currentPage >= totalPages} onClick={() => setPage(currentPage + 1)}>Next</button>
+                    </div>
                 </div>
             </div>
 

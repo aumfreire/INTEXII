@@ -365,6 +365,7 @@ function ActionMenu({
 
 /* ===== Main Page ===== */
 export default function DonorsPage() {
+  const pageSizeOptions = [10, 25, 50, 100];
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -382,6 +383,8 @@ export default function DonorsPage() {
   const [filterType, setFilterType] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [filterChannel, setFilterChannel] = useState('');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   function mapSupporterSummary(item: {
     id: number;
@@ -619,6 +622,21 @@ export default function DonorsPage() {
     return true;
   });
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const startIndex = (currentPage - 1) * pageSize;
+  const pagedSupporters = filtered.slice(startIndex, startIndex + pageSize);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, filterType, filterStatus, filterChannel]);
+
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
+
   // Summary counts (from full dataset)
   const activeCount = supporters.filter((s) => s.status === 'active').length;
   const monthlyDonors = supporters.filter(
@@ -745,7 +763,7 @@ export default function DonorsPage() {
           {/* Filter Bar */}
           <div className="donors-filters">
             <div className="donors-filters-row">
-              <div className="donors-filter-group">
+              <div className="donors-filter-group" style={{ flex: '1 1 240px', minWidth: '220px', maxWidth: '280px' }}>
                 <label className="donors-filter-label" htmlFor="dn-search">Search</label>
                 <div style={{ position: 'relative' }}>
                   <Search
@@ -809,6 +827,22 @@ export default function DonorsPage() {
                   <option value="">All Channels</option>
                   {Object.entries(channelLabels).map(([val, label]) => (
                     <option key={val} value={val}>{label}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="donors-filter-group" style={{ maxWidth: '120px' }}>
+                <label className="donors-filter-label" htmlFor="dn-page-size">Display</label>
+                <select
+                  id="dn-page-size"
+                  className="donors-filter-select"
+                  value={pageSize}
+                  onChange={(e) => {
+                    setPageSize(Number(e.target.value));
+                    setPage(1);
+                  }}
+                >
+                  {pageSizeOptions.map((size) => (
+                    <option key={size} value={size}>{size}</option>
                   ))}
                 </select>
               </div>
@@ -878,7 +912,7 @@ export default function DonorsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filtered.map((s) => (
+                    {pagedSupporters.map((s) => (
                       <tr key={s.id}>
                         <td>
                           <div className="donors-supporter-name">{s.name}</div>
@@ -917,8 +951,39 @@ export default function DonorsPage() {
               </div>
               <div className="donors-table-footer">
                 <span>
-                  Showing {filtered.length} of {supporters.length} supporter{supporters.length !== 1 ? 's' : ''}
+                  Showing {filtered.length === 0 ? 0 : startIndex + 1}-{Math.min(startIndex + pageSize, filtered.length)} of {filtered.length}
                 </span>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <button
+                    type="button"
+                    disabled={currentPage <= 1}
+                    onClick={() => setPage(currentPage - 1)}
+                    style={{
+                      padding: '6px 10px',
+                      borderRadius: 'var(--radius-sm)',
+                      border: '1px solid var(--color-light-gray)',
+                      backgroundColor: 'var(--color-white)',
+                      cursor: currentPage <= 1 ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    Prev
+                  </button>
+                  <span style={{ color: 'var(--color-muted)', fontSize: '0.88rem' }}>Page {currentPage} of {totalPages}</span>
+                  <button
+                    type="button"
+                    disabled={currentPage >= totalPages}
+                    onClick={() => setPage(currentPage + 1)}
+                    style={{
+                      padding: '6px 10px',
+                      borderRadius: 'var(--radius-sm)',
+                      border: '1px solid var(--color-light-gray)',
+                      backgroundColor: 'var(--color-white)',
+                      cursor: currentPage >= totalPages ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    Next
+                  </button>
+                </div>
               </div>
             </div>
           )}

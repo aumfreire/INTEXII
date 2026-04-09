@@ -116,6 +116,7 @@ function ConfirmDialog({ message, onConfirm, onCancel }: { message: string; onCo
 
 /* ===== Main Page ===== */
 export default function ProcessRecordingsPage() {
+  const pageSizeOptions = [10, 25, 50, 100];
   const [searchParams] = useSearchParams();
   const prefilledResidentId = searchParams.get('residentId');
 
@@ -124,7 +125,7 @@ export default function ProcessRecordingsPage() {
   const [recordings, setRecordings] = useState<ProcessRecordingListItem[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const pageSize = 20;
+  const [pageSize, setPageSize] = useState(10);
 
   const [residents, setResidents] = useState<ResidentOption[]>([]);
   const [search, setSearch] = useState('');
@@ -144,7 +145,7 @@ export default function ProcessRecordingsPage() {
   useEffect(() => {
     void loadRecordings();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, filterResidentId, filterSessionType]);
+  }, [page, pageSize, filterResidentId, filterSessionType]);
 
   async function loadRecordings() {
     setIsLoading(true);
@@ -285,6 +286,22 @@ export default function ProcessRecordingsPage() {
           <select id="pr-type" className="pr-filter-select" value={filterSessionType} onChange={(e) => { setFilterSessionType(e.target.value); setPage(1); }}>
             <option value="">All Types</option>
             {Object.entries(sessionTypeLabels).map(([val, label]) => <option key={val} value={val}>{label}</option>)}
+          </select>
+        </div>
+        <div className="pr-filter-group">
+          <label className="pr-filter-label" htmlFor="pr-page-size">Display</label>
+          <select
+            id="pr-page-size"
+            className="pr-filter-select"
+            value={pageSize}
+            onChange={(e) => {
+              setPageSize(Number(e.target.value));
+              setPage(1);
+            }}
+          >
+            {pageSizeOptions.map((size) => (
+              <option key={size} value={size}>{size}</option>
+            ))}
           </select>
         </div>
         <button className="pr-search-btn" onClick={handleSearch}>Search</button>

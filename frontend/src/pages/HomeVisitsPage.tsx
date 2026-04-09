@@ -137,12 +137,13 @@ const emptyVisitForm: VisitForm = {
 };
 
 function HomeVisitsTab({ residents, prefilledResidentId }: { residents: ResidentOption[]; prefilledResidentId: string }) {
+  const pageSizeOptions = [10, 25, 50, 100];
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
   const [visits, setVisits] = useState<HomeVisitationListItem[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const pageSize = 20;
+  const [pageSize, setPageSize] = useState(10);
 
   const [search, setSearch] = useState('');
   const [filterResidentId, setFilterResidentId] = useState(prefilledResidentId);
@@ -155,7 +156,7 @@ function HomeVisitsTab({ residents, prefilledResidentId }: { residents: Resident
   const [isSaving, setIsSaving] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
-  useEffect(() => { void loadVisits(); }, [page, filterResidentId, filterVisitType, filterSafety]);  // eslint-disable-line
+  useEffect(() => { void loadVisits(); }, [page, pageSize, filterResidentId, filterVisitType, filterSafety]);  // eslint-disable-line
 
   async function loadVisits() {
     setIsLoading(true);
@@ -277,6 +278,19 @@ function HomeVisitsTab({ residents, prefilledResidentId }: { residents: Resident
               <option value="">Any</option>
               <option value="yes">Yes</option>
               <option value="no">No</option>
+            </select>
+          </div>
+          <div className="hv-filter-group">
+            <label className="hv-filter-label">Display</label>
+            <select
+              className="hv-filter-select"
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value));
+                setPage(1);
+              }}
+            >
+              {pageSizeOptions.map((size) => <option key={size} value={size}>{size}</option>)}
             </select>
           </div>
           <button className="hv-search-btn" onClick={() => void loadVisits()}>Search</button>
@@ -431,11 +445,14 @@ const emptyConferenceForm: ConferenceForm = {
 };
 
 function CaseConferencesTab({ residents }: { residents: ResidentOption[] }) {
+  const pageSizeOptions = [10, 25, 50, 100];
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
   const [plans, setPlans] = useState<InterventionPlanItem[]>([]);
   const [filterResidentId, setFilterResidentId] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const [editorOpen, setEditorOpen] = useState(false);
   const [editorId, setEditorId] = useState<number | null>(null);
@@ -456,6 +473,21 @@ function CaseConferencesTab({ residents }: { residents: ResidentOption[] }) {
 
     return plans;
   }, [filterStatus, plans]);
+
+  const totalPages = Math.max(1, Math.ceil(visiblePlans.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const startIndex = (currentPage - 1) * pageSize;
+  const pagedPlans = visiblePlans.slice(startIndex, startIndex + pageSize);
+
+  useEffect(() => {
+    setPage(1);
+  }, [filterResidentId, filterStatus]);
+
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
 
   async function loadPlans() {
     setIsLoading(true);
@@ -544,6 +576,19 @@ function CaseConferencesTab({ residents }: { residents: ResidentOption[] }) {
               <option value="completed">Completed</option>
             </select>
           </div>
+          <div className="hv-filter-group">
+            <label className="hv-filter-label">Display</label>
+            <select
+              className="hv-filter-select"
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value));
+                setPage(1);
+              }}
+            >
+              {pageSizeOptions.map((size) => <option key={size} value={size}>{size}</option>)}
+            </select>
+          </div>
         </div>
         <PrimaryButton onClick={openCreate}><Plus size={15} /> Schedule Conference</PrimaryButton>
       </div>
@@ -571,7 +616,7 @@ function CaseConferencesTab({ residents }: { residents: ResidentOption[] }) {
                 </tr>
               </thead>
               <tbody>
-                {visiblePlans.map((p) => (
+                {pagedPlans.map((p) => (
                   <tr key={p.id}>
                     <td className="hv-date">{formatDate(p.caseConferenceDate)}</td>
                     <td>
@@ -595,6 +640,14 @@ function CaseConferencesTab({ residents }: { residents: ResidentOption[] }) {
                 ))}
               </tbody>
             </table>
+            <div className="hv-table-footer">
+              <span>{visiblePlans.length === 0 ? 0 : startIndex + 1}-{Math.min(startIndex + pageSize, visiblePlans.length)} of {visiblePlans.length}</span>
+              <div className="hv-pagination">
+                <button className="hv-page-btn" disabled={currentPage <= 1} onClick={() => setPage(currentPage - 1)}>‹ Prev</button>
+                <span>Page {currentPage} of {totalPages}</span>
+                <button className="hv-page-btn" disabled={currentPage >= totalPages} onClick={() => setPage(currentPage + 1)}>Next ›</button>
+              </div>
+            </div>
           </div>
         )}
       </div>

@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Building2, Home, PencilLine, Plus, RefreshCw, Search, Trash2, Users, X } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Building2, Home, MoreVertical, PencilLine, Plus, RefreshCw, Search, Trash2, Users, X } from 'lucide-react';
 import AlertBanner from '../components/ui/AlertBanner';
 import PrimaryButton from '../components/ui/PrimaryButton';
 import SecondaryButton from '../components/ui/SecondaryButton';
@@ -96,7 +96,83 @@ function formatDate(value: string | null): string {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
+function SafehouseActionMenu({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => void }) {
+    const [open, setOpen] = useState(false);
+    const menuRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+                setOpen(false);
+            }
+        }
+
+        if (open) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [open]);
+
+    return (
+        <div ref={menuRef} style={{ position: 'relative', display: 'inline-flex' }}>
+            <button
+                type="button"
+                className="au-badge donor"
+                style={{ border: 'none', cursor: 'pointer', padding: '6px 8px' }}
+                onClick={(event) => {
+                    event.stopPropagation();
+                    setOpen((value) => !value);
+                }}
+                aria-label="Safehouse actions"
+            >
+                <MoreVertical size={14} />
+            </button>
+            {open && (
+                <div
+                    style={{
+                        position: 'absolute',
+                        top: 'calc(100% + 6px)',
+                        right: 0,
+                        minWidth: '130px',
+                        backgroundColor: 'var(--color-white)',
+                        border: '1px solid var(--color-light-gray)',
+                        borderRadius: 'var(--radius-sm)',
+                        boxShadow: 'var(--shadow-md)',
+                        zIndex: 30,
+                        overflow: 'hidden',
+                    }}
+                >
+                    <button
+                        type="button"
+                        onClick={(event) => {
+                            event.stopPropagation();
+                            setOpen(false);
+                            onEdit();
+                        }}
+                        style={{ width: '100%', padding: '8px 10px', border: 'none', textAlign: 'left', background: 'transparent', cursor: 'pointer' }}
+                    >
+                        <PencilLine size={12} style={{ marginRight: '6px' }} /> Edit
+                    </button>
+                    <button
+                        type="button"
+                        onClick={(event) => {
+                            event.stopPropagation();
+                            setOpen(false);
+                            onDelete();
+                        }}
+                        style={{ width: '100%', padding: '8px 10px', border: 'none', textAlign: 'left', background: 'transparent', color: 'var(--color-primary-dark)', cursor: 'pointer' }}
+                    >
+                        <Trash2 size={12} style={{ marginRight: '6px' }} /> Delete
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+}
+
 export default function AdminSafehousesPage() {
+    const pageSizeOptions = [10, 25, 50, 100];
     const [safehouses, setSafehouses] = useState<SafehouseItem[]>([]);
     const [selectedId, setSelectedId] = useState<number | null>(null);
     const [search, setSearch] = useState('');
@@ -108,6 +184,8 @@ export default function AdminSafehousesPage() {
     const [editorId, setEditorId] = useState<number | null>(null);
     const [editorForm, setEditorForm] = useState<SafehouseFormState>(emptyForm());
     const [deleteId, setDeleteId] = useState<number | null>(null);
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
 
     const loadSafehouses = useCallback(async () => {
         setIsLoading(true);
@@ -156,9 +234,24 @@ export default function AdminSafehousesPage() {
         [safehouses, selectedId]
     );
 
+    const totalPages = Math.max(1, Math.ceil(filteredSafehouses.length / pageSize));
+    const currentPage = Math.min(page, totalPages);
+    const startIndex = (currentPage - 1) * pageSize;
+    const pagedSafehouses = filteredSafehouses.slice(startIndex, startIndex + pageSize);
+
     const safehouseHasResidents = useCallback((item: SafehouseItem | null) => {
         return (item?.currentOccupancy ?? 0) > 0;
     }, []);
+
+    useEffect(() => {
+        setPage(1);
+    }, [search]);
+
+    useEffect(() => {
+        if (page > totalPages) {
+            setPage(totalPages);
+        }
+    }, [page, totalPages]);
 
     function promptDelete(item: SafehouseItem | null) {
         if (!item) return;
@@ -306,8 +399,8 @@ export default function AdminSafehousesPage() {
                 </div>
             </div>
 
-            <div className="au-filters">
-                <div className="au-search-wrap">
+            <div className="au-filters" style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '12px', flexWrap: 'nowrap' }}>
+                <div className="au-search-wrap" style={{ flex: '1 1 340px', minWidth: '240px' }}>
                     <Search size={16} className="au-search-icon" />
                     <input
                         className="au-filter-input"
@@ -316,7 +409,22 @@ export default function AdminSafehousesPage() {
                         placeholder="Search safehouses, locations, or status"
                     />
                 </div>
-                <div className="au-filter-actions">
+                <div className="au-filter-actions" style={{ display: 'flex', alignItems: 'center', flexWrap: 'nowrap', gap: '10px' }}>
+                    <label className="au-filter-label" htmlFor="safehouse-page-size" style={{ marginBottom: 0 }}>Display</label>
+                    <select
+                        id="safehouse-page-size"
+                        className="au-filter-select"
+                        value={pageSize}
+                        onChange={(event) => {
+                            setPageSize(Number(event.target.value));
+                            setPage(1);
+                        }}
+                        style={{ width: '96px', minWidth: '96px' }}
+                    >
+                        {pageSizeOptions.map((size) => (
+                            <option key={size} value={size}>{size}</option>
+                        ))}
+                    </select>
                     <SecondaryButton onClick={() => void loadSafehouses()} disabled={isLoading}>
                         <RefreshCw size={16} /> Refresh
                     </SecondaryButton>
@@ -342,7 +450,7 @@ export default function AdminSafehousesPage() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {filteredSafehouses.map((item) => {
+                                    {pagedSafehouses.map((item) => {
                                         const selected = item.safehouseId === selectedId;
                                         const occupancy = item.capacityGirls && item.capacityGirls > 0
                                             ? `${item.currentOccupancy ?? 0}/${item.capacityGirls}`
@@ -362,18 +470,11 @@ export default function AdminSafehousesPage() {
                                                     </span>
                                                 </td>
                                                 <td>
-                                                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-                                                        <button className="au-badge donor" onClick={(event) => { event.stopPropagation(); openEdit(item); }} style={{ border: 'none', cursor: 'pointer' }}>
-                                                            <PencilLine size={12} style={{ marginRight: '4px' }} /> Edit
-                                                        </button>
-                                                        <button
-                                                            className="au-badge donor"
-                                                            onClick={(event) => { event.stopPropagation(); promptDelete(item); }}
-                                                            title="Delete safehouse"
-                                                            style={{ border: 'none', cursor: 'pointer', backgroundColor: 'rgba(171, 85, 58, 0.1)', color: 'var(--color-primary-dark)' }}
-                                                        >
-                                                            <Trash2 size={12} style={{ marginRight: '4px' }} /> Delete
-                                                        </button>
+                                                    <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                                                        <SafehouseActionMenu
+                                                            onEdit={() => openEdit(item)}
+                                                            onDelete={() => promptDelete(item)}
+                                                        />
                                                     </div>
                                                 </td>
                                             </tr>
@@ -381,6 +482,16 @@ export default function AdminSafehousesPage() {
                                     })}
                                 </tbody>
                             </table>
+                            <div className="au-table-footer">
+                                <span>
+                                    Showing {filteredSafehouses.length === 0 ? 0 : startIndex + 1}-{Math.min(startIndex + pageSize, filteredSafehouses.length)} of {filteredSafehouses.length}
+                                </span>
+                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                    <button className="au-danger-btn" type="button" disabled={currentPage <= 1} onClick={() => setPage(currentPage - 1)}>Prev</button>
+                                    <span style={{ color: 'var(--color-muted)', fontSize: '0.88rem' }}>Page {currentPage} of {totalPages}</span>
+                                    <button className="au-danger-btn" type="button" disabled={currentPage >= totalPages} onClick={() => setPage(currentPage + 1)}>Next</button>
+                                </div>
+                            </div>
                         </div>
                     )}
                 </div>

@@ -63,7 +63,11 @@ function toPayload(form: IncidentFormState): IncidentReportUpsertRequest {
 }
 
 export default function IncidentReportsPage() {
+    const pageSizeOptions = [10, 25, 50, 100];
     const [items, setItems] = useState<IncidentReportListItem[]>([]);
+    const [total, setTotal] = useState(0);
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
     const [residents, setResidents] = useState<ResidentOption[]>([]);
     const [safehouses, setSafehouses] = useState<SafehouseItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -79,6 +83,15 @@ export default function IncidentReportsPage() {
     useEffect(() => {
         void Promise.all([loadIncidents(), loadLookups()]);
     }, []);
+
+    useEffect(() => {
+        if (isLoading) {
+            return;
+        }
+
+        void loadIncidents();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [page, pageSize]);
 
     async function loadLookups() {
         try {
@@ -101,10 +114,11 @@ export default function IncidentReportsPage() {
                 search: search.trim() || undefined,
                 severity: severity || undefined,
                 resolved: resolved === 'all' ? undefined : resolved === 'resolved',
-                page: 1,
-                pageSize: 100,
+                page,
+                pageSize,
             });
             setItems(data.items);
+            setTotal(data.total);
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : 'Unable to load incident reports.');
         } finally {
@@ -212,7 +226,24 @@ export default function IncidentReportsPage() {
                         <option value="open">Open</option>
                         <option value="resolved">Resolved</option>
                     </select>
-                    <SecondaryButton onClick={() => void loadIncidents()}>Apply</SecondaryButton>
+                    <select
+                        className="ir-input"
+                        value={pageSize}
+                        onChange={(e) => {
+                            setPageSize(Number(e.target.value));
+                            setPage(1);
+                        }}
+                    >
+                        {pageSizeOptions.map((size) => <option key={size} value={size}>{size}</option>)}
+                    </select>
+                    <SecondaryButton
+                        onClick={() => {
+                            setPage(1);
+                            void loadIncidents();
+                        }}
+                    >
+                        Apply
+                    </SecondaryButton>
                 </div>
                 <PrimaryButton onClick={openCreate}><Plus size={16} /> New Incident</PrimaryButton>
             </div>
@@ -272,6 +303,34 @@ export default function IncidentReportsPage() {
                         ))}
                     </tbody>
                 </table>
+                {!isLoading && total > 0 && (
+                    <div className="d-flex justify-content-between align-items-center flex-wrap gap-2" style={{ padding: '12px 16px' }}>
+                        <span style={{ color: 'var(--color-muted)', fontSize: '0.88rem' }}>
+                            Showing {((page - 1) * pageSize) + 1}-{Math.min(page * pageSize, total)} of {total}
+                        </span>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            <button
+                                className="ir-action-btn"
+                                type="button"
+                                disabled={page <= 1}
+                                onClick={() => setPage((value) => Math.max(1, value - 1))}
+                            >
+                                Prev
+                            </button>
+                            <span style={{ color: 'var(--color-muted)', fontSize: '0.88rem' }}>
+                                Page {page} of {Math.max(1, Math.ceil(total / pageSize))}
+                            </span>
+                            <button
+                                className="ir-action-btn"
+                                type="button"
+                                disabled={page >= Math.ceil(total / pageSize)}
+                                onClick={() => setPage((value) => Math.min(Math.ceil(total / pageSize), value + 1))}
+                            >
+                                Next
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {editorOpen && (
