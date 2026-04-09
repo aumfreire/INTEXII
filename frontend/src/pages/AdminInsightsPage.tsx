@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { BrainCircuit, Heart, Home, Mail, Phone, Users } from 'lucide-react';
+import { BrainCircuit, Heart, Home, Mail, Megaphone, Phone, Users } from 'lucide-react';
 import AlertBanner from '../components/ui/AlertBanner';
 import {
     getDonorLapse,
@@ -399,6 +399,71 @@ function SocialSection({ result }: { result: InsightResponse<SocialEngagementRec
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Social Media Action Section (static / presentational)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const socialActionCards = [
+    {
+        stat: '8x',
+        headline: 'Open with a name, not a statistic.',
+        body: 'Posts that started with a specific person ("Patyia*", "Grace*", "Rob") averaged 8x the engagement of posts that opened with general awareness language. Use a pseudonym + asterisk to protect privacy.',
+    },
+    {
+        stat: '18 of 20',
+        headline: 'Use 0\u20132 hashtags. That\u2019s it.',
+        body: '18 of the top 20 highest-engagement posts in our benchmark used zero hashtags. Hashtag spam signals \u201Cbrand\u201D to the algorithm and gets throttled. Put your energy into the first line of the caption instead.',
+    },
+    {
+        stat: '7x',
+        headline: 'Tie posts to a cultural moment within 24 hours.',
+        body: 'The single best-performing carousel in our benchmark hijacked Stranger Things Season 5 and earned 7x the account\u2019s median engagement. Awareness days, holidays, show launches, and news moments all consistently outperform evergreen content.',
+    },
+    {
+        stat: '3x',
+        headline: 'Post on Saturday or Sunday.',
+        body: 'Weekend posts averaged a 0.29% engagement rate versus 0.10% on weekdays \u2014 nearly 3x better. Most nonprofits post Tuesday\u2013Thursday, leaving the weekend wide open.',
+    },
+    {
+        stat: '$1M',
+        headline: 'Lead with a specific number when announcing impact.',
+        body: '\u201C$1 million raised,\u201D \u201C1 million children reached,\u201D \u201C20 years ago\u201D \u2014 milestone posts with concrete numbers landed in the top quartile every time. Vague phrases like \u201Cpowerful work happening\u201D landed in the bottom. Specificity converts.',
+    },
+];
+
+function SocialMediaActionSection() {
+    return (
+        <div>
+            <div className="insights-section-header">
+                <div>
+                    <h3 className="insights-section-title">
+                        <span className="insights-section-title-icon"><Megaphone size={18} /></span>
+                        Social Media Action
+                    </h3>
+                    <p className="social-action-subtitle">
+                        Five evidence-backed moves to boost engagement. Pick one. Do it this week.
+                    </p>
+                </div>
+            </div>
+
+            <div className="social-action-grid">
+                {socialActionCards.map((card) => (
+                    <div key={card.stat} className="social-action-card">
+                        <div className="social-action-stat">{card.stat}</div>
+                        <div className="social-action-headline">{card.headline}</div>
+                        <p className="social-action-body">{card.body}</p>
+                        <span className="social-action-cta">Try this &rarr;</span>
+                    </div>
+                ))}
+            </div>
+
+            <p className="social-action-footer">
+                Source: analysis of 134 posts from Love146, A21, and Dressember (April 2026).
+            </p>
+        </div>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Main Page
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -486,6 +551,9 @@ export default function AdminInsightsPage() {
                     runDate={socialResult?.runDate ?? null}
                 />
                 <SocialSection result={socialResult} />
+
+                {/* ── Social Media Action (static) ── */}
+                <SocialMediaActionSection />
             </div>
         </div>
     );
