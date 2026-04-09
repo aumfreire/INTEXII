@@ -24,6 +24,7 @@ import AdminDashboardPage from './pages/AdminDashboardPage';
 import EditProfilePage from './pages/EditProfilePage';
 import AdminUsersPage from './pages/AdminUsersPage';
 import AdminDonationsPage from './pages/AdminDonationsPage';
+import AdminInsightsPage from './pages/AdminInsightsPage';
 import CookieConsentBanner from './components/CookieConsentBanner';
 import CookiePolicyPage from './pages/CookiePolicyPage';
 import AuthCallbackPage from './pages/AuthCallbackPage';
@@ -144,6 +145,14 @@ function App() {
                   element={
                     <RequireAuth adminOnly>
                       <AdminDonationsPage />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/admin/insights"
+                  element={
+                    <RequireAuth adminOnly>
+                      <AdminInsightsPage />
                     </RequireAuth>
                   }
                 />

@@ -9,6 +9,7 @@ import {
     Settings,
     ShieldCheck,
     HandCoins,
+    BrainCircuit,
     LogOut,
 } from 'lucide-react';
 import { useAuth } from '../../context/useAuth';
@@ -252,6 +253,7 @@ export default function Navbar() {
                                                 <div style={{ display: 'grid', gap: '4px' }}>
                                                     <MenuLink to="/admin" icon={ShieldCheck} label="Admin Dashboard" description="User management and metrics" onClick={closeMenus} />
                                                     <MenuLink to="/admin/donations" icon={HandCoins} label="Manage Donations" description="Review and edit donation records" onClick={closeMenus} />
+                                                    <MenuLink to="/admin/insights" icon={BrainCircuit} label="ML Insights" description="Donor risk, resident health, and safehouse forecasts" onClick={closeMenus} />
                                                 </div>
                                             </>
                                         ) : null}
@@ -403,6 +405,7 @@ export default function Navbar() {
                                     <MobileMenuSection title="Admin Tools">
                                         <MobileMenuLink to="/admin" icon={ShieldCheck} label="Admin Dashboard" description="User management and metrics" onClick={closeMenus} />
                                         <MobileMenuLink to="/admin/donations" icon={HandCoins} label="Manage Donations" description="Review and edit donation records" onClick={closeMenus} />
+                                        <MobileMenuLink to="/admin/insights" icon={BrainCircuit} label="ML Insights" description="Donor risk, resident health, and safehouse forecasts" onClick={closeMenus} />
                                     </MobileMenuSection>
                                 ) : null}
                                 <Link
