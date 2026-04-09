@@ -15,6 +15,7 @@ import {
   X,
   AlertTriangle,
   Building2,
+  BrainCircuit,
 } from 'lucide-react';
 import { useAuth } from '../../context/useAuth';
 import Navbar from './Navbar';
@@ -34,6 +35,7 @@ const navItems = [
   { to: '/admin/incidents', icon: AlertTriangle, label: 'Incident Reports' },
   { divider: true },
   { to: '/admin/reports', icon: BarChart3, label: 'Reports' },
+  { to: '/admin/insights', icon: BrainCircuit, label: 'ML Insights' },
 ] as const;
 
 function getInitials(name: string): string {

@@ -20,6 +20,7 @@ import ResidentDetailPage from './pages/ResidentDetailPage';
 import AdminSafehousesPage from './pages/AdminSafehousesPage';
 import DonorsPage from './pages/DonorsPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
+import AdminInsightsPage from './pages/AdminInsightsPage';
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './context/useAuth';
 import LogoutPage from './pages/LogoutPage';
@@ -112,6 +113,7 @@ function App() {
               <Route path="home-visits" element={<HomeVisitsPage />} />
               <Route path="incidents" element={<IncidentReportsPage />} />
               <Route path="reports" element={<ReportsPage />} />
+              <Route path="insights" element={<AdminInsightsPage />} />
             </Route>
 
             <Route
