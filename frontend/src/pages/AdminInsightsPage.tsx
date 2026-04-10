@@ -1,5 +1,5 @@
 import { Fragment, useCallback, useEffect, useState } from 'react';
-import { BrainCircuit, Heart, Home, Mail, Phone, Users } from 'lucide-react';
+import { BrainCircuit, Heart, Home, Mail, Megaphone, Phone, Users } from 'lucide-react';
 import AlertBanner from '../components/ui/AlertBanner';
 import {
     getDonorLapse,
@@ -458,6 +458,70 @@ function SocialSection({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Social Media Action Section (static / presentational)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const socialActionCards = [
+    {
+        stat: '8x',
+        headline: 'Open with a name, not a statistic.',
+        body: 'Posts that started with a specific person ("Patyia*", "Grace*", "Rob") averaged 8x the engagement of posts that opened with general awareness language. Use a pseudonym + asterisk to protect privacy.',
+    },
+    {
+        stat: '18 of 20',
+        headline: 'Use 0-2 hashtags. That is it.',
+        body: '18 of the top 20 highest-engagement posts in our benchmark used zero hashtags. Hashtag spam signals "brand" to the algorithm and gets throttled. Put your energy into the first line of the caption instead.',
+    },
+    {
+        stat: '7x',
+        headline: 'Tie posts to a cultural moment within 24 hours.',
+        body: 'The single best-performing carousel in our benchmark hijacked Stranger Things Season 5 and earned 7x the account median engagement. Awareness days, holidays, show launches, and news moments all consistently outperform evergreen content.',
+    },
+    {
+        stat: '3x',
+        headline: 'Post on Saturday or Sunday.',
+        body: 'Weekend posts averaged a 0.29% engagement rate versus 0.10% on weekdays, nearly 3x better. Most nonprofits post Tuesday-Thursday, leaving the weekend wide open.',
+    },
+    {
+        stat: '$1M',
+        headline: 'Lead with a specific number when announcing impact.',
+        body: '"$1 million raised," "1 million children reached," "20 years ago". Milestone posts with concrete numbers landed in the top quartile every time. Vague phrases like "powerful work happening" landed in the bottom. Specificity converts.',
+    },
+];
+
+function SocialMediaActionSection() {
+    return (
+        <div>
+            <div className="insights-section-header">
+                <div>
+                    <h3 className="insights-section-title">
+                        <span className="insights-section-title-icon"><Megaphone size={18} /></span>
+                        Social Media Action
+                    </h3>
+                    <p className="social-action-subtitle">
+                        Five evidence-backed moves to boost engagement. Pick one and do it this week.
+                    </p>
+                </div>
+            </div>
+
+            <div className="social-action-grid">
+                {socialActionCards.map((card) => (
+                    <div key={card.stat} className="social-action-card">
+                        <div className="social-action-stat">{card.stat}</div>
+                        <div className="social-action-headline">{card.headline}</div>
+                        <p className="social-action-body">{card.body}</p>
+                    </div>
+                ))}
+            </div>
+
+            <p className="social-action-footer">
+                Source: analysis of 134 posts from Love146, A21, and Dressember (April 2026).
+            </p>
+        </div>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Main Page
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -576,6 +640,9 @@ export default function AdminInsightsPage() {
                     showAll={showAllSocial}
                     onToggleShowAll={() => setShowAllSocial((v) => !v)}
                 />
+
+                {/* ── Social Media Action (static) ── */}
+                <SocialMediaActionSection />
             </div>
         </div>
     );
