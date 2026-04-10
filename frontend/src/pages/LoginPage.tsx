@@ -129,20 +129,6 @@ export default function LoginPage() {
                         difference every single day.
                     </p>
 
-                    <div className="login-panel-stats">
-                        <div className="login-stat">
-                            <span className="login-stat-number">4,200+</span>
-                            <span className="login-stat-label">Girls Served</span>
-                        </div>
-                        <div className="login-stat">
-                            <span className="login-stat-number">18</span>
-                            <span className="login-stat-label">Safe Houses</span>
-                        </div>
-                        <div className="login-stat">
-                            <span className="login-stat-number">92%</span>
-                            <span className="login-stat-label">School Retention</span>
-                        </div>
-                    </div>
                 </div>
             </div>
 
