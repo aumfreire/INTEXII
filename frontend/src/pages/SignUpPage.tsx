@@ -5,6 +5,7 @@ import FormInput from '../components/ui/FormInput';
 import PrimaryButton from '../components/ui/PrimaryButton';
 import AlertBanner from '../components/ui/AlertBanner';
 import { buildExternalLoginUrl, registerUser } from '../lib/authAPI';
+import { PASSWORD_MIN_LENGTH, PASSWORD_POLICY_MESSAGE, meetsPasswordPolicy } from '../lib/passwordPolicy';
 import '../styles/pages/login.css';
 
 export default function SignUpPage() {
@@ -27,16 +28,6 @@ export default function SignUpPage() {
         }
     };
 
-    const meetsPasswordPolicy = (value: string) => {
-        return (
-            value.length >= 14 &&
-            /[A-Z]/.test(value) &&
-            /[a-z]/.test(value) &&
-            /\d/.test(value) &&
-            /[^A-Za-z0-9]/.test(value)
-        );
-    };
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
@@ -48,7 +39,7 @@ export default function SignUpPage() {
         if (!email.trim()) errors.email = 'Email is required';
         if (!password.trim()) errors.password = 'Password is required';
         else if (!meetsPasswordPolicy(password))
-            errors.password = 'Use 14+ chars with upper, lower, number, and symbol';
+            errors.password = PASSWORD_POLICY_MESSAGE;
         if (!confirmPassword.trim()) {
             errors.confirmPassword = 'Please confirm your password';
         } else if (password !== confirmPassword) {
@@ -162,6 +153,7 @@ export default function SignUpPage() {
                             clearError('password');
                         }}
                         placeholder="At least 14 characters"
+                        minLength={PASSWORD_MIN_LENGTH}
                         icon={<Lock size={18} />}
                         error={fieldErrors.password}
                         required

@@ -23,6 +23,7 @@ import {
     getAdminUserById,
     listAdminUsers,
 } from '../lib/authAPI';
+import { PASSWORD_MIN_LENGTH, PASSWORD_POLICY_MESSAGE, meetsPasswordPolicy } from '../lib/passwordPolicy';
 import { formatCurrency } from '../lib/formatters';
 import { useAuth } from '../context/useAuth';
 import type { AdminUserDetail, AdminUserSummary } from '../types/AdminUser';
@@ -195,6 +196,11 @@ export default function AdminUsersPage() {
             return;
         }
 
+        if (!meetsPasswordPolicy(createPassword)) {
+            setErrorMessage(PASSWORD_POLICY_MESSAGE);
+            return;
+        }
+
         setIsWorking(true);
         setErrorMessage('');
         setSuccessMessage('');
@@ -308,8 +314,8 @@ export default function AdminUsersPage() {
             setErrorMessage('Password reset is unavailable for external-only accounts.');
             return;
         }
-        if (newPassword.length < 14) {
-            setErrorMessage('Password must be at least 14 characters.');
+        if (!meetsPasswordPolicy(newPassword)) {
+            setErrorMessage(PASSWORD_POLICY_MESSAGE);
             return;
         }
 
@@ -584,7 +590,7 @@ export default function AdminUsersPage() {
                                 </label>
                                 <label>
                                     Password *
-                                    <input className="au-filter-input" type="password" value={createPassword} onChange={(event) => setCreatePassword(event.target.value)} placeholder="Minimum 14 characters" />
+                                    <input className="au-filter-input" type="password" value={createPassword} onChange={(event) => setCreatePassword(event.target.value)} placeholder={`Minimum ${PASSWORD_MIN_LENGTH} characters`} minLength={PASSWORD_MIN_LENGTH} autoComplete="new-password" />
                                 </label>
                                 <label>
                                     First Name
@@ -790,7 +796,7 @@ export default function AdminUsersPage() {
                                     <div className="au-danger-panel">
                                         <label>
                                             New Password
-                                            <input className="au-filter-input" type="password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} placeholder="Minimum 14 characters" />
+                                            <input className="au-filter-input" type="password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} placeholder={`Minimum ${PASSWORD_MIN_LENGTH} characters`} minLength={PASSWORD_MIN_LENGTH} autoComplete="new-password" />
                                         </label>
                                         <button type="button" className="au-danger-btn solid" onClick={() => void handlePasswordReset()} disabled={isWorking}>
                                             Confirm Password Reset

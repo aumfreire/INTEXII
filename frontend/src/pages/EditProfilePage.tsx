@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { ChevronLeft, Settings, ShieldCheck, UserRound } from 'lucide-react';
 import AlertBanner from '../components/ui/AlertBanner';
 import PrimaryButton from '../components/ui/PrimaryButton';
+import { PASSWORD_POLICY_MESSAGE, meetsPasswordPolicy } from '../lib/passwordPolicy';
 import {
     getManagedProfile,
     updateManagedProfile,
@@ -89,8 +90,8 @@ export default function EditProfilePage() {
             return;
         }
 
-        if (newPassword.length < 14) {
-            setErrorMessage('New password must be at least 14 characters.');
+        if (!meetsPasswordPolicy(newPassword)) {
+            setErrorMessage(PASSWORD_POLICY_MESSAGE);
             return;
         }
 
@@ -266,6 +267,8 @@ export default function EditProfilePage() {
                                 className="au-filter-input"
                                 value={newPassword}
                                 onChange={(event) => setNewPassword(event.target.value)}
+                                minLength={14}
+                                autoComplete="new-password"
                                 required
                             />
                         </div>
@@ -279,6 +282,7 @@ export default function EditProfilePage() {
                                 className="au-filter-input"
                                 value={confirmPassword}
                                 onChange={(event) => setConfirmPassword(event.target.value)}
+                                autoComplete="new-password"
                                 required
                             />
                         </div>

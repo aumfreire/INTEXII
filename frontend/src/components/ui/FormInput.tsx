@@ -11,6 +11,7 @@ interface FormInputProps {
   required?: boolean;
   icon?: ReactNode;
   disabled?: boolean;
+  minLength?: number;
   children?: ReactNode;
 }
 
@@ -25,6 +26,7 @@ export default function FormInput({
   required = false,
   icon,
   disabled = false,
+  minLength,
   children,
 }: FormInputProps) {
   return (
@@ -72,6 +74,7 @@ export default function FormInput({
           placeholder={placeholder}
           required={required}
           disabled={disabled}
+          minLength={minLength}
           style={{
             width: '100%',
             padding: icon ? '10px 12px 10px 40px' : '10px 12px',
