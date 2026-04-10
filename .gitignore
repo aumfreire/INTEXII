@@ -57,3 +57,5 @@ TestResults/
 .backup/
 backend/INTEXII.API/publish/
 backend/INTEXII.API/backend-deploy.zip
+backend/INTEXII.API/backend-deploy-*.zip
+backend/db-backups/
