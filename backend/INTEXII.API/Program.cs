@@ -170,12 +170,12 @@ builder.Services.AddAuthorization(options =>
 // Requires length + complexity to reduce weak credential risk.
 builder.Services.Configure<IdentityOptions>(options =>
 {
-    options.Password.RequireDigit = true;
-    options.Password.RequireLowercase = true;
+    options.Password.RequireDigit = false;
+    options.Password.RequireLowercase = false;
     options.Password.RequireNonAlphanumeric = false;
-    options.Password.RequireUppercase = true;
+    options.Password.RequireUppercase = false;
     options.Password.RequiredLength = 14;
-    options.Password.RequiredUniqueChars = 4;
+    options.Password.RequiredUniqueChars = 1;
 });
 
 // Cookie security configuration
