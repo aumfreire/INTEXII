@@ -84,9 +84,6 @@ export default function ImpactPage() {
             <Link to="/donate" className="ip-cta-btn primary">
               Donate Now <ArrowRight size={16} />
             </Link>
-            <Link to="/about" className="ip-cta-btn secondary">
-              Our Mission
-            </Link>
           </div>
         </div>
       </section>

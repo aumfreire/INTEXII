@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { Fragment, useCallback, useEffect, useState } from 'react';
 import { BrainCircuit, Heart, Home, Mail, Megaphone, Phone, Users } from 'lucide-react';
 import AlertBanner from '../components/ui/AlertBanner';
 import {
@@ -17,6 +17,8 @@ import type {
     SocialEngagementRecord,
 } from '../types/InsightTypes';
 import '../styles/pages/admin-insights.css';
+
+const INITIAL_VISIBLE_ROWS = 10;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -127,10 +129,20 @@ function ContactButtons({ email, phone }: { email?: string | null; phone?: strin
 // Donor Lapse Section
 // ─────────────────────────────────────────────────────────────────────────────
 
-function DonorSection({ result }: { result: InsightResponse<DonorLapseRecord> | null }) {
+function DonorSection({
+    result,
+    showAll,
+    onToggleShowAll,
+}: {
+    result: InsightResponse<DonorLapseRecord> | null;
+    showAll: boolean;
+    onToggleShowAll: () => void;
+}) {
     if (!result) return <div className="insights-empty">Loading donor predictions…</div>;
     if (result.data.length === 0)
         return <div className="insights-empty">No donor predictions available. Run the pipeline to generate data.</div>;
+
+    const visibleRows = showAll ? result.data : result.data.slice(0, INITIAL_VISIBLE_ROWS);
 
     return (
         <>
@@ -150,7 +162,7 @@ function DonorSection({ result }: { result: InsightResponse<DonorLapseRecord> | 
                             </tr>
                         </thead>
                         <tbody>
-                            {result.data.map((d) => (
+                            {visibleRows.map((d) => (
                                 <tr key={d.supporterId}>
                                     <td>
                                         <div className="insights-name">{d.displayName ?? '—'}</div>
@@ -168,6 +180,15 @@ function DonorSection({ result }: { result: InsightResponse<DonorLapseRecord> | 
                     </table>
                 </div>
             </div>
+            {result.data.length > INITIAL_VISIBLE_ROWS && (
+                <div style={{ marginTop: '8px', display: 'flex', justifyContent: 'center' }}>
+                    <button className="insights-expand-btn" onClick={onToggleShowAll}>
+                        {showAll
+                            ? `View less (showing first ${INITIAL_VISIBLE_ROWS})`
+                            : `View more (${result.data.length - INITIAL_VISIBLE_ROWS} more)`}
+                    </button>
+                </div>
+            )}
         </>
     );
 }
@@ -176,12 +197,22 @@ function DonorSection({ result }: { result: InsightResponse<DonorLapseRecord> | 
 // Resident Risk Section
 // ─────────────────────────────────────────────────────────────────────────────
 
-function ResidentSection({ result }: { result: InsightResponse<ResidentRiskRecord> | null }) {
+function ResidentSection({
+    result,
+    showAll,
+    onToggleShowAll,
+}: {
+    result: InsightResponse<ResidentRiskRecord> | null;
+    showAll: boolean;
+    onToggleShowAll: () => void;
+}) {
     const [expanded, setExpanded] = useState<number | null>(null);
 
     if (!result) return <div className="insights-empty">Loading resident predictions…</div>;
     if (result.data.length === 0)
         return <div className="insights-empty">No resident predictions available. Run the pipeline to generate data.</div>;
+
+    const visibleRows = showAll ? result.data : result.data.slice(0, INITIAL_VISIBLE_ROWS);
 
     return (
         <>
@@ -201,9 +232,9 @@ function ResidentSection({ result }: { result: InsightResponse<ResidentRiskRecor
                             </tr>
                         </thead>
                         <tbody>
-                            {result.data.map((r) => (
-                                <>
-                                    <tr key={r.residentId}>
+                            {visibleRows.map((r) => (
+                                <Fragment key={r.residentId}>
+                                    <tr>
                                         <td>
                                             <div className="insights-name">{r.caseControlNo ?? `RES-${r.residentId}`}</div>
                                             {r.internalCode && <div className="insights-sub">{r.internalCode}</div>}
@@ -223,7 +254,7 @@ function ResidentSection({ result }: { result: InsightResponse<ResidentRiskRecor
                                         </td>
                                     </tr>
                                     {expanded === r.residentId && (
-                                        <tr key={`${r.residentId}-detail`} className="expanded-row">
+                                        <tr className="expanded-row">
                                             <td colSpan={7}>
                                                 <div className="insights-detail-panel">
                                                     <div className="insights-detail-grid">
@@ -267,12 +298,21 @@ function ResidentSection({ result }: { result: InsightResponse<ResidentRiskRecor
                                             </td>
                                         </tr>
                                     )}
-                                </>
+                                </Fragment>
                             ))}
                         </tbody>
                     </table>
                 </div>
             </div>
+            {result.data.length > INITIAL_VISIBLE_ROWS && (
+                <div style={{ marginTop: '8px', display: 'flex', justifyContent: 'center' }}>
+                    <button className="insights-expand-btn" onClick={onToggleShowAll}>
+                        {showAll
+                            ? `View less (showing first ${INITIAL_VISIBLE_ROWS})`
+                            : `View more (${result.data.length - INITIAL_VISIBLE_ROWS} more)`}
+                    </button>
+                </div>
+            )}
         </>
     );
 }
@@ -355,10 +395,20 @@ function SafehouseSection({ result }: { result: InsightResponse<SafehouseHealthR
 // Social Engagement Section
 // ─────────────────────────────────────────────────────────────────────────────
 
-function SocialSection({ result }: { result: InsightResponse<SocialEngagementRecord> | null }) {
+function SocialSection({
+    result,
+    showAll,
+    onToggleShowAll,
+}: {
+    result: InsightResponse<SocialEngagementRecord> | null;
+    showAll: boolean;
+    onToggleShowAll: () => void;
+}) {
     if (!result) return <div className="insights-empty">Loading social engagement predictions…</div>;
     if (result.data.length === 0)
         return <div className="insights-empty">No social engagement predictions available. Run the pipeline to generate data.</div>;
+
+    const visibleRows = showAll ? result.data : result.data.slice(0, INITIAL_VISIBLE_ROWS);
 
     return (
         <>
@@ -377,7 +427,7 @@ function SocialSection({ result }: { result: InsightResponse<SocialEngagementRec
                             </tr>
                         </thead>
                         <tbody>
-                            {result.data.map((s) => (
+                            {visibleRows.map((s) => (
                                 <tr key={s.supporterId}>
                                     <td>
                                         <div className="insights-name">{s.displayName ?? '—'}</div>
@@ -394,6 +444,15 @@ function SocialSection({ result }: { result: InsightResponse<SocialEngagementRec
                     </table>
                 </div>
             </div>
+            {result.data.length > INITIAL_VISIBLE_ROWS && (
+                <div style={{ marginTop: '8px', display: 'flex', justifyContent: 'center' }}>
+                    <button className="insights-expand-btn" onClick={onToggleShowAll}>
+                        {showAll
+                            ? `View less (showing first ${INITIAL_VISIBLE_ROWS})`
+                            : `View more (${result.data.length - INITIAL_VISIBLE_ROWS} more)`}
+                    </button>
+                </div>
+            )}
         </>
     );
 }
@@ -410,23 +469,23 @@ const socialActionCards = [
     },
     {
         stat: '18 of 20',
-        headline: 'Use 0\u20132 hashtags. That\u2019s it.',
-        body: '18 of the top 20 highest-engagement posts in our benchmark used zero hashtags. Hashtag spam signals \u201Cbrand\u201D to the algorithm and gets throttled. Put your energy into the first line of the caption instead.',
+        headline: 'Use 0-2 hashtags. That is it.',
+        body: '18 of the top 20 highest-engagement posts in our benchmark used zero hashtags. Hashtag spam signals "brand" to the algorithm and gets throttled. Put your energy into the first line of the caption instead.',
     },
     {
         stat: '7x',
         headline: 'Tie posts to a cultural moment within 24 hours.',
-        body: 'The single best-performing carousel in our benchmark hijacked Stranger Things Season 5 and earned 7x the account\u2019s median engagement. Awareness days, holidays, show launches, and news moments all consistently outperform evergreen content.',
+        body: 'The single best-performing carousel in our benchmark hijacked Stranger Things Season 5 and earned 7x the account median engagement. Awareness days, holidays, show launches, and news moments all consistently outperform evergreen content.',
     },
     {
         stat: '3x',
         headline: 'Post on Saturday or Sunday.',
-        body: 'Weekend posts averaged a 0.29% engagement rate versus 0.10% on weekdays \u2014 nearly 3x better. Most nonprofits post Tuesday\u2013Thursday, leaving the weekend wide open.',
+        body: 'Weekend posts averaged a 0.29% engagement rate versus 0.10% on weekdays, nearly 3x better. Most nonprofits post Tuesday-Thursday, leaving the weekend wide open.',
     },
     {
         stat: '$1M',
         headline: 'Lead with a specific number when announcing impact.',
-        body: '\u201C$1 million raised,\u201D \u201C1 million children reached,\u201D \u201C20 years ago\u201D \u2014 milestone posts with concrete numbers landed in the top quartile every time. Vague phrases like \u201Cpowerful work happening\u201D landed in the bottom. Specificity converts.',
+        body: '"$1 million raised," "1 million children reached," "20 years ago". Milestone posts with concrete numbers landed in the top quartile every time. Vague phrases like "powerful work happening" landed in the bottom. Specificity converts.',
     },
 ];
 
@@ -440,7 +499,7 @@ function SocialMediaActionSection() {
                         Social Media Action
                     </h3>
                     <p className="social-action-subtitle">
-                        Five evidence-backed moves to boost engagement. Pick one. Do it this week.
+                        Five evidence-backed moves to boost engagement. Pick one and do it this week.
                     </p>
                 </div>
             </div>
@@ -472,22 +531,41 @@ export default function AdminInsightsPage() {
     const [residentResult, setResidentResult] = useState<InsightResponse<ResidentRiskRecord> | null>(null);
     const [socialResult, setSocialResult] = useState<InsightResponse<SocialEngagementRecord> | null>(null);
     const [error, setError] = useState('');
+    const [showAllDonor, setShowAllDonor] = useState(false);
+    const [showAllResident, setShowAllResident] = useState(false);
+    const [showAllSocial, setShowAllSocial] = useState(false);
 
     const load = useCallback(async () => {
         setError('');
-        try {
-            const [donor, safehouse, resident, social] = await Promise.all([
-                getDonorLapse(),
-                getSafehouseHealth(),
-                getResidentRisk(),
-                getSocialEngagement(),
-            ]);
-            setDonorResult(donor);
-            setSafehouseResult(safehouse);
-            setResidentResult(resident);
-            setSocialResult(social);
-        } catch (e) {
-            setError(e instanceof Error ? e.message : 'Failed to load insights.');
+        const names = [
+            'Donor lapse',
+            'Safehouse health',
+            'Resident risk',
+            'Social engagement',
+        ];
+
+        const [donor, safehouse, resident, social] = await Promise.allSettled([
+            getDonorLapse(),
+            getSafehouseHealth(),
+            getResidentRisk(),
+            getSocialEngagement(),
+        ]);
+
+        setShowAllDonor(false);
+        setShowAllResident(false);
+        setShowAllSocial(false);
+
+        setDonorResult(donor.status === 'fulfilled' ? donor.value : null);
+        setSafehouseResult(safehouse.status === 'fulfilled' ? safehouse.value : null);
+        setResidentResult(resident.status === 'fulfilled' ? resident.value : null);
+        setSocialResult(social.status === 'fulfilled' ? social.value : null);
+
+        const failed = [donor, safehouse, resident, social]
+            .map((r, i) => (r.status === 'rejected' ? names[i] : null))
+            .filter((v): v is string => v !== null);
+
+        if (failed.length > 0) {
+            setError(`Some insight sections could not be loaded: ${failed.join(', ')}.`);
         }
     }, []);
 
@@ -525,7 +603,11 @@ export default function AdminInsightsPage() {
                     runDate={donorResult?.runDate ?? null}
                     first
                 />
-                <DonorSection result={donorResult} />
+                <DonorSection
+                    result={donorResult}
+                    showAll={showAllDonor}
+                    onToggleShowAll={() => setShowAllDonor((v) => !v)}
+                />
 
                 {/* ── Resident Risk ── */}
                 <SectionHeader
@@ -533,7 +615,11 @@ export default function AdminInsightsPage() {
                     title="Resident 30-Day Risk"
                     runDate={residentResult?.runDate ?? null}
                 />
-                <ResidentSection result={residentResult} />
+                <ResidentSection
+                    result={residentResult}
+                    showAll={showAllResident}
+                    onToggleShowAll={() => setShowAllResident((v) => !v)}
+                />
 
                 {/* ── Safehouse Health ── */}
                 <SectionHeader
@@ -549,7 +635,11 @@ export default function AdminInsightsPage() {
                     title="Social Media Donor Engagement"
                     runDate={socialResult?.runDate ?? null}
                 />
-                <SocialSection result={socialResult} />
+                <SocialSection
+                    result={socialResult}
+                    showAll={showAllSocial}
+                    onToggleShowAll={() => setShowAllSocial((v) => !v)}
+                />
 
                 {/* ── Social Media Action (static) ── */}
                 <SocialMediaActionSection />

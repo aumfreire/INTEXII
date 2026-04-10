@@ -455,19 +455,6 @@
   flex: 1;
 }
 
-.social-action-cta {
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--color-primary);
-  margin-top: 4px;
-  cursor: pointer;
-  transition: color var(--transition-fast);
-}
-
-.social-action-cta:hover {
-  color: var(--color-primary-dark);
-}
-
 .social-action-footer {
   text-align: center;
   font-size: 0.78rem;

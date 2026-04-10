@@ -75,6 +75,7 @@ const emptyPartner: PartnerForm = {
 };
 
 export default function PartnersPage() {
+    const pageSizeOptions = [10, 25, 50, 100];
     const [items, setItems] = useState<PartnerItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -85,6 +86,8 @@ export default function PartnersPage() {
     const [saving, setSaving] = useState(false);
     const [formError, setFormError] = useState('');
     const [confirmId, setConfirmId] = useState<number | null>(null);
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
 
     useEffect(() => { void load(search); }, []);
 
@@ -185,6 +188,21 @@ export default function PartnersPage() {
         !search || p.partnerName?.toLowerCase().includes(search.toLowerCase())
     );
 
+    const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+    const currentPage = Math.min(page, totalPages);
+    const startIndex = (currentPage - 1) * pageSize;
+    const pagedItems = filtered.slice(startIndex, startIndex + pageSize);
+
+    useEffect(() => {
+        setPage(1);
+    }, [search]);
+
+    useEffect(() => {
+        if (page > totalPages) {
+            setPage(totalPages);
+        }
+    }, [page, totalPages]);
+
     if (loading) {
         return (
             <div className="st-state">
@@ -212,9 +230,26 @@ export default function PartnersPage() {
                         onChange={(e) => setSearch(e.target.value)}
                     />
                 </div>
-                <button className="st-add-btn" onClick={openCreate}>
-                    <Plus size={15} /> Add Partner
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'nowrap' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: '160px' }}>
+                        <label className="st-label" htmlFor="partners-page-size" style={{ marginBottom: 0 }}>Display</label>
+                        <select
+                            id="partners-page-size"
+                            className="st-search"
+                            value={pageSize}
+                            onChange={(e) => {
+                                setPageSize(Number(e.target.value));
+                                setPage(1);
+                            }}
+                            style={{ width: '96px', minWidth: '96px', paddingLeft: '12px' }}
+                        >
+                            {pageSizeOptions.map((size) => <option key={size} value={size}>{size}</option>)}
+                        </select>
+                    </div>
+                    <button className="st-add-btn" onClick={openCreate}>
+                        <Plus size={15} /> Add Partner
+                    </button>
+                </div>
             </div>
 
             <div className="st-table-wrap">
@@ -235,7 +270,7 @@ export default function PartnersPage() {
                             {filtered.length === 0 && (
                                 <tr><td colSpan={7} className="st-empty-cell">No partners found.</td></tr>
                             )}
-                            {filtered.map((p) => (
+                            {pagedItems.map((p) => (
                                 <tr key={p.id}>
                                     <td className="st-name">{p.partnerName}</td>
                                     <td className="st-muted">{p.partnerType || '—'}</td>
@@ -255,6 +290,18 @@ export default function PartnersPage() {
                         </tbody>
                     </table>
                 </div>
+                {filtered.length > 0 && (
+                    <div className="st-toolbar" style={{ borderTop: '1px solid var(--color-light-gray)', marginTop: 0 }}>
+                        <span style={{ color: 'var(--color-muted)', fontSize: '0.88rem' }}>
+                            Showing {startIndex + 1}-{Math.min(startIndex + pageSize, filtered.length)} of {filtered.length}
+                        </span>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            <button className="st-dialog-btn cancel" type="button" disabled={currentPage <= 1} onClick={() => setPage(currentPage - 1)}>Prev</button>
+                            <span style={{ color: 'var(--color-muted)', fontSize: '0.88rem' }}>Page {currentPage} of {totalPages}</span>
+                            <button className="st-dialog-btn cancel" type="button" disabled={currentPage >= totalPages} onClick={() => setPage(currentPage + 1)}>Next</button>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {editorOpen && (

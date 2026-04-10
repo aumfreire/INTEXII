@@ -260,6 +260,7 @@ function CheckRow({ label, checked, onChange }: { label: string; checked: boolea
 
 /* ===== Main Page ===== */
 export default function CaseloadPage() {
+  const pageSizeOptions = [10, 25, 50, 100];
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(true);
@@ -274,6 +275,8 @@ export default function CaseloadPage() {
   const [filterSafehouse, setFilterSafehouse] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const [filterRisk, setFilterRisk] = useState('');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   // Editor state
   const [editorOpen, setEditorOpen] = useState(false);
@@ -503,6 +506,21 @@ export default function CaseloadPage() {
     return true;
   });
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const startIndex = (currentPage - 1) * pageSize;
+  const pagedResidents = filtered.slice(startIndex, startIndex + pageSize);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, filterStatus, filterSafehouse, filterCategory, filterRisk]);
+
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
+
   const activeCount = residents.filter((r) => r.caseStatus === 'active').length;
   const highRiskCount = residents.filter((r) => r.riskLevel === 'high' || r.riskLevel === 'critical').length;
   const pendingReintCount = residents.filter((r) => r.reintegrationStatus === 'in-progress').length;
@@ -597,7 +615,7 @@ export default function CaseloadPage() {
           {/* Filter Bar */}
           <div className="caseload-filters">
             <div className="caseload-filters-row">
-              <div className="caseload-filter-group">
+              <div className="caseload-filter-group" style={{ flex: '1 1 240px', minWidth: '220px', maxWidth: '280px' }}>
                 <label className="caseload-filter-label" htmlFor="cl-search">Search</label>
                 <div style={{ position: 'relative' }}>
                   <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-muted)', pointerEvents: 'none' }} />
@@ -630,6 +648,20 @@ export default function CaseloadPage() {
                 <select id="cl-risk" className="caseload-filter-select" value={filterRisk} onChange={(e) => setFilterRisk(e.target.value)}>
                   <option value="">All Levels</option>
                   {Object.entries(riskLabels).map(([val, label]) => <option key={val} value={val}>{label}</option>)}
+                </select>
+              </div>
+              <div className="caseload-filter-group" style={{ maxWidth: '120px' }}>
+                <label className="caseload-filter-label" htmlFor="cl-page-size">Display</label>
+                <select
+                  id="cl-page-size"
+                  className="caseload-filter-select"
+                  value={pageSize}
+                  onChange={(e) => {
+                    setPageSize(Number(e.target.value));
+                    setPage(1);
+                  }}
+                >
+                  {pageSizeOptions.map((size) => <option key={size} value={size}>{size}</option>)}
                 </select>
               </div>
             </div>
@@ -672,7 +704,7 @@ export default function CaseloadPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filtered.map((r) => (
+                    {pagedResidents.map((r) => (
                       <tr key={r.id}>
                         <td>
                           <Link to={`/admin/residents/${r.id}`} className="caseload-resident-link" style={{ textDecoration: 'none' }}>
@@ -701,7 +733,40 @@ export default function CaseloadPage() {
                 </table>
               </div>
               <div className="caseload-table-footer">
-                <span>Showing {filtered.length} of {residents.length} resident{residents.length !== 1 ? 's' : ''}</span>
+                <span>
+                  Showing {filtered.length === 0 ? 0 : startIndex + 1}-{Math.min(startIndex + pageSize, filtered.length)} of {filtered.length}
+                </span>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <button
+                    type="button"
+                    disabled={currentPage <= 1}
+                    onClick={() => setPage(currentPage - 1)}
+                    style={{
+                      padding: '6px 10px',
+                      borderRadius: 'var(--radius-sm)',
+                      border: '1px solid var(--color-light-gray)',
+                      backgroundColor: 'var(--color-white)',
+                      cursor: currentPage <= 1 ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    Prev
+                  </button>
+                  <span style={{ color: 'var(--color-muted)', fontSize: '0.88rem' }}>Page {currentPage} of {totalPages}</span>
+                  <button
+                    type="button"
+                    disabled={currentPage >= totalPages}
+                    onClick={() => setPage(currentPage + 1)}
+                    style={{
+                      padding: '6px 10px',
+                      borderRadius: 'var(--radius-sm)',
+                      border: '1px solid var(--color-light-gray)',
+                      backgroundColor: 'var(--color-white)',
+                      cursor: currentPage >= totalPages ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    Next
+                  </button>
+                </div>
               </div>
             </div>
           )}

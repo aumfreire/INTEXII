@@ -127,7 +127,7 @@ export default function AdminDonationsPage() {
     const [response, setResponse] = useState<PagedDonationResponse<DonationRecord> | null>(null);
     const [supporterOptions, setSupporterOptions] = useState<DonationSupporterOption[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
-    const [pageSize, setPageSize] = useState(25);
+    const [pageSize, setPageSize] = useState(10);
     const [page, setPage] = useState(1);
     const [supporterLookupTerm, setSupporterLookupTerm] = useState('');
     const [errorMessage, setErrorMessage] = useState('');

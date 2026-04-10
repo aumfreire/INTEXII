@@ -13,12 +13,10 @@
 .hero-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    to right,
-    rgba(28, 16, 8, 0.82) 0%,
-    rgba(28, 16, 8, 0.55) 50%,
-    rgba(28, 16, 8, 0.2) 100%
-  );
+  background: linear-gradient(to right,
+      rgba(28, 16, 8, 0.82) 0%,
+      rgba(28, 16, 8, 0.55) 50%,
+      rgba(28, 16, 8, 0.2) 100%);
   z-index: 1;
 }
 
@@ -149,6 +147,111 @@
   font-weight: 500;
 }
 
+.impact-programs-wrap {
+  margin-top: 56px;
+  text-align: center;
+}
+
+.impact-programs-title {
+  color: var(--color-cream);
+  font-family: var(--font-heading);
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  font-weight: 700;
+  margin: 0 0 10px;
+}
+
+.impact-programs-subtitle {
+  color: rgba(250, 246, 240, 0.78);
+  font-size: 1rem;
+  line-height: 1.7;
+  margin: 0 0 32px;
+}
+
+.impact-programs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 24px;
+}
+
+.impact-program-card {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(251, 247, 240, 0.98) 100%);
+  border-radius: var(--radius-md);
+  padding: 28px 24px;
+  text-align: left;
+  box-shadow: var(--shadow-md);
+  height: 100%;
+}
+
+.impact-program-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+
+.impact-program-title {
+  color: var(--color-dark);
+  font-family: var(--font-heading);
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 0 0 10px;
+}
+
+.impact-program-text {
+  color: var(--color-muted);
+  font-size: 0.95rem;
+  line-height: 1.75;
+  margin: 0;
+}
+
+.impact-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  margin-top: 28px;
+}
+
+.impact-metric-pill {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+}
+
+.impact-metric-count {
+  color: var(--color-cream);
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.impact-metric-label {
+  color: rgba(250, 246, 240, 0.72);
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+.impact-cta-row {
+  display: flex;
+  justify-content: center;
+  margin-top: 32px;
+}
+
+.impact-loading-state {
+  color: rgba(250, 246, 240, 0.8);
+  font-size: 1rem;
+  line-height: 1.7;
+  margin: 32px 0 0;
+  text-align: center;
+}
+
 /* ===== How You Can Help ===== */
 .help-section {
   padding: 80px 0;
@@ -203,6 +306,7 @@
 }
 
 @media (max-width: 768px) {
+
   .mission-section,
   .impact-section,
   .help-section,

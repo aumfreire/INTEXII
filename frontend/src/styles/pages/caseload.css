@@ -89,8 +89,8 @@
 
 .caseload-filters-row {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
-  gap: 12px;
+  grid-template-columns: minmax(220px, 2fr) repeat(4, minmax(120px, 1fr)) minmax(96px, 110px);
+  gap: 10px;
   align-items: end;
 }
 

@@ -1,8 +1,10 @@
+import { useEffect, useState } from 'react';
 import {
   Heart,
   Users,
   HandHeart,
   ArrowRight,
+  BookOpen,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import PrimaryButton from '../components/ui/PrimaryButton';
@@ -11,6 +13,7 @@ import SectionHeading from '../components/ui/SectionHeading';
 import Card from '../components/ui/Card';
 import TestimonialCard from '../components/ui/TestimonialCard';
 import CountUpStat from '../components/ui/CountUpStat';
+import { getPublicImpactStats, type PublicImpactStats } from '../lib/authAPI';
 import '../styles/pages/landing.css';
 
 const heroImageUrl =
@@ -18,12 +21,15 @@ const heroImageUrl =
 const missionImageUrl =
   'https://images.unsplash.com/photo-1615466178532-b6d2f9c304de?auto=format&fit=crop&w=1200&q=80';
 
-const impactStats = [
-  { end: 2500, suffix: '+', label: 'Girls Protected & Served' },
-  { end: 94, suffix: '%', label: 'Program Completion Rate' },
-  { end: 15, suffix: '+', label: 'Years of Service' },
-  { end: 2.8, prefix: '$', suffix: 'M', decimals: 1, label: 'Invested in Girl-Centered Programs' },
-];
+const emptyImpactStats: PublicImpactStats = {
+  totalServed: 0,
+  activeResidents: 0,
+  reintegrated: 0,
+  activeSafehouses: 0,
+  totalDonations: 0,
+  totalDonors: 0,
+  programStats: [],
+};
 
 const helpCards = [
   {
@@ -39,16 +45,12 @@ const helpCards = [
     title: 'Spread the Word',
     description:
       'Share our mission with your network. Follow us on social media, share our stories, and help raise awareness about the challenges girls face.',
-    link: '/coming-soon?topic=share-our-story',
-    linkText: 'Share Our Story',
   },
   {
     icon: <HandHeart size={32} />,
     title: 'Corporate Partnership',
     description:
       'Align your business with a cause that matters. Corporate sponsors enjoy brand visibility while making a meaningful impact on girls\' lives.',
-    link: '/coming-soon?topic=corporate-partnership',
-    linkText: 'Become a Partner',
   },
 ];
 
@@ -74,6 +76,39 @@ const testimonials = [
 ];
 
 export default function LandingPage() {
+  const [publicStats, setPublicStats] = useState<PublicImpactStats | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void getPublicImpactStats()
+      .then((stats) => {
+        if (!cancelled) {
+          setPublicStats(stats);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setPublicStats(emptyImpactStats);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const impactStats = publicStats
+    ? [
+      { end: publicStats.totalServed, suffix: '+', label: 'Girls Protected & Served' },
+      { end: publicStats.activeResidents, suffix: '', label: 'Currently in Care' },
+      { end: publicStats.reintegrated, suffix: '+', label: 'Successfully Reintegrated' },
+      { end: publicStats.activeSafehouses, suffix: '', label: 'Active Safehouses' },
+      { end: publicStats.totalDonors, suffix: '+', label: 'Generous Donors' },
+      { end: publicStats.totalDonations, prefix: '$', label: 'Total Contributions', decimals: 0 },
+    ]
+    : [];
+
   return (
     <>
       {/* Hero — full-width background image */}
@@ -155,23 +190,85 @@ export default function LandingPage() {
           <SectionHeading
             label="Our Impact"
             title="Measurable Change, Real Lives"
-            subtitle="Every number represents a real girl whose life has been transformed through safety, care, and opportunity."
+            subtitle="Every number below comes from live program data and reflects the people we are currently serving."
             light
           />
-          <div className="row mt-4">
-            {impactStats.map((stat, i) => (
-              <div className="col-6 col-md-3" key={i}>
-                <CountUpStat
-                  end={stat.end}
-                  prefix={stat.prefix}
-                  suffix={stat.suffix}
-                  decimals={stat.decimals}
-                  label={stat.label}
-                  duration={2200}
-                />
+          {impactStats.length > 0 ? (
+            <>
+              <div className="row g-4 mt-4">
+                {impactStats.map((stat, i) => (
+                  <div className="col-6 col-md-4 col-lg-2" key={i}>
+                    <CountUpStat
+                      end={stat.end}
+                      prefix={stat.prefix}
+                      suffix={stat.suffix}
+                      decimals={stat.decimals}
+                      label={stat.label}
+                      duration={2200}
+                    />
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+
+              <div className="impact-programs-wrap">
+                <h3 className="impact-programs-title">What We Do</h3>
+                <p className="impact-programs-subtitle">
+                  Three pillars that define our approach to healing and restoration.
+                </p>
+                <div className="impact-programs-grid">
+                  <div className="impact-program-card">
+                    <div className="impact-program-icon" style={{ backgroundColor: 'rgba(193,96,58,0.1)', color: '#C1603A' }}>
+                      <Heart size={32} />
+                    </div>
+                    <h4 className="impact-program-title">Caring</h4>
+                    <p className="impact-program-text">
+                      Safe shelter, nutritious meals, trauma-informed counseling, and 24/7 emotional support for every resident in our care. No one faces recovery alone.
+                    </p>
+                  </div>
+                  <div className="impact-program-card">
+                    <div className="impact-program-icon" style={{ backgroundColor: 'rgba(122,158,126,0.1)', color: '#7A9E7E' }}>
+                      <Users size={32} />
+                    </div>
+                    <h4 className="impact-program-title">Healing</h4>
+                    <p className="impact-program-text">
+                      Individual and group therapy, legal aid, medical support, and structured case management that addresses the root causes of vulnerability and builds resilience.
+                    </p>
+                  </div>
+                  <div className="impact-program-card">
+                    <div className="impact-program-icon" style={{ backgroundColor: 'rgba(230,126,34,0.1)', color: '#e67e22' }}>
+                      <BookOpen size={32} />
+                    </div>
+                    <h4 className="impact-program-title">Teaching</h4>
+                    <p className="impact-program-text">
+                      Education re-enrollment, vocational training, life skills development, and family reintegration planning that empowers residents to build independent, thriving lives.
+                    </p>
+                  </div>
+                </div>
+
+                {publicStats?.programStats?.length ? (
+                  <div className="impact-metrics-grid">
+                    {publicStats.programStats.map((item) => (
+                      <div className="impact-metric-pill" key={item.label}>
+                        <span className="impact-metric-count">{item.count.toLocaleString()}</span>
+                        <span className="impact-metric-label">{item.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+
+                <div className="impact-cta-row">
+                  <Link to="/donate" className="cta-band-btn">
+                    <Heart size={18} />
+                    Donate Now
+                  </Link>
+                </div>
+              </div>
+            </>
+          ) : (
+            <p className="impact-loading-state">
+              Loading current impact data...
+            </p>
+          )}
         </div>
       </section>
 
@@ -192,21 +289,23 @@ export default function LandingPage() {
                   description={card.description}
                   accentColor="var(--color-primary)"
                 >
-                  <Link
-                    to={card.link}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      color: 'var(--color-primary-dark)',
-                      fontWeight: 600,
-                      fontSize: '0.9rem',
-                      textDecoration: 'none',
-                    }}
-                  >
-                    {card.linkText}
-                    <ArrowRight size={16} />
-                  </Link>
+                  {card.link ? (
+                    <Link
+                      to={card.link}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        color: 'var(--color-primary-dark)',
+                        fontWeight: 600,
+                        fontSize: '0.9rem',
+                        textDecoration: 'none',
+                      }}
+                    >
+                      {card.linkText}
+                      <ArrowRight size={16} />
+                    </Link>
+                  ) : null}
                 </Card>
               </div>
             ))}

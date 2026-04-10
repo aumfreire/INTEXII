@@ -550,7 +550,7 @@ export default function ResidentDetailPage() {
                     <span className="rd-field-value">{r.gender}</span>
                   </div>
                   <div className="rd-field">
-                    <span className="rd-field-label">Nationality</span>
+                    <span className="rd-field-label">City</span>
                     <span className="rd-field-value">{r.nationality}</span>
                   </div>
                   <div className="rd-field">
@@ -592,7 +592,7 @@ export default function ResidentDetailPage() {
                     <span className="rd-field-value">{r.familyStatus}</span>
                   </div>
                   <div className="rd-field">
-                    <span className="rd-field-label">Siblings</span>
+                    <span className="rd-field-label">Present Age</span>
                     <span className="rd-field-value">{r.siblings}</span>
                   </div>
                   <div className="rd-field">
