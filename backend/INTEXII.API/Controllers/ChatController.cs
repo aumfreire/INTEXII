@@ -586,12 +586,19 @@ public class ChatController : ControllerBase
             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
         var login = Regex.IsMatch(
             trimmed,
-            @"\b(log\s*in|login|sign\s*in|signin|where\s+(can|do)\s+i\s+log\s*in|how\s+(can|do)\s+i\s+log\s*in|access\s+(my\s+)?account|sign\s+on)\b",
+            @"\b(log\s*in|login|sign\s*in|signin|where\s+(can|do)\s+i\s+log\s*in|how\s+(can|do)\s+i\s+log\s*in|access\s+(my\s+)?account|sign\s+on|forgot\s+password|reset\s+password)\b",
             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
         var signup = Regex.IsMatch(
             trimmed,
             @"\b(sign\s*up|signup|register|create\s+(an?\s+)?account|new\s+account|where\s+(can|do)\s+i\s+sign\s*up|how\s+(can|do)\s+i\s+register)\b",
             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        var impact = Regex.IsMatch(trimmed, @"\b(impact|results?|success\s+stories?)\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        var privacy = Regex.IsMatch(trimmed, @"\b(privacy|data\s+policy|privacy\s+policy)\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        var cookies = Regex.IsMatch(trimmed, @"\b(cookie|cookies)\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        var dashboard = Regex.IsMatch(trimmed, @"\b(dashboard|my\s+dashboard)\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        var donationHistory = Regex.IsMatch(trimmed, @"\b(donation\s+history|my\s+donations|past\s+donations?)\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        var home = Regex.IsMatch(trimmed, @"\b(home|homepage|main\s+page)\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        var chat = Regex.IsMatch(trimmed, @"\b(chat|assistant|help\s+chat)\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
         var authDetails = Regex.IsMatch(trimmed, @"\b(credentials?|authentication)\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
         var visitorAccess = Regex.IsMatch(
             trimmed,
@@ -616,7 +623,7 @@ public class ChatController : ControllerBase
             login = true;
         }
 
-        if (!donate && !login && !signup)
+        if (!donate && !login && !signup && !impact && !privacy && !cookies && !dashboard && !donationHistory && !home && !chat)
         {
             return false;
         }
@@ -635,6 +642,34 @@ public class ChatController : ControllerBase
         if (donate)
         {
             parts.Add("Thank you for wanting to help—your support means a lot.\n\n**[Donate here](/donate)**");
+        }
+        if (impact)
+        {
+            parts.Add("You can see our impact here.\n\n**[View impact](/impact)**");
+        }
+        if (privacy)
+        {
+            parts.Add("You can read our privacy policy here.\n\n**[Privacy policy](/privacy)**");
+        }
+        if (cookies)
+        {
+            parts.Add("You can view our cookie policy here.\n\n**[Cookie policy](/cookies)**");
+        }
+        if (dashboard)
+        {
+            parts.Add("You can open your dashboard here.\n\n**[Go to dashboard](/dashboard)**");
+        }
+        if (donationHistory)
+        {
+            parts.Add("You can view your donation history here.\n\n**[My donations](/donations)**");
+        }
+        if (home)
+        {
+            parts.Add("You can go back to the home page here.\n\n**[Home](/)**");
+        }
+        if (chat)
+        {
+            parts.Add("You can use Haven Chat here.\n\n**[Open chat](/chat)**");
         }
 
         markdown = string.Join("\n\n", parts);
