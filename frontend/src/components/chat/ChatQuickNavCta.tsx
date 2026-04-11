@@ -11,6 +11,12 @@ const loginIntent =
 const signupIntent =
   /\b(sign\s*up|signup|register|create\s+(an?\s+)?account|new\s+account|where\s+(can|do)\s+i\s+sign\s*up|how\s+(can|do)\s+i\s+register)\b/i;
 
+/** Match backend TryGetPublicCannedResponse: IT-style wording on public chat → show log in. */
+const internalFlavored =
+  /\b(data\s+synchroniz|synchronization|user\s+permissions|permissions\s+(are|set)|data\s+visibility|authentication\s+systems?|database\s+context|internal\s+(assistant|systems?)|operational\s+access|system\s+administrator|it\s+support|verify\s+if)\b/i;
+const soundsStuck =
+  /\b(access|account|login|log\s*in|sign\s*in|interface|dashboard|trying\s+to|issues?|unable|can't|cannot)\b/i;
+
 interface ChatQuickNavCtaProps {
   messages: ChatMessage[];
 }
@@ -22,9 +28,13 @@ export default function ChatQuickNavCta({ messages }: ChatQuickNavCtaProps) {
     if (!text) {
       return { showDonate: false, showLogin: false, showSignup: false };
     }
+    const techAccess =
+      text.length <= 520 && internalFlavored.test(text) && soundsStuck.test(text);
+    const authDetails = /\b(credentials?|authentication)\b/i.test(text);
+    const visitorAccess = /\b(log\s*in|login|sign\s*in|account|access|sign\s+on)\b/i.test(text);
     return {
       showDonate: donateIntent.test(text),
-      showLogin: loginIntent.test(text),
+      showLogin: loginIntent.test(text) || techAccess || (authDetails && visitorAccess),
       showSignup: signupIntent.test(text),
     };
   }, [messages]);

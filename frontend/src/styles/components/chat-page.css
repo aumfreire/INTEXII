@@ -379,6 +379,20 @@
   text-align: center;
 }
 
+/* Launcher / embedded popup: don’t vertically center in a tall min-height — keeps greeting near the top */
+.chat-page.chat-page-popup .chat-empty-state {
+  min-height: 0;
+  justify-content: flex-start;
+  padding-top: 4px;
+}
+
+.chat-empty-state h2 {
+  margin: 0;
+  font-size: clamp(1.05rem, 3.5vw, 1.35rem);
+  font-weight: 600;
+  line-height: 1.25;
+}
+
 .chat-empty-logo {
   width: 56px;
   height: 56px;

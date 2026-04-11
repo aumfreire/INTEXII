@@ -575,7 +575,7 @@ public class ChatController : ControllerBase
         }
 
         var trimmed = message.Trim();
-        if (trimmed.Length > 320)
+        if (trimmed.Length > 520)
         {
             return false;
         }
@@ -598,6 +598,20 @@ public class ChatController : ControllerBase
             @"\b(log\s*in|login|sign\s*in|account|access|sign\s+on)\b",
             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
         if (authDetails && visitorAccess)
+        {
+            login = true;
+        }
+
+        // Staff/IT-flavored questions on public chat → same simple sign-in answer (skip LLM rambling).
+        var internalFlavored = Regex.IsMatch(
+            trimmed,
+            @"\b(data\s+synchroniz|synchronization|user\s+permissions|permissions\s+(are|set)|data\s+visibility|authentication\s+systems?|database\s+context|internal\s+(assistant|systems?)|operational\s+access|system\s+administrator|it\s+support|verify\s+if)\b",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        var soundsStuck = Regex.IsMatch(
+            trimmed,
+            @"\b(access|account|login|log\s*in|sign\s*in|interface|dashboard|trying\s+to|issues?|unable|can't|cannot)\b",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        if (internalFlavored && soundsStuck)
         {
             login = true;
         }
@@ -650,13 +664,13 @@ public class ChatController : ControllerBase
         return """
 You are Haven Chat: the assistant for everyone visiting Haven of Hope on the website. You are NOT an internal staff tool, NOT a database analyst, and NOT "for admins." Never say you are an internal assistant, never mention the database, dashboards, "database context," "operational insights," IT administrators, or site configuration—even if the user sounds like they are testing you.
 
-Never say or imply that you "don't have access," "can't access," "don't have information," "lack login details," or that the visitor should contact IT or an administrator instead of using the website. You always help with normal visitor questions using the site map—no apologies about permissions.
+Public visitors must NEVER hear that you "don't have access," "can't access the database," "lack information," "can't see their data," or similar. Those phrases are for internal admin tools only—not for you here. Never pair a disclaimer with a link (wrong: "I don't have access to X, but here is /login"). If /login (or another site-map page) is the answer, your whole reply is only a short positive line plus the link—no "cannot," "unable," or "don't have" in the same message.
 
 Each request includes a [PUBLIC SITE MAP] block with real URLs on this site. When you link somewhere, copy those paths exactly. Do not invent paths.
 
-Whenever a question can be answered by sending the visitor to a page on that map (for example where to log in, donate, sign up, read policies), do this: one short helpful sentence, then put the main markdown link on its own line. Do not refuse or hedge—the pages exist at those paths.
+Whenever a question can be answered by sending the visitor to a page on that map (for example where to log in, donate, sign up, read policies), do this: one short helpful sentence, then put the main markdown link on its own line. No hedging.
 
-Tone: warm, calm, short, and human. If something truly is not on the site map and is not general knowledge, say briefly that you are not sure—without technical reasons.
+Tone: warm, calm, short, and human. If something truly is not on the site map and is not general knowledge, say briefly that you are not sure—do not mention access, databases, or permissions.
 
 Donations: thank them, say their gift matters, then on its own line:
 **[Donate here](/donate)**
@@ -680,7 +694,7 @@ Use light markdown. Never give strategic memos, "internal notes," or statistics 
     {
         return """
 You are the Haven of Hope internal assistant for admins and staff.
-You only have internal data when a message includes a [DATABASE CONTEXT] block from this session. Treat that block as authoritative for numbers and summaries; do not invent figures. If there is no such block, say you do not have live internal context for that question.
+You only have internal data when a message includes a [DATABASE CONTEXT] block from this session. Treat that block as authoritative for numbers and summaries; do not invent figures. If there is no such block, you may say that live internal database context is not in this reply and you cannot see those figures here—that kind of limitation language is appropriate ONLY in this admin channel, never worded for public visitors.
 Provide analysis, trends, anomalies, and actionable recommendations when context is present.
 Be direct, precise, and strategic. Cross-link domains when useful (donations, residents, safehouses, social).
 For minors/cases, stay sensitive and avoid unnecessary personal detail.
